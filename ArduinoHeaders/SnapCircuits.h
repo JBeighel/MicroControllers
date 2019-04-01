@@ -371,7 +371,7 @@
 		unsigned long nCurrTime = millis();
 
 		for (nPinCtr = 0; nPinCtr < BIN_NUMINPUT + BIN_NUMOUTPUT; nPinCtr++) {
-			CurrState = digitalRead(nPinCtr);
+			CurrState = digitalRead(mBinIOPins[nPinCtr].nPin);
 			if (CurrState != mBinIOPins[nPinCtr].CurrState) { //The pin has changed
 				if (mBinIOPins[nPinCtr].tStateChange == 0) {
 					//First detection of the change, begin debounce timer
@@ -397,7 +397,7 @@
 				} 
 			} else { //Pin state has not changed
 				if ((mBinIOPins[nPinCtr].tFlipTime != 0) && (nCurrTime - mBinIOPins[nPinCtr].tStateBegin >= mBinIOPins[nPinCtr].tFlipTime)) {
-					Flip(nPinCtr);
+					Flip(mBinIOPins[nPinCtr].nPin);
 				}
 
 				mBinIOPins[nPinCtr].tStateChange = 0;
@@ -440,7 +440,8 @@
 			return false;
 		}
 
-		digitalWrite(nPin, LOW);
+		digitalWrite(mBinIOPins[nPin].nPin, LOW);
+		mBinIOPins[nPin].tFlipTime = 0; //Cancel any pending flips
 		return true;
 	}
 
@@ -453,7 +454,8 @@
 			return false;
 		}
 
-		digitalWrite(nPin, HIGH);
+		digitalWrite(mBinIOPins[nPin].nPin, HIGH);
+		mBinIOPins[nPin].tFlipTime = 0; //Cancel any pending flips
 		return true;
 	}
 
@@ -468,13 +470,15 @@
 			return false;
 		}
 
-		CurrState = digitalRead(nPin);
+		CurrState = digitalRead(mBinIOPins[nPin].nPin);
 
 		if (CurrState == HIGH) {
-			digitalWrite(nPin, LOW);
+			digitalWrite(mBinIOPins[nPin].nPin, LOW);
 		} else {
-			digitalWrite(nPin, HIGH);
+			digitalWrite(mBinIOPins[nPin].nPin, HIGH);
 		}
+
+		mBinIOPins[nPin].tFlipTime = 0; //Cancel any pending flips
 
 		return true;
 	}
@@ -562,7 +566,7 @@
 			}
 		}
 
-		if (mBinIOPins[nPin].Direction != OUTPUT) {
+		if (mBinIOPins[nPin].Direction == OUTPUT) {
 			if (mBinIOPins[nPin].CurrState == LOW) {
 				return false;
 			} else {
@@ -587,7 +591,7 @@
 			}
 		}
 
-		if (mBinIOPins[nPin].Direction != OUTPUT) {
+		if (mBinIOPins[nPin].Direction == OUTPUT) {
 			if (mBinIOPins[nPin].CurrState == LOW) {
 				return true;
 			} else {
@@ -608,11 +612,10 @@
 			return false;
 		}
 
-		if (TurnOn(nPin) == true) { //Output state set, apply the timer
+		if (TurnOn(mBinIOPins[nPin].nPin) == true) { //Output state set, apply the timer
 			//tFlip time specifies how long we should be in the state before flipping
 			mBinIOPins[nPin].tFlipTime = millis() - mBinIOPins[nPin].tStateBegin; //Amount of time we've been in the state
 			mBinIOPins[nPin].tFlipTime += (nTime * 1000); //Ad the requested duration
-			
 			return true;
 		} else { //Unable to set the output state, abort
 			return false;
@@ -628,7 +631,7 @@
 			return false;
 		}
 
-		if (TurnOff(nPin) == true) { //Output state set, apply the timer
+		if (TurnOff(mBinIOPins[nPin].nPin) == true) { //Output state set, apply the timer
 			//tFlip time specifies how long we should be in the state before flipping
 			mBinIOPins[nPin].tFlipTime = millis() - mBinIOPins[nPin].tStateBegin; //Amount of time we've been in the state
 			mBinIOPins[nPin].tFlipTime += (nTime * 1000); //Ad the requested duration
