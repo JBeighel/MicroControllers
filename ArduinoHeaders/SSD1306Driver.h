@@ -17,6 +17,13 @@
 		the screen will display.  This buffer will need to have 1 bit
 		per pixel of the screen, so a 128x64 pixel display will have
 		8192 pixels and need 1024 bytes for this buffer.
+
+		Available preprocessor options:
+		- SSD1306_ALLCAPLETTERS all constant values are placed in RAM 
+			in the Arduino.  The fonts use 7 bytes per character and
+			as a result can take up a chunk of memory.  This will cause
+			all letters to be uppercase and removes the lower case 
+			letter constants to free up 182 bytes of RAM.
 */
 
 #ifndef __SSD1306OLEDDRIVER_H
@@ -38,8 +45,17 @@
 	*/
 	#define OLED1306_COLUMNS	128
 
+	/** @brief		Default clock frequency for the 1306 display
+		@ingroup	oled1306
+	*/
 	#define OLED1306_CLKFREQ	8000000
 
+	/**	@brief		Constant holding capital letters for the display font
+		@details	Each character is 5 bits wide and 7 bits tall.  Making each letter
+			use 7 bytes.  The last 3 bits in each byte are not needed.  It is expected
+			that when rendered the bits that are off will not be drawn.
+		@ingroup	oled1306
+	*/
 	const uint8_t aBitImg_CapLetters_5x7[] = {
 		//Capital A
 		B01110000,
@@ -252,6 +268,12 @@
 	};
 
 	#ifndef SSD1306_ALLCAPLETTERS
+		/**	@brief		Constant holding lower case letters for the display font
+			@details	Each character is 5 bits wide and 7 bits tall.  Making each letter
+				use 7 bytes.  The last 3 bits in each byte are not needed.  It is expected
+				that when rendered the bits that are off will not be drawn.
+			@ingroup	oled1306
+		*/
 		const uint8_t aBitImg_LowLetters_5x7[] = {
 			//Lower a
 			B00000000,
@@ -466,6 +488,12 @@
 		const uint8_t *aBitImg_LowLetters_5x7 = aBitImg_CapLetters_5x7;
 	#endif
 
+	/**	@brief		Constant holding numeric digits for the display font
+		@details	Each character is 5 bits wide and 7 bits tall.  Making each letter
+			use 7 bytes.  The last 3 bits in each byte are not needed.  It is expected
+			that when rendered the bits that are off will not be drawn.
+		@ingroup	oled1306
+	*/
 	const uint8_t aBitImg_Digits_5x7[] = {
 		//0
 		B01110000,
@@ -587,9 +615,9 @@
 
 		OLED_SetVComDeselect		= 0xDB, /**< Adjusts the VCom regulator output, takes a parameter that is the new level */
 
-		OLED_SetPageAddress			= 0x22,
+		OLED_SetPageAddress			= 0x22,	/**< Specify the row number that will be the start of the next data stream.  Takes two parameters first is the start row, second is the end row */
 
-		OLED_SetColumnAddress		= 0x21,
+		OLED_SetColumnAddress		= 0x21,	/**< Specify the column number that will be the start of the next data stream.  Takes two parameters first is the start column, second is the end column */
 
 		OLED_SetMemoryMode			= 0x20,	/** Specifies how data recieved is written to the GDDRAM */
 		OLED_MemoryModeDefault		= 0x00,	/**< Draws to the screen in blocks that are 8 pixels tall and 16 pixels wide, left to right then top to bottom */
@@ -608,10 +636,39 @@
 		uint8_t nColBits[16];
 	};
 
+	/**	@brief		Class containing all operations needed for the 1306 screen
+		@details	This class will initialize RAM variables, including dynamically allocating
+			1024 bytes of RAM, needed by the operations.  It will initialize the hardware when
+			the Begin() function is called.
+
+			Then the various drawing functions can be used to render an image in the allocated
+			buffer.  Once the SendToScree() function is called the created drawing will be 
+			passed to the hardware.
+		@ingroup	oled1306
+	*/
 	class SSD1306 {
 		public:
+			/**	@brief		Constructor that prepates an instance of the class
+				@details	This only prepares the class, it does not aattempt to 
+					communicate with the screen.  This allows the class to be 
+					instantiated in global space before the Arduino Setup function has
+					ran to prepare the I/O pins.
+				@param		nWidth		The width in pixels of the connected screen
+				@param		nHeight		The height in pixes of the connected screen
+				@param		nDCPin		The binary I/O pin connected to the screen data
+					or command select
+				@param		nCSPin		The binary I/O pin connected to the screen
+					chip select.
+				@param		nResetPin	The binary I/O pin connected to the screen reset
+			*/
 			SSD1306(uint8_t nWidth, uint8_t nHeight, uint8_t nDCPin, uint8_t nCSPin, uint8_t nResetPin);
+			
+			/**	@brief		Deonstructor to clean up any allocated resources
+				@details	The class allocates RAM for the drawing buffer, this ensures
+					that this memory is freed
+			*/
 			~SSD1306();
+			
 			void Begin(SPIClass *pSpi);
 			void Reset();
 			void SendToScreen();
@@ -625,7 +682,11 @@
 			void DrawTextDblSize(uint8_t nXLeft, uint8_t nYTop, char *Text);
 
 		protected:
+			/**	@brief		Width in pixels of the connected screen
+			*/
 			uint8_t cnScreenWidth;
+			/**	@brief		Height in pixels of the connected screen
+			*/
 			uint8_t cnScreenHeight;
 
 			/**	@brief		Chip select digital IO pin
@@ -650,8 +711,28 @@
 			*/
 			uint8_t cnDataCmdPin;
 
+			/**	@brief		Pointer to the allocated buffer holding the drawing
+				@details	This buffer will be allocated at run time to hold the drawing 
+					while it is being created until it is sent to the screen.  The blocks
+					are arranged in 16 byte chunks.  The screen will be configured to 
+					accept bytes from left to right until then top to bottom.
+
+					However, each byte will be used vertically.  The least significant bit 
+					in the topmost row of the screen, the most significant bit 7 rows below
+					that.  Each byte spans 8 rows.  
+
+					This could be done with each block being the full width of the screen,
+					but it was broken into chunks in the event that different width screens
+					were to be supported.
+			*/
 			sScreenBlock_t *caBlocks;
+
+			/**	@brief		Number of data blocks in the allocated space
+			*/
 			uint8_t cnBlocksCnt;
+
+			/**	@brief		Pointer to the SPI interface class for the Arduino 
+			*/
 			SPIClass *cpSpi;
 
 			void SPISendRegisterValue(uint8_t nRegister, uint8_t nValue);
@@ -1066,5 +1147,5 @@
 		return;
 	}
 
- #endif
+#endif
 
