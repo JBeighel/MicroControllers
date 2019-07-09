@@ -7,22 +7,22 @@
 #ifndef __NAME_H
 	#define __NAME_H
 
-/***** Includes    *****/
+/***** Includes		*****/
 
 
-/***** Constants   *****/
+/***** Constants	*****/
 
 
-/***** Definitions *****/
+/***** Definitions	*****/
 
 
-/***** Globals     *****/
+/***** Globals		*****/
 
 
-/***** Prototypes  *****/
+/***** Prototypes 	*****/
 
 
-/***** Functions   *****/
+/***** Functions	*****/
 
 
 #endif
