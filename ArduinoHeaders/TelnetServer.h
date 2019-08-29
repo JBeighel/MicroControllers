@@ -22,12 +22,13 @@
 	#define	TELNET_IDFIRST		1
 
 /***** Definitions	*****/
-		typedef struct sTelnetClient_t {
-			uint32_t nID;
-			EthernetClient Client;
-			uint32_t nBuffLen;
-			char *pRecvBuff;
-		} sTelnetClient_t;
+	typedef struct sTelnetClient_t {
+		uint32_t nID;
+		EthernetClient Client;
+		uint32_t nBuffLen;
+		uint32_t nRecvLen;
+		char *pRecvBuff;
+	} sTelnetClient_t;
 
 	typedef void (*pfTelnetTextRecv_t)(uint32_t, const char *, uint32_t);
 
@@ -83,6 +84,7 @@ cTelnetServer_t::cTelnetServer_t(uint16_t nPortNum, uint16_t nMaxClients) {
 			caEthClients[nCtr].nID = TELNET_IDINVALID;
 			caEthClients[nCtr].Client = EthernetClient();
 			caEthClients[nCtr].nBuffLen = 0;
+			caEthClients[nCtr].nRecvLen = 0;
 			caEthClients[nCtr].pRecvBuff = NULL;
 		}
 	}
@@ -237,74 +239,70 @@ bool cTelnetServer_t::CloseClient(uint32_t nClientID) {
 	caEthClients[nCtr].Client.stop();
 
 	caEthClients[nCtr].nID = TELNET_IDINVALID;
+	caEthClients[nCtr].nRecvLen = 0;
+	caEthClients[nCtr].nBuffLen = 0;
+
+	if (caEthClients[nCtr].pRecvBuff != NULL) {
+		delete caEthClients[nCtr].pRecvBuff;
+	}
+	caEthClients[nCtr].pRecvBuff = NULL;
 
 	return true;
 }
 
 bool cTelnetServer_t::ClientDataRecv(sTelnetClient_t *pClient, uint32_t nNumBytes) {
-	uint32_t nByteCtr, nStartIdx;
-	void *pFreeBuff;
+	uint32_t nCtr, nStartIdx;
+	char *pOldBuff;
 
-	if (pClient->nBuffLen == 0) {
-		//Create a buffer to hold all the incoming data +1 null terminator byte
-		cpRecvBuff = new char [nNumBytes + 1];
-		nStartIdx = 0;
-		pFreeBuff = NULL;
-	} else {
-		//Create a buffer to hold all existing data + incoming data
-		cpRecvBuff = new char [nNumBytes + pClient->nBuffLen];
-		nStartIdx = pClient->nBuffLen;
-		pFreeBuff = pClient->pRecvBuff;
+	//Set the new size of the received data
+	nStartIdx = pClient->nRecvLen; //Save off the current data length
+	pClient->nRecvLen += nNumBytes;
+
+	if ((pClient->nBuffLen == 0) || (pClient->pRecvBuff == NULL)) { //Clients buffer doesn't exist, create one
+		pClient->pRecvBuff = new char[pClient->nRecvLen + 1]; //1 extra character for the null terminator
+		pClient->nBuffLen = pClient->nRecvLen + 1;
+	} else if (pClient->nBuffLen < pClient->nRecvLen + 1) { //Client buffer is too small, get a bigger one
+		pOldBuff = pClient->pRecvBuff; //Save off the old buffer
+		pClient->pRecvBuff = new char[pClient->nRecvLen + 1];
+
+		if (pClient->pRecvBuff != NULL) { //No receive buffer exists
+			memcpy(pClient->pRecvBuff, cpRecvBuff, nStartIdx + 1);
+		}
+
+		delete pOldBuff;
 	}
-	pClient->nBuffLen += nNumBytes;
 
-	if (cpRecvBuff == NULL) { //Failed to allocate memory, abort handling
+	if (pClient->pRecvBuff == NULL) { //No receive buffer exists
+		pClient->nBuffLen = 0;
+		pClient->nRecvLen = 0;
 		return false;
 	}
 
-	if (pClient->nBuffLen > 0) { //Copy existing data into the start of the new buffer
-		memcpy(cpRecvBuff, pClient->pRecvBuff, pClient->nBuffLen);
+	for (nCtr = 0; nCtr < nNumBytes; nCtr++) {
+		pClient->pRecvBuff[nCtr + nStartIdx] = pClient->Client.read(); //Reads one byte of data
+	}
+	pClient->pRecvBuff[nCtr + nStartIdx] = '\0'; //Make sure the terminator exists
+
+	if (pClient->pRecvBuff[pClient->nRecvLen - 1] != '\n') { //Command does not have a carraige return, keep collecting characters
+		return true;
 	}
 
-	//Read data from ethernet and put it at the end of hte buffer
-	for (nByteCtr = 0; nByteCtr < nNumBytes; nByteCtr++) { //Byte by byte fill the buffer
-		cpRecvBuff[nByteCtr + nStartIdx] = pClient->Client.read(); //Reads one byte of data
+	while ((pClient->pRecvBuff[pClient->nRecvLen - 1] == '\n') || (pClient->pRecvBuff[pClient->nRecvLen - 1] == '\r')) {
+		pClient->pRecvBuff[pClient->nRecvLen - 1] = '\0'; //Remove the carraige return
+		pClient->nRecvLen -= 1; //We took a character off (\n) reduce the length
 	}
-	cpRecvBuff[nByteCtr + nStartIdx] = '\0'; //Make sure the terminator is in place
 
-	//Put this new buffer into the client struct, then free the old one
-	pClient->pRecvBuff = cpRecvBuff;
-	cpRecvBuff = NULL;
-	delete pFreeBuff;
+	//Assume the data is ascii and call the virtual TextReceived handler
+	TextReceived(pClient->nID, pClient->pRecvBuff, pClient->nRecvLen);
 
-	//Try to filter out non-character values
-	nStartIdx = 0;
-	for (nByteCtr = 0; nByteCtr < pClient->nBuffLen; nByteCtr++) {
-		if ((pClient->pRecvBuff[nByteCtr] == '\n') || ((pClient->pRecvBuff[nByteCtr] >= ' ') && (pClient->pRecvBuff[nByteCtr] <= '~'))) {
-			pClient->pRecvBuff[nStartIdx] = pClient->pRecvBuff[nByteCtr];
-			nStartIdx += 1;
-		}
+	//if the call back is set, call that too
+	if (cpfTextRecvHandler != NULL) {
+		cpfTextRecvHandler(pClient->nID, pClient->pRecvBuff, pClient->nRecvLen);
 	}
-	pClient->pRecvBuff[nStartIdx] = '\0'; //Add null terminator
-	pClient->nBuffLen = nStartIdx; //Null terminator is last byte in the buffer
 
-	//Break the data at carraige returns, sending each chunk to the text handlers
-	if ((pClient->nBuffLen > 0) && (pClient->pRecvBuff[pClient->nBuffLen - 1] == '\n')) { //Carraige return means a full command was received
-		pClient->pRecvBuff[pClient->nBuffLen - 1] = '\0';
-		nByteCtr = 1; //Will remove 1 byte due to carraige return
-
-		//Assume the data is ascii and call the virtual TextReceived handler
-		TextReceived(pClient->nID, pClient->pRecvBuff, pClient->nBuffLen - nByteCtr);
-
-		//if the call back is set, call that too
-		if (cpfTextRecvHandler != NULL) {
-			cpfTextRecvHandler(pClient->nID, pClient->pRecvBuff, pClient->nBuffLen - nByteCtr);
-		}
-
-		delete pClient->pRecvBuff;
-		pClient->pRecvBuff = NULL;
-		pClient->nBuffLen = 0;
-	}
+	//We've processed the command, reset for the next one
+	pClient->pRecvBuff[0] = '\0';
+	pClient->nRecvLen = 0;
 
 	return true;
 }

@@ -90,7 +90,9 @@
 	}
 
 	bool ArduinoSPI::BeginTransfer() {
-		digitalWrite(cnChipSelectPin, LOW); //Select the chip
+		if (cnChipSelectPin != SPI_NOPIN) {
+			digitalWrite(cnChipSelectPin, LOW); //Select the chip
+		}
 		SPI.beginTransaction(cSPISettings);
 
 		return true;
@@ -98,7 +100,9 @@
 
 	bool ArduinoSPI::EndTransfer() {
 		SPI.endTransaction();
-		digitalWrite(cnChipSelectPin, HIGH); //Deselect the chip
+		if (cnChipSelectPin != SPI_NOPIN) {
+			digitalWrite(cnChipSelectPin, HIGH); //Deselect the chip
+		}
 
 		return true;
 	}

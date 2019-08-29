@@ -63,6 +63,22 @@
 	*/
 	#define SetAllBitsInMask(Register, Mask)	Register = ((typeof(Register))(((uint32_t)Register) | ((uint32_t)Mask)))
 
+	/**	@brief		Returns the larger of two numeric values
+		@param		nNum1	The first number to compare
+		@param		nNum2	The second number to compare
+		@return		The larger of the two values being compared
+		@ingroup	commonutils
+	*/
+	#define GetLargerNum(nNum1, nNum2)		((nNum1 > nNum2) ? nNum1 : nNum2)
+
+	/**	@brief		Returns the smaller of two numeric values
+		@param		nNum1	The first number to compare
+		@param		nNum2	The second number to compare
+		@return		The smaller of the two values being compared
+		@ingroup	commonutils
+	*/
+	#define GetSmallerNum(nNum1, nNum2)		((nNum1 < nNum2) ? nNum1 : nNum2)
+
 /***** Functions	*****/
 
 

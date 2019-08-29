@@ -1,3 +1,4 @@
+
 /**	@defgroup	ifacespi
 	@brief		Abstract class providing an interface to the SPI hardware
 	@details	v0.1
@@ -30,8 +31,13 @@
 
 /***** Constants   *****/
 	#ifndef SPI_BUFFSIZE
-		#define SPI_BUFFSIZE 16
+		#define SPI_BUFFSIZE	16
 	#endif
+
+	/**	@brief		This is passed into a function when no pin exists for that function
+		@ingroup	ifacespi
+	*/
+	#define	SPI_NOPIN			0xFF
 
 /***** Definitions *****/
 	typedef enum eSPIDataOrder_t {

@@ -111,8 +111,10 @@
 		cDS3231_t(uint8_t nIntPin, uint8_t nResetPin, TwoWire *pI2CWire);
 		~cDS3231_t();
 		bool Initialize();
-		bool ReadDateTime(struct tm *tTime);
-		bool SetDateTime(struct tm tTime);
+		bool ReadDateAndTime(struct tm *tTime);
+		bool SetDateAndTime(const struct tm *tTime);
+		bool SetDateOnly(const struct tm *tTime);
+		bool SetTimeOnly(const struct tm *tTime);
 
 	protected:
 		uint8_t I2CReadUint8Reg(uint8_t nDevAddr, uint8_t nRegAddr);
@@ -169,7 +171,7 @@ bool cDS3231_t::Initialize() {
 	return true;
 }
 
-bool cDS3231_t::ReadDateTime(struct tm *tTime) {
+bool cDS3231_t::ReadDateAndTime(struct tm *tTime) {
 	uint8_t	nByteRecv;
 
 	nByteRecv = I2CReadUint8Reg(RTC_DS3231_ADDR, RTC_Seconds);
@@ -205,7 +207,45 @@ bool cDS3231_t::ReadDateTime(struct tm *tTime) {
 	return true;
 }
 
-bool cDS3231_t::SetDateTime(const struct tm *tTime) {
+bool cDS3231_t::SetDateAndTime(const struct tm *tTime) {
+	SetDateOnly(tTime);
+	SetTimeOnly(tTime);
+
+	return true;
+}
+
+bool cDS3231_t::SetDateOnly(const struct tm *tTime) {
+	uint8_t nByteSend;
+	uint16_t nYear;
+
+	nByteSend = Uint8toBCD8(tTime->tm_mday);
+	I2CWriteUint8Reg(RTC_DS3231_ADDR, RTC_Date, nByteSend);
+
+	nByteSend = Uint8toBCD8(tTime->tm_wday);
+	I2CWriteUint8Reg(RTC_DS3231_ADDR, RTC_Day, nByteSend);
+
+	nYear = tTime->tm_year;
+	if (nYear > 1900) {
+		nYear -= 1900; //The RTC starts at year 1900
+	}
+
+	if (nYear >= 100) {
+		nByteSend = Uint8toBCD8(tTime->tm_mon);
+		nByteSend |= RTC_Month_Century;
+		I2CWriteUint8Reg(RTC_DS3231_ADDR, RTC_MonthCentury, nByteSend);
+
+		nYear -= 100; //Remove the years represented in the century flag
+	} else {
+		nByteSend = Uint8toBCD8(tTime->tm_mon);
+		I2CWriteUint8Reg(RTC_DS3231_ADDR, RTC_MonthCentury, nByteSend);
+	}
+	nByteSend = Uint8toBCD8(nYear);
+	I2CWriteUint8Reg(RTC_DS3231_ADDR, RTC_Year, nByteSend);
+
+	return true;
+}
+
+bool cDS3231_t::SetTimeOnly(const struct tm *tTime) {
 	uint8_t nByteSend;
 
 	nByteSend = Uint8toBCD8(tTime->tm_sec);
@@ -217,27 +257,6 @@ bool cDS3231_t::SetDateTime(const struct tm *tTime) {
 	nByteSend = Uint8toBCD8(tTime->tm_hour);
 	ZeroAllBitsInMask(nByteSend, RTC_Hours_1224); //Set the RTC into 24 hour mode
 	I2CWriteUint8Reg(RTC_DS3231_ADDR, RTC_Hours, nByteSend);
-
-	nByteSend = Uint8toBCD8(tTime->tm_mday);
-	I2CWriteUint8Reg(RTC_DS3231_ADDR, RTC_Date, nByteSend);
-
-	nByteSend = Uint8toBCD8(tTime->tm_wday);
-	I2CWriteUint8Reg(RTC_DS3231_ADDR, RTC_Day, nByteSend);
-
-	if (tTime->year >= 100) {
-		nByteSend = Uint8toBCD8(tTime->tm_mon);
-		nByteSend |= RTC_Month_Century;
-		I2CWriteUint8Reg(RTC_DS3231_ADDR, RTC_MonthCentury, nByteSend);
-
-		nByteSend = Uint8toBCD8(tTime->tm_year - 100);
-		I2CWriteUint8Reg(RTC_DS3231_ADDR, RTC_Year, nByteSend);
-	} else {
-		nByteSend = Uint8toBCD8(tTime->tm_mon);
-		I2CWriteUint8Reg(RTC_DS3231_ADDR, RTC_MonthCentury, nByteSend);
-
-		nByteSend = Uint8toBCD8(tTime->tm_year);
-		I2CWriteUint8Reg(RTC_DS3231_ADDR, RTC_Year, nByteSend);
-	}
 
 	return true;
 }
