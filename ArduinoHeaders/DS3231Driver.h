@@ -14,7 +14,7 @@
 	#include "CommonUtils.h"
 
 /***** Constants	*****/
-	#define RTC_CENTURY			2000
+	#define RTC_CENTURY			1900
 
 	#define RTC_NOPIN			0xFF
 
@@ -81,14 +81,14 @@
 	} eDS3231_RegAlrmDay_t;
 
 	typedef enum eDS3231_RegControl_t {
-		RTC_Ctrl_EOSC			= 0x80,
-		RTC_Ctrl_BBSQW			= 0x40,
-		RTC_Ctrl_CONV			= 0x20,
-		RTC_Ctrl_RS2			= 0x10,
-		RTC_Ctrl_RS1			= 0x08,
-		RTC_Ctrl_INTCN			= 0x04,
-		RTC_Ctrl_A2IE			= 0x02,
-		RTC_Ctrl_A1IE			= 0x01,
+		RTC_Ctrl_EOSC			= 0x80,	/**< If zero enable oscillator, it one the oscillator is stopped when battery is used */
+		RTC_Ctrl_BBSQW			= 0x40,	/**< If zero the no square wave is supplied on battery power, if one the square wave will be provided.  This is supeceded by the INTCN setting */
+		RTC_Ctrl_CONV			= 0x20,	/**< Convert temperature control */
+		RTC_Ctrl_RS2			= 0x10,	/**< RS1 and RS2 control square wave generated.  RS1 RS2 = 0 0 is 1kHz, 0 1 is 1.024 kHz, 1 0 is 4.096 kHz, and 1 1 is 8.192 kHz */
+		RTC_Ctrl_RS1			= 0x08,	/**< RS1 and RS2 control square wave generated.  RS1 RS2 = 0 0 is 1kHz, 0 1 is 1.024 kHz, 1 0 is 4.096 kHz, and 1 1 is 8.192 kHz */
+		RTC_Ctrl_INTCN			= 0x04,	/**< If zero a square wave is provided on the Int/SQW pin, if one the pin will be normally 1 and change to zero when an alarm is raised */
+		RTC_Ctrl_A2IE			= 0x02,	/**< Zero to disable alarm 1, to allow alarm 1 to triger the interrupt pin.  Superceded by INTCN setting */
+		RTC_Ctrl_A1IE			= 0x01,	/**< Zero to disable alarm 2, to allow alarm 2 to triger the interrupt pin.  Superceded by INTCN setting */
 	} eDS3231_RegControl_t;
 
 	typedef enum eDS3231_RegCtrlStat_t {
@@ -106,6 +106,23 @@
 		RTC_TempLSB_75			= 0xC0,
 	} eDS3231_RegTempLSB_t;
 
+	typedef enum eDS3231_AlarmPeriod_t {
+		RTC_Alarm_None			= 0x00,	/**< Do not raise alarms */
+		RTC_Alarm_PerSecond		= 0x3F,	/**< Alarm once per second, only available for alarm 1 */
+		RTC_Alarm_PerMinute		= 0x3E,	/**< Alarm when seconds match (once a minute), alarm 2 uses seconds of 00 */
+		RTC_Alarm_PerHour		= 0x3C,	/**< ALarm when minutes and seconds match, alarm 2 uses seconds of 00 */
+		RTC_Alarm_PerDay		= 0x38,	/**< Alarm when hours, minutes, and seconds match, alarm 2 uses seconds of 00 */
+		RTC_Alarm_PerWeek		= 0x10,	/**< Alarm when day of week, hours, minutes, and seconds match, alarm 2 uses seconds of 00 */
+		RTC_Alarm_PerMonth		= 0x20,	/**< Alarm when day of month, hours, minutes, and seconds match, alarm 2 uses seconds of 00 */
+
+		RTC_Alarm_AM1			= 0x01,
+		RTC_Alarm_AM2			= 0x02,
+		RTC_Alarm_AM3			= 0x04,
+		RTC_Alarm_AM4			= 0x08,
+		RTC_Alarm_Day			= 0x10,
+		RTC_Alarm_Date			= 0x20,
+	} eDS3231_AlarmPeriod_t;
+
 	typedef class cDS3231_t {
 	public:
 		cDS3231_t(uint8_t nIntPin, uint8_t nResetPin, TwoWire *pI2CWire);
@@ -115,13 +132,17 @@
 		bool SetDateAndTime(const struct tm *tTime);
 		bool SetDateOnly(const struct tm *tTime);
 		bool SetTimeOnly(const struct tm *tTime);
+		bool SetAlarm1(eDS3231_AlarmPeriod_t ePeriod, tm *tDateTimeMatch);
+		bool SetAlarm2(eDS3231_AlarmPeriod_t ePeriod, tm *tDateTimeMatch);
+		bool ReadAlarm1();
+		bool ReadAlarm2();
 
 	protected:
 		uint8_t I2CReadUint8Reg(uint8_t nDevAddr, uint8_t nRegAddr);
 		bool I2CWriteUint8Reg(uint8_t nDevAddr, uint8_t nRegAddr, uint8_t nValue);
 
 	private:
-		uint8_t cnIntPin;
+		uint8_t cnAlarmIntPin;
 		uint8_t cnResetPin;
 
 		TwoWire *cpI2CBus;
@@ -139,7 +160,7 @@
 
 /***** Functions	*****/
 cDS3231_t::cDS3231_t(uint8_t nIntPin, uint8_t nResetPin, TwoWire *pI2CWire) {
-	cnIntPin = nIntPin;
+	cnAlarmIntPin = nIntPin;
 	cnResetPin = nResetPin;
 	cpI2CBus = pI2CWire;
 
@@ -158,8 +179,8 @@ bool cDS3231_t::Initialize() {
 		pinMode(cnResetPin, OUTPUT);
 	}
 
-	if (cnIntPin != RTC_NOPIN) {
-		pinMode(cnIntPin, INPUT_PULLUP);
+	if (cnAlarmIntPin != RTC_NOPIN) {
+		pinMode(cnAlarmIntPin, INPUT_PULLUP);
 	}
 
 	//Prepare the I2C bus
@@ -196,6 +217,7 @@ bool cDS3231_t::ReadDateAndTime(struct tm *tTime) {
 	} else {
 		tTime->tm_year = 0;
 	}
+	tTime->tm_year += RTC_CENTURY; //Include the base century amount
 
 	nByteRecv = I2CReadUint8Reg(RTC_DS3231_ADDR, RTC_Year);
 	tTime->tm_year += BCD8toUint8(nByteRecv);
@@ -225,8 +247,8 @@ bool cDS3231_t::SetDateOnly(const struct tm *tTime) {
 	I2CWriteUint8Reg(RTC_DS3231_ADDR, RTC_Day, nByteSend);
 
 	nYear = tTime->tm_year;
-	if (nYear > 1900) {
-		nYear -= 1900; //The RTC starts at year 1900
+	if (nYear > RTC_CENTURY) {
+		nYear -= RTC_CENTURY; //The RTC starting year
 	}
 
 	if (nYear >= 100) {
@@ -283,5 +305,167 @@ bool cDS3231_t::I2CWriteUint8Reg(uint8_t nDevAddr, uint8_t nRegAddr, uint8_t nVa
 	return true;
 }
 
-#endif
+bool cDS3231_t::SetAlarm1(eDS3231_AlarmPeriod_t ePeriod, tm *tDateTimeMatch) {
+	uint8_t DataByte;
 
+	//Set each of the alarm settings
+	//Seconds
+	DataByte = RTC_AlrmSec_BCDMask & Uint8toBCD8(tDateTimeMatch->tm_sec);
+	if (CheckAllBitsInMask(ePeriod, RTC_Alarm_AM1) == 1) {
+		DataByte |= RTC_AlrmSec_AM1;
+	}
+
+	I2CWriteUint8Reg(RTC_DS3231_ADDR, RTC_Alarm1Sec, DataByte);
+
+	//Minutes
+	DataByte = RTC_AlrmMin_BCDMask & Uint8toBCD8(tDateTimeMatch->tm_min);
+	if (CheckAllBitsInMask(ePeriod, RTC_Alarm_AM2) == 1) {
+		DataByte |= RTC_AlrmMin_AM2;
+	}
+
+	I2CWriteUint8Reg(RTC_DS3231_ADDR, RTC_Alarm1Minutes, DataByte);
+
+	//Hours
+	DataByte = RTC_AlrmHrs_BCD24Mask & Uint8toBCD8(tDateTimeMatch->tm_hour);
+	ZeroAllBitsInMask(DataByte, RTC_Hours_1224); //Set the alarm in 24 hour mode
+	if (CheckAllBitsInMask(ePeriod, RTC_Alarm_AM3) == 1) {
+		DataByte |= RTC_AlrmHrs_AM3;
+	}
+
+	I2CWriteUint8Reg(RTC_DS3231_ADDR, RTC_Alarm1Hours, DataByte);
+
+	//Day/Date
+	DataByte = RTC_AlrmSec_BCDMask & Uint8toBCD8(tDateTimeMatch->tm_wday);
+	if (CheckAllBitsInMask(ePeriod, RTC_Alarm_Date) == 1) { //Alarm on day of month
+		DataByte = RTC_AlrmDay_BCDDayMask & Uint8toBCD8(tDateTimeMatch->tm_wday);
+
+		DataByte |= RTC_AlrmDay_DayDate;
+	} else { //Alarm on day of week
+		DataByte = RTC_AlrmDay_BCDDateMask & Uint8toBCD8(tDateTimeMatch->tm_mday);
+
+		ZeroAllBitsInMask(DataByte, RTC_AlrmDay_DayDate);
+	}
+
+	if (CheckAllBitsInMask(ePeriod, RTC_Alarm_AM4) == 1) {
+		DataByte |= RTC_AlrmDay_AM4;
+	}
+
+	I2CWriteUint8Reg(RTC_DS3231_ADDR, RTC_Alarm1DayDate, DataByte);
+
+	//Update the control settings
+	DataByte = I2CReadUint8Reg(RTC_DS3231_ADDR, RTC_Control);
+
+	//Set control to allow Alarm 1: Disable square wave, allow interrupts, and enable alarm 1
+	ZeroAllBitsInMask(DataByte, RTC_Ctrl_EOSC | RTC_Ctrl_BBSQW);
+	SetAllBitsInMask(DataByte, RTC_Ctrl_INTCN | RTC_Ctrl_A1IE);
+
+	I2CWriteUint8Reg(RTC_DS3231_ADDR, RTC_Control, DataByte);
+
+	//If we have an interrupt pin, verify its mode
+	if (cnAlarmIntPin != RTC_NOPIN) {
+		pinMode(cnAlarmIntPin, INPUT_PULLUP);
+	}
+
+	return true;
+}
+
+bool cDS3231_t::SetAlarm2(eDS3231_AlarmPeriod_t ePeriod, tm *tDateTimeMatch) {
+	uint8_t DataByte;
+
+	//Set each of the alarm settings (Alarm 2 does not use seconds)
+	//Minutes
+	DataByte = RTC_AlrmMin_BCDMask & Uint8toBCD8(tDateTimeMatch->tm_min);
+	if (CheckAllBitsInMask(ePeriod, RTC_Alarm_AM2) == 1) {
+		DataByte |= RTC_AlrmMin_AM2;
+	}
+
+	I2CWriteUint8Reg(RTC_DS3231_ADDR, RTC_Alarm2Minutes, DataByte);
+
+	//Hours
+	DataByte = RTC_AlrmHrs_BCD24Mask & Uint8toBCD8(tDateTimeMatch->tm_hour);
+	ZeroAllBitsInMask(DataByte, RTC_Hours_1224); //Set the alarm in 24 hour mode
+	if (CheckAllBitsInMask(ePeriod, RTC_Alarm_AM3) == 1) {
+		DataByte |= RTC_AlrmHrs_AM3;
+	}
+
+	I2CWriteUint8Reg(RTC_DS3231_ADDR, RTC_Alarm2Hours, DataByte);
+
+	//Day/Date
+	DataByte = RTC_AlrmSec_BCDMask & Uint8toBCD8(tDateTimeMatch->tm_wday);
+	if (CheckAllBitsInMask(ePeriod, RTC_Alarm_Date) == 1) { //Alarm on day of month
+		DataByte = RTC_AlrmDay_BCDDayMask & Uint8toBCD8(tDateTimeMatch->tm_wday);
+
+		DataByte |= RTC_AlrmDay_DayDate;
+	} else { //Alarm on day of week
+		DataByte = RTC_AlrmDay_BCDDateMask & Uint8toBCD8(tDateTimeMatch->tm_mday);
+
+		ZeroAllBitsInMask(DataByte, RTC_AlrmDay_DayDate);
+	}
+
+	if (CheckAllBitsInMask(ePeriod, RTC_Alarm_AM4) == 1) {
+		DataByte |= RTC_AlrmDay_AM4;
+	}
+
+	I2CWriteUint8Reg(RTC_DS3231_ADDR, RTC_Alarm2DayDate, DataByte);
+
+	//Update the control settings
+	DataByte = I2CReadUint8Reg(RTC_DS3231_ADDR, RTC_Control);
+
+	if (ePeriod == RTC_Alarm_None) {
+		ZeroAllBitsInMask(DataByte, RTC_Ctrl_EOSC | RTC_Ctrl_BBSQW);
+		SetAllBitsInMask(DataByte, RTC_Ctrl_INTCN | RTC_Ctrl_A2IE);
+	} else { //Set control for Alarm 2: Disable square wave, allow interrupts, and enable alarm 2
+		ZeroAllBitsInMask(DataByte, RTC_Ctrl_EOSC | RTC_Ctrl_BBSQW);
+		SetAllBitsInMask(DataByte, RTC_Ctrl_INTCN | RTC_Ctrl_A2IE);
+	}
+
+	I2CWriteUint8Reg(RTC_DS3231_ADDR, RTC_Control, DataByte);
+
+	//If we have an interrupt pin, verify its mode
+	if (cnAlarmIntPin != RTC_NOPIN) {
+		pinMode(cnAlarmIntPin, INPUT_PULLUP);
+	}
+
+	return true;
+}
+
+bool cDS3231_t::ReadAlarm1() {
+	uint8_t DataByte;
+	bool bIsSet;
+
+	//Read the flag
+	DataByte = I2CReadUint8Reg(RTC_DS3231_ADDR, RTC_ControlStatus);
+	if (CheckAllBitsInMask(DataByte, RTC_CtrlStat_A1F) == 1) {
+		bIsSet = true;
+	} else {
+		bIsSet = false;
+	}
+
+	//Clear the flag
+	ZeroAllBitsInMask(DataByte, RTC_CtrlStat_A1F);
+	I2CWriteUint8Reg(RTC_DS3231_ADDR, RTC_ControlStatus, DataByte);
+
+	return bIsSet;
+}
+
+bool cDS3231_t::ReadAlarm2() {
+	uint8_t DataByte;
+	bool bIsSet;
+
+	//Read the flag
+	DataByte = I2CReadUint8Reg(RTC_DS3231_ADDR, RTC_ControlStatus);
+
+	if (CheckAllBitsInMask(DataByte, RTC_CtrlStat_A2F) == 1) {
+		bIsSet = true;
+	} else {
+		bIsSet = false;
+	}
+
+	//Clear the flag
+	ZeroAllBitsInMask(DataByte, RTC_CtrlStat_A2F);
+	I2CWriteUint8Reg(RTC_DS3231_ADDR, RTC_ControlStatus, DataByte);
+
+	return bIsSet;
+}
+
+#endif

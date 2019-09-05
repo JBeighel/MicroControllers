@@ -16,7 +16,9 @@
 	/** Minimum time in milliseconds an input must be low before accepting the change 
 		@ingroup binin_obj
 	*/
-	#define INPUT_DEBOUNCETIME	50
+	#ifndef INPUT_DEBOUNCETIME
+		#define INPUT_DEBOUNCETIME	50
+	#endif
 
 /***** Definitions	*****/
 	/**	@brief		Enumeration of all flags used internally in cBinInput_t class
@@ -61,6 +63,8 @@
 		bool DidChange();
 
 		bool Update();
+
+		bool SetName(const char *pName);
 
 	protected:
 		uint32_t ctDebounceStart;
@@ -257,6 +261,27 @@ bool cBinInput_t::Update() {
 		ZeroAllBitsInMask(ceFlags, BI_CurrentState);
 		SetAllBitsInMask(ceFlags, BI_EventChanged | BI_EventLow);
 	}
+
+	return true;
+}
+
+bool cBinInput_t::SetName(const char *pName) {
+	uint16_t nLen;
+
+	if (cpName != NULL) {
+		free(cpName);
+	}
+
+	nLen = strlen(pName) + 1; //Add 1 for the null terminator
+
+	cpName = (char *)malloc(sizeof(char) * nLen);
+
+	if (cpName == NULL) {
+		return false;
+	}
+
+	memcpy(cpName, pName, sizeof(char) * nLen);
+	cpName[nLen - 1] = '\0'; //Just to be sure the string is terminated
 
 	return true;
 }

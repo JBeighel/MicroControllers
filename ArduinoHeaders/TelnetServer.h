@@ -104,7 +104,7 @@ cTelnetServer_t::~cTelnetServer_t() {
 		}
 	}
 
-	delete caEthClients;
+	delete [] caEthClients;
 	caEthClients = NULL;
 
 	if (cpRecvBuff != NULL) {
