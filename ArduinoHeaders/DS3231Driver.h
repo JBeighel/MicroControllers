@@ -1,7 +1,8 @@
 /**	@defgroup	DS3231DRIVER
-	@brief		Driver for the DS3231 Real Time CLock chip
-	@details	
-		
+	@brief		Driver for the DS3231 Real Time Clock chip
+	@details	v0.1
+		This is a driver for the DS3231 Real Time Clock for an Arduino.  It requires
+		the RTC to be connected to an I2C port of the Arduino.
 */
 
 #ifndef __DS3231DRIVER_H
@@ -14,57 +15,91 @@
 	#include "CommonUtils.h"
 
 /***** Constants	*****/
+	/**	@brief		The century that the RTC begins timing from
+		@details	The DS3231 has a two digit field for reporting the year along with a 
+			bit for when this field rolls over.  This define specifies the century to 
+			use for the beginning of this year count.
+		@ingroup	DS3231DRIVER
+	*/
 	#define RTC_CENTURY			1900
 
+	/**	@brief		Value to use if a pin of the RTC is not being used
+		@details	The DS3231 has a reset and square wave/alarm pin.  These are not 
+			required for all operations, if they are not connected provide thi value
+			for those pins so the driver knows not to interact with them.
+		@ingroup	DS3231DRIVER
+	*/
 	#define RTC_NOPIN			0xFF
 
+	/**	@brief		The I2C address the RTC uses by default
+		@ingroup	DS3231DRIVER
+	*/
 	#define RTC_DS3231_ADDR		0x68
 
 /***** Definitions	*****/
+	/**	@brief		Enumeration of all read/write registers within the DS3231
+		@details	The value of the enumaration is the address in the RTC.
+		@ingroup	DS3231DRIVER
+	*/
 	typedef enum eDS3231Registers_t {
 		RTC_Seconds				= 0x00,		/**< BCD coded value of the seconds for the time stamp */
 		RTC_Minutes				= 0x01,		/**< BCD coded value of the minutes for the time stamp */
 		RTC_Hours				= 0x02,		/**< Flags and BCD coded hours for the time stamp */
-		RTC_Day					= 0x03,
-		RTC_Date				= 0x04,
-		RTC_MonthCentury		= 0x05,
-		RTC_Year				= 0x06,
-		RTC_Alarm1Sec			= 0x07,
-		RTC_Alarm1Minutes		= 0x08,
-		RTC_Alarm1Hours			= 0x09,
-		RTC_Alarm1DayDate		= 0x0A,
-		RTC_Alarm2Minutes		= 0x0B,
-		RTC_Alarm2Hours			= 0x0C,
-		RTC_Alarm2DayDate		= 0x0D,
-		RTC_Control				= 0x0E,
-		RTC_ControlStatus		= 0x0F,
+		RTC_Day					= 0x03,		/**< BCD value of the day of the week for the time stamp */
+		RTC_Date				= 0x04,		/**< BCD value of the date, day of the month, for the time stamp */
+		RTC_MonthCentury		= 0x05,		/**< Bit specifying the year value roled over, and BCD value of the month */
+		RTC_Year				= 0x06,		/**< BCD value for the year of the time stamp */
+		RTC_Alarm1Sec			= 0x07,		/**< Seconds setting for Alarm 1 */
+		RTC_Alarm1Minutes		= 0x08,		/**< Minutes setting for Alarm 1 */
+		RTC_Alarm1Hours			= 0x09,		/**< Hours setting for Alarm 1 */
+		RTC_Alarm1DayDate		= 0x0A,		/**< Day or Date setting for Alarm 1 */
+		RTC_Alarm2Minutes		= 0x0B,		/**< Minutes setting for Alarm 2 */
+		RTC_Alarm2Hours			= 0x0C,		/**< Hours setting for Alarm 2 */
+		RTC_Alarm2DayDate		= 0x0D,		/**< Day or Date setting for Alarm 2 */
+		RTC_Control				= 0x0E,		/**< Control/Configuration bits for the RTC */
+		RTC_ControlStatus		= 0x0F,		/**< Additional control bits, as well as status bits for the RTC */
 		RTC_AgingOffset			= 0x10,
 		RTC_TempMSB				= 0x11,		/**< Integer portion of the temperature in celsius, 8 bit signed int */
 		RTC_TempLSB				= 0x12,		/**< Fraction portion of temperature in celsius, increments of 0.25 */
 	} eDS3231Registers_t;
 
+	/**	@brief		Enumeration of bits and masks used by the Hours register
+		@ingroup	DS3231DRIVER
+	*/
 	typedef enum eDS3231_RegHours_t {
 		RTC_Hours_1224			= 0x40,
 		RTC_Hours_AMPM			= 0x20,
 		RTC_Hours_BCD24Mask		= 0x3F,
 		RTC_Hours_BCD12Mask		= 0x1F,
 	} eDS3231_RegHours_t;
-
+	
+	/**	@brief		Enumeration of bits and masks used by the Month register
+		@ingroup	DS3231DRIVER
+	*/
 	typedef enum eDS3231_RegMonth_t {
 		RTC_Month_Century		= 0x80,
 		RTC_Month_BCDMask		= 0x1F,
 	} eDS3231_RegMonth_t;
 
+	/**	@brief		Enumeration of bits and masks used by the Alarm 1 seconds register
+		@ingroup	DS3231DRIVER
+	*/
 	typedef enum eDS3231_RegAlrmSeconds_t {
 		RTC_AlrmSec_AM1			= 0x80,
 		RTC_AlrmSec_BCDMask		= 0x7F,
 	} eDS3231_RegAlrm1Seconds_t;
 
+	/**	@brief		Enumeration of bits and masks used by the Alarm 1 or 2 Minutes register
+		@ingroup	DS3231DRIVER
+	*/
 	typedef enum eDS3231_RegAlrmMinutes_t {
 		RTC_AlrmMin_AM2			= 0x80,
 		RTC_AlrmMin_BCDMask		= 0x7F,
 	} eDS3231_RegAlrm1Minutes_t;
 
+	/**	@brief		Enumeration of bits and masks used by the Alarm 1 or 2 Hours register
+		@ingroup	DS3231DRIVER
+	*/
 	typedef enum eDS3231_RegAlrmHours_t {
 		RTC_AlrmHrs_AM3			= 0x80,
 		RTC_AlrmHrs_1224		= 0x40,
@@ -73,6 +108,9 @@
 		RTC_AlrmHrs_BCD12Mask	= 0x1F,
 	} eDS3231_RegAlrmHours_t;
 
+	/**	@brief		Enumeration of bits and masks used by the Alarm 1 or 2 Day register
+		@ingroup	DS3231DRIVER
+	*/
 	typedef enum eDS3231_RegAlrmDay_t {
 		RTC_AlrmDay_AM4			= 0x80,
 		RTC_AlrmDay_DayDate		= 0x40,
@@ -80,6 +118,9 @@
 		RTC_AlrmDay_BCDDateMask	= 0x3F,
 	} eDS3231_RegAlrmDay_t;
 
+	/**	@brief		Enumeration of bits and masks used by the Control register
+		@ingroup	DS3231DRIVER
+	*/
 	typedef enum eDS3231_RegControl_t {
 		RTC_Ctrl_EOSC			= 0x80,	/**< If zero enable oscillator, it one the oscillator is stopped when battery is used */
 		RTC_Ctrl_BBSQW			= 0x40,	/**< If zero the no square wave is supplied on battery power, if one the square wave will be provided.  This is supeceded by the INTCN setting */
@@ -91,6 +132,9 @@
 		RTC_Ctrl_A1IE			= 0x01,	/**< Zero to disable alarm 2, to allow alarm 2 to triger the interrupt pin.  Superceded by INTCN setting */
 	} eDS3231_RegControl_t;
 
+	/**	@brief		Enumeration of bits and masks used by the Control and Status register
+		@ingroup	DS3231DRIVER
+	*/
 	typedef enum eDS3231_RegCtrlStat_t {
 		RTC_CtrlStat_OSF		= 0x80,
 		RTC_CtrlStat_EN32KHz	= 0x08,
@@ -99,6 +143,9 @@
 		RTC_CtrlStat_A1F		= 0x01,
 	} eDS3231_RegCtrlStat_t;
 
+	/**	@brief		Enumeration of bits and masks used by the Temerature LSB register
+		@ingroup	DS3231DRIVER
+	*/
 	typedef enum eDS3231_RegTempLSB_t {
 		RTC_TempLSB_00			= 0x00,
 		RTC_TempLSB_25			= 0x40,
@@ -106,6 +153,9 @@
 		RTC_TempLSB_75			= 0xC0,
 	} eDS3231_RegTempLSB_t;
 
+	/**	@brief		Enumeration of all values used by the interface function to set the RTC alarms
+		@ingroup	DS3231DRIVER
+	*/
 	typedef enum eDS3231_AlarmPeriod_t {
 		RTC_Alarm_None			= 0x00,	/**< Do not raise alarms */
 		RTC_Alarm_PerSecond		= 0x3F,	/**< Alarm once per second, only available for alarm 1 */
@@ -115,12 +165,12 @@
 		RTC_Alarm_PerWeek		= 0x10,	/**< Alarm when day of week, hours, minutes, and seconds match, alarm 2 uses seconds of 00 */
 		RTC_Alarm_PerMonth		= 0x20,	/**< Alarm when day of month, hours, minutes, and seconds match, alarm 2 uses seconds of 00 */
 
-		RTC_Alarm_AM1			= 0x01,
-		RTC_Alarm_AM2			= 0x02,
-		RTC_Alarm_AM3			= 0x04,
-		RTC_Alarm_AM4			= 0x08,
-		RTC_Alarm_Day			= 0x10,
-		RTC_Alarm_Date			= 0x20,
+		RTC_Alarm_AM1			= 0x01,	/**< Flag for setting the Alarm bit in the Alarm seconds register */
+		RTC_Alarm_AM2			= 0x02,	/**< Flag for setting the Alarm bit in the Alarm minutes register */
+		RTC_Alarm_AM3			= 0x04,	/**< Flag for setting the Alarm bit in the Alarm hours register */
+		RTC_Alarm_AM4			= 0x08,	/**< Flag for setting the Alarm bit in the Alarm days register */
+		RTC_Alarm_Day			= 0x10,	/**< Flag for setting the RTC alarm to use the day/date register as a day of the week */
+		RTC_Alarm_Date			= 0x20,	/**< Flag for setting the RTC alarm to use the day/date register as a day of the month */
 	} eDS3231_AlarmPeriod_t;
 
 	typedef class cDS3231_t {
