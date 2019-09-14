@@ -177,7 +177,7 @@
 		@return		The value of Register after it is updated
 		@ingroup	commonutils
 	*/
-	#define ZeroAllBitsInMask(Register, Mask)	Register = ((typeof(Register))(((uint32_t)Register) & (~(uint32_t)Mask)))
+	#define ZeroAllBitsInMask(Register, Mask)	Register = ((typeof(Register))(((uint32_t)Register) & (~(uint32_t)(Mask))))
 
 	/**	@brief		Gives the value from Register with the bits set in mask set to 1
 		@details	The Register value will not be updated by calling this macro, its 
@@ -188,7 +188,7 @@
 		@return		The value of Register after it is updated
 		@ingroup	commonutils
 	*/
-	#define SetAllBitsInMask(Register, Mask)	Register = ((typeof(Register))(((uint32_t)Register) | ((uint32_t)Mask)))
+	#define SetAllBitsInMask(Register, Mask)	Register = ((typeof(Register))(((uint32_t)Register) | ((uint32_t)(Mask))))
 
 	/**	@brief		Returns the larger of two numeric values
 		@param		nNum1	The first number to compare
@@ -205,6 +205,17 @@
 		@ingroup	commonutils
 	*/
 	#define GetSmallerNum(nNum1, nNum2)		((nNum1 < nNum2) ? nNum1 : nNum2)
+	
+	/**	@brief		Checks if a number is within a specified range
+		@details	Tests if the number is within the bounds of the number range specified.  If the number
+			matches the bounds it is considered within the range.
+		@param		nNumber		The number to test
+		@param		nRangeMin	The minimum bound of the range
+		@param		nRangeMax	The maximum bound of the range
+		@return		True if the number is within the range, false otherwise
+		@ingroup	commonutils
+	*/
+	#define	IsNumberInInclusiveRange(nNumber, nRangeMin, nRangeMax)		(((nNumber >= nRangeMin) && (nNumber <= nRangeMax)) ? true : false)
 	
 	/**	@brief		Determines if a given number exists in an array
 		@param		nNumber		The number to check for in the array
