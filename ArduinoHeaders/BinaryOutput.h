@@ -411,7 +411,7 @@ bool cBinOutput_t::SetPWMValue(uint8_t nPWMValueStart, uint8_t nPWMValueEnd, uin
 
 bool cBinOutput_t::Update() {
 	uint8_t nOutVal;
-	uint32_t tCurrTime, tChangeDur, tEllapseDur;
+	uint32_t tCurrTime, tTimePassed, tSchedDur;
 	float nChgPcnt;
 	
 	//Set the current logic level of the output
@@ -441,12 +441,12 @@ bool cBinOutput_t::Update() {
 	}
 	
 	tCurrTime = millis();
-	tChangeDur = tCurrTime - ctScheduleStart; //How much time has passed
-	tEllapseDur = ctScheduleEnd - ctScheduleStart; //Divided by total time
+	tTimePassed = tCurrTime - ctScheduleStart; //How much time has passed
+	tSchedDur = ctScheduleEnd - ctScheduleStart; //Divided by total time
 	
 	//If Pin Set True is scheduled handle that
 	if (CheckAllBitsInMask(ceFlags, BinOut_OnScheduled) == true) {
-		if (tEllapseDur >= tChangeDur) {
+		if (tTimePassed >= tSchedDur) {
 			if (CheckAllBitsInMask(ceFlags, BinOut_InvertValue) == true) {
 				digitalWrite(cnPinNum, LOW);
 			} else {
@@ -461,7 +461,7 @@ bool cBinOutput_t::Update() {
 	
 	//If Pin Set False is scheduled handle that
 	if (CheckAllBitsInMask(ceFlags, BinOut_OnScheduled) == true) {
-		if (tEllapseDur >= tChangeDur) {
+		if (tTimePassed >= tSchedDur) {
 			if (CheckAllBitsInMask(ceFlags, BinOut_InvertValue) == true) {
 				digitalWrite(cnPinNum, HIGH);
 			} else {
@@ -475,7 +475,7 @@ bool cBinOutput_t::Update() {
 	
 	//If Pin Toggle is scheduled handle that
 	if (CheckAllBitsInMask(ceFlags, BinOut_ToggleScheduled) == true) {
-		if (tEllapseDur >= tChangeDur) {
+		if (tTimePassed >= tSchedDur) {
 			if (nOutVal == LOW) {
 				digitalWrite(cnPinNum, HIGH);
 				
@@ -501,13 +501,13 @@ bool cBinOutput_t::Update() {
 	
 	//If Set PWM is scheduled handle that
 	if (cnPWMAtStart != cnPWMToSet) {  //A ramped change was requested
-		if (tChangeDur >= tEllapseDur) { //Duration fully ellapsed, go to max value
+		if (tTimePassed >= tSchedDur) { //Duration fully ellapsed, go to max value
 			analogWrite(cnPinNum, cnPWMToSet);
 			cnCurrPWM = cnPWMToSet;
 			
 			ZeroAllBitsInMask(ceFlags, BinOut_PWMScheduled | BinOut_ScheduleMask);
 		} else { //Apply partial change
-			nChgPcnt = (float)tChangeDur / (float)tEllapseDur;  //Get the percentage of change
+			nChgPcnt = (float)tTimePassed / (float)tSchedDur;  //Get the percentage of change
 
 			nChgPcnt = nChgPcnt * (float)(cnPWMToSet - cnPWMAtStart); //Find amount to change
 			nOutVal = (uint8_t)((int16_t)cnPWMAtStart + (int16_t)nChgPcnt); //Apply change from start point
@@ -517,9 +517,9 @@ bool cBinOutput_t::Update() {
 		
 		SetAllBitsInMask(ceFlags, BinOut_PWMOutputSet);
 	} else { //Change is all at once, just wait for the time to pass
-		if (tEllapseDur >= tChangeDur) {
+		if (tTimePassed >= tSchedDur) {
 			analogWrite(cnPinNum, cnPWMToSet);
-			analogWrite(cnPinNum, cnPWMToSet);
+			cnCurrPWM = cnPWMToSet;
 			
 			SetAllBitsInMask(ceFlags, BinOut_PWMOutputSet);
 			ZeroAllBitsInMask(ceFlags, BinOut_PWMScheduled | BinOut_ScheduleMask);

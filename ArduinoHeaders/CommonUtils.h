@@ -106,7 +106,7 @@
 		/** Array holding all pulse width modulated binary output pins 
 			@ingroup arduinobinary
 		*/
-		const uint8_t BINOUT_PWNPINLIST[BINOUT_PWMCOUNT] = {3, 5, 6, 9, 10, 11, 12};
+		const uint8_t BINOUT_PWNPINLIST[BINOUT_PWMCOUNT] = {3, 5, 6, 9, 10, 11, 13};
 
 		/** Number of binary inputs on the Arduino 
 			@ingroup arduinobinary
@@ -138,6 +138,16 @@
 				#define SCREENPLOT_POINTS	128
 			#endif
 		#endif
+	#else //No arduino type specified
+		/** Number of pulse width modulated binary output pins 
+			@ingroup arduinobinary
+		*/
+		#define BINOUT_PWMCOUNT	0
+		
+		/** Array holding all pulse width modulated binary output pins 
+			@ingroup arduinobinary
+		*/
+		const uint8_t *BINOUT_PWNPINLIST = NULL;
 	#endif 
 
 /***** Definitions	*****/

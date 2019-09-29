@@ -10,10 +10,10 @@
 /***** Includes		*****/
 
 
-/***** Constants	*****/
-
-
 /***** Definitions	*****/
+
+
+/***** Constants	*****/
 
 
 /***** Globals		*****/
