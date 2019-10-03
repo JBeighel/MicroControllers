@@ -42,6 +42,18 @@
 		@ingroup	commonutils
 	*/
 	#define ARDUINO_MICRO		2
+	
+	/**	@brief		One of the arduino types, the Arduino Nano
+		@details	There are multiple varieties of the Nano, all have identical pinouts
+			- 22 Dedicated binary In/Out pins, 6 that can do PWM, 8 can be Analog inputs
+			- 2048+ bytes of RAM
+			- 32K+ bytes of flash (512 bytes used by bootloader)
+			- Logic voltage varies per model
+			- 1KB EEPROM
+			- 1 SPI, dedicated pins
+		@ingroup	commonutils
+	*/
+	#define ARDUINO_NANO		3
 
 	#ifndef ARDUINO_TYPE
 		/** Specifies the type of arduino being used
@@ -62,6 +74,16 @@
 			@ingroup arduinobinary
 		*/
 		const uint8_t BINOUT_PWNPINLIST[BINOUT_PWMCOUNT] = {3, 5, 6, 9, 10, 11};
+		
+		/**	Number of GPIO pins that provide interrupt support
+			@ingroup arduinobinary
+		*/
+		#define BININ_INTERRUPTCOUNT	2
+		
+		/**	Array holding all interrupt capable binary input pins
+			@ingroup arduinobinary
+		*/
+		const uint8_t BININ_INTERRUPTLIST[BININ_INTERRUPTCOUNT] = {2, 3};
 
 		/** Number of binary inputs on the Arduino
 			@ingroup arduinobinary
@@ -108,6 +130,16 @@
 		*/
 		const uint8_t BINOUT_PWNPINLIST[BINOUT_PWMCOUNT] = {3, 5, 6, 9, 10, 11, 13};
 
+		/**	Number of GPIO pins that provide interrupt support
+			@ingroup arduinobinary
+		*/
+		#define BININ_INTERRUPTCOUNT	5
+		
+		/**	Array holding all interrupt capable binary input pins
+			@ingroup arduinobinary
+		*/
+		const uint8_t BININ_INTERRUPTLIST[BININ_INTERRUPTCOUNT] = {0, 1, 2, 3, 7};
+
 		/** Number of binary inputs on the Arduino 
 			@ingroup arduinobinary
 		*/
@@ -138,11 +170,67 @@
 				#define SCREENPLOT_POINTS	128
 			#endif
 		#endif
+	#elif ARDUINO_TYPE == ARDUINO_NANO
+		/** Number of pulse width modulated binary output pins 
+			@ingroup arduinobinary
+		*/
+		#define BINOUT_PWMCOUNT	6
+
+		/** Array holding all pulse width modulated binary output pins 
+			@ingroup arduinobinary
+		*/
+		const uint8_t BINOUT_PWNPINLIST[BINOUT_PWMCOUNT] = {6, 8, 9, 12, 13, 14};
+
+		/**	Number of GPIO pins that provide interrupt support
+			@ingroup arduinobinary
+		*/
+		#define BININ_INTERRUPTCOUNT	2
+		
+		/**	Array holding all interrupt capable binary input pins
+			@ingroup arduinobinary
+		*/
+		const uint8_t BININ_INTERRUPTLIST[BININ_INTERRUPTCOUNT] = {2, 3};
+
+		/** Number of binary inputs on the Arduino 
+			@ingroup arduinobinary
+		*/
+		#define ARDUINO_BINPINS	22
+
+		/** Number of analog inputs on the arduino 
+			@ingroup arduinoanalog
+		*/
+		#define ARDUINO_ANAPINS	8
+
+		/** The Arduno has 3 LEDs on the board tied to binary pins, this is labeled RX 
+			@ingroup	snapduino
+		*/
+		#define RX_LEDPIN		0
+		
+		/** The Arduno has 3 LEDs on the board tied to binary pins, this is labeled TX 
+			@ingroup	snapduino
+		*/
+		#define TX_LEDPIN		1
+
+		#ifndef SNAPCIR_NOSCREEN
+			#ifndef SCREENPLOT_POINTS
+				/** @brief		The number of points to display when plotting an analog input
+					@details	The number of points that can be shown is dependenta on the free
+						RAM the device has with everything else loaded.
+					@ingroup	snapscreen
+				*/
+				#define SCREENPLOT_POINTS	128
+			#endif
+		#endif
 	#else //No arduino type specified
 		/** Number of pulse width modulated binary output pins 
 			@ingroup arduinobinary
 		*/
 		#define BINOUT_PWMCOUNT	0
+		
+		/**	Number of GPIO pins that provide interrupt support
+			@ingroup arduinobinary
+		*/
+		#define BININ_INTERRUPTCOUNT	0
 		
 		/** Array holding all pulse width modulated binary output pins 
 			@ingroup arduinobinary

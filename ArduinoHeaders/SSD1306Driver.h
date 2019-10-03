@@ -33,6 +33,7 @@
 	#include <stdlib.h>
 
 	#include <SPI.h>
+	#include <Wire.h>
 
 /***** Constants   *****/
 	/** @brief		Assumed number of rows of pixesl in the screen
@@ -49,6 +50,25 @@
 		@ingroup	oled1306
 	*/
 	#define OLED1306_CLKFREQ	8000000
+	
+	/**	@brief		If a pin is not connected then set its value to this so it is ignored in the logical_and
+		@ingroup	oled1306
+	*/
+	#define OLED1306_NOPIN		UINT8_MAXVALUE
+	
+	#define OLED1306_I2CADDRBASE	0x3C
+	
+	#define OLED1306_I2CSA0BIT		0x01
+	
+	#define OLED1306_I2CCOBIT		0x80
+	
+	#define OLED1306_I2CDCBIT		0x40
+	
+	#ifdef BUFFER_LENGTH
+		#define OLED1306_I2CBUFFLEN		BUFFER_LENGTH
+	#else
+		#define OLED1306_I2CBUFFLEN		32
+	#endif
 
 	/**	@brief		Constant holding capital letters for the display font
 		@details	Each character is 5 bits wide and 7 bits tall.  Making each letter
@@ -653,6 +673,25 @@
 					communicate with the screen.  This allows the class to be 
 					instantiated in global space before the Arduino Setup function has
 					ran to prepare the I/O pins.
+			*/
+			SSD1306();
+			
+			/**	@brief		Deonstructor to clean up any allocated resources
+				@details	The class allocates RAM for the drawing buffer, this ensures
+					that this memory is freed
+			*/
+			~SSD1306();
+			
+			/**	@brief		Setup the pins needed to communicate with the screen via I2C bus
+				@param 		pI2C		Pointer to the I2C bus controller to communicate through
+				@param		nWidth		The width in pixels of the connected screen
+				@param		nHeight		The height in pixes of the connected screen
+				@param		nResetPin	The binary I/O pin connected to the screen reset
+			*/
+			void BeginI2C(TwoWire *pI2C, bool bSA0Bit, uint8_t nWidth, uint8_t nHeight, uint8_t nResetPin = OLED1306_NOPIN);
+			
+			/**	@brief		Setup the pins needed to communicate with the screen via SPI bus
+				@param 		pSpi		Pointer to the SPI bus controller to communicate through
 				@param		nWidth		The width in pixels of the connected screen
 				@param		nHeight		The height in pixes of the connected screen
 				@param		nDCPin		The binary I/O pin connected to the screen data
@@ -661,15 +700,8 @@
 					chip select.
 				@param		nResetPin	The binary I/O pin connected to the screen reset
 			*/
-			SSD1306(uint8_t nWidth, uint8_t nHeight, uint8_t nDCPin, uint8_t nCSPin, uint8_t nResetPin);
+			void BeginSPI(SPIClass *pSpi, uint8_t nWidth, uint8_t nHeight, uint8_t nDCPin, uint8_t nCSPin, uint8_t nResetPin = OLED1306_NOPIN);
 			
-			/**	@brief		Deonstructor to clean up any allocated resources
-				@details	The class allocates RAM for the drawing buffer, this ensures
-					that this memory is freed
-			*/
-			~SSD1306();
-			
-			void Begin(SPIClass *pSpi);
 			void Reset();
 			void SendToScreen();
 			void ClearDrawing();
@@ -680,6 +712,7 @@
 			void DrawImageDblSize_BitMap(uint8_t nXLeft, uint8_t nYTop, uint8_t nDataWidth, uint8_t nDataHeight, bool bDrawZeroes, const uint8_t *aImageData);
 			void DrawText(uint8_t nXLeft, uint8_t nYTop, char *Text);
 			void DrawTextDblSize(uint8_t nXLeft, uint8_t nYTop, char *Text);
+			void InvertColors(bool bInvertOn);
 
 		protected:
 			/**	@brief		Width in pixels of the connected screen
@@ -734,12 +767,16 @@
 			/**	@brief		Pointer to the SPI interface class for the Arduino 
 			*/
 			SPIClass *cpSpi;
+			
+			TwoWire *cpI2C;
+			uint8_t cnI2CAddr;
 
-			void SPISendRegisterValue(uint8_t nRegister, uint8_t nValue);
-			void SPISendByte(uint8_t nByte);
-			void SPISendDataBlock(uint16_t nNumBytes, void *pDataBlock);
+			void SendRegisterValue(uint8_t nRegister, uint8_t nValue);
+			void SendByte(uint8_t nByte);
+			void SendDataBlock(uint16_t nNumBytes, void *pDataBlock, bool bIsDisplayData = false);
 
 		private:
+			bool DeviceSetup();
 	};
 
 /***** Globals     *****/
@@ -749,15 +786,7 @@
 
 
 /***** Functions   *****/
-	SSD1306::SSD1306(uint8_t nWidth, uint8_t nHeight, uint8_t nDCPin, uint8_t nCSPin, uint8_t nResetPin) {
-		//Intialize class variables
-		cnScreenWidth = nWidth;
-		cnScreenHeight = nHeight;
-		cnCSPin = nCSPin;
-		cnDataCmdPin = nDCPin;
-		cnResetPin = nResetPin;
-		cnBlocksCnt = cnScreenHeight * cnScreenWidth / 8 / 16; //Number of pixels divide by bytes then by block size
-
+	SSD1306::SSD1306() {
 		return;
 	}
 
@@ -767,53 +796,51 @@
 		}
 	}
 
-	void SSD1306::Begin(SPIClass *pSpi) {
-		cpSpi = pSpi;
-
-		caBlocks = (sScreenBlock_t *)malloc(sizeof(sScreenBlock_t) * cnBlocksCnt);
-		if (caBlocks == NULL) {
-			Serial.print("SSD1306 Driver: Drawing Buffer Allocation Failed!\n");
+	void SSD1306::BeginI2C(TwoWire *pI2C, bool bSA0Bit, uint8_t nWidth, uint8_t nHeight, uint8_t nResetPin) {
+		//Intialize class variables
+		cnScreenWidth = nWidth;
+		cnScreenHeight = nHeight;
+		cnCSPin = OLED1306_NOPIN;
+		cnDataCmdPin = OLED1306_NOPIN;
+		cnResetPin = nResetPin;
+		cnBlocksCnt = cnScreenHeight * cnScreenWidth / 8 / 16; //Number of pixels divide by bytes then by block size
+		cpSpi = NULL;
+		cpI2C = pI2C;
+		
+		cnI2CAddr = OLED1306_I2CADDRBASE;
+		
+		if (bSA0Bit == true) {
+			cnI2CAddr |= OLED1306_I2CSA0BIT;
 		}
-
-		ClearDrawing();
-
+		
+		DeviceSetup();
+		
+		return;
+	}
+	
+	void SSD1306::BeginSPI(SPIClass *pSpi, uint8_t nWidth, uint8_t nHeight, uint8_t nDCPin, uint8_t nCSPin, uint8_t nResetPin) {
+		//Intialize class variables
+		cnScreenWidth = nWidth;
+		cnScreenHeight = nHeight;
+		cnCSPin = nCSPin;
+		cnDataCmdPin = nDCPin;
+		cnResetPin = nResetPin;
+		cnBlocksCnt = cnScreenHeight * cnScreenWidth / 8 / 16; //Number of pixels divide by bytes then by block size
+		cpSpi = pSpi;
+		cpI2C = NULL;
+		
 		//Setup control pins
 		pinMode(cnCSPin, OUTPUT);
 		pinMode(cnDataCmdPin, OUTPUT);
-		pinMode(cnResetPin, OUTPUT);
-
+		
 		digitalWrite(cnCSPin, HIGH);
 		digitalWrite(cnDataCmdPin, HIGH);
-		digitalWrite(cnResetPin, HIGH);
-
-		//Initialize the chip
-		Reset();
-
-		SPISendByte(OLED_DisplayOff);
-
-		SPISendRegisterValue(OLED_DisplayClockDivide, OLED_ClockDivideDefault);
-		SPISendRegisterValue(OLED_MultiplexRatio, cnScreenHeight - 1);
-		SPISendRegisterValue(OLED_DisplayOffset, 0x00); //The first line is the start line
-		SPISendByte(OLED_DisplayStartLine | 0x00); //Set start line to zero
-		SPISendRegisterValue(OLED_SetChargePump, OLED_ChargePumpOn);
-		SPISendRegisterValue(OLED_SetMemoryMode, 0x00);
-		SPISendByte(OLED_SegmentRemapSegDriv);
-		SPISendByte(OLED_ComScanDecr);
-		SPISendRegisterValue(OLED_SetComPins, 0x12); //Other option 0x02
-		SPISendRegisterValue(OLED_SetContrast, 0xCF);
-
-		SPISendRegisterValue(OLED_SetPreCharge, 0xF1); //Precharge 0x22 or 0xF1
-		SPISendRegisterValue(OLED_SetVComDeselect, 0x40);
-		SPISendByte(OLED_DeactivateScroll);
 		
-		SPISendByte(OLED_DisplayResume);
-		SPISendByte(OLED_NormalDisplay);
-		
-		SPISendByte(OLED_DisplayOn);
+		DeviceSetup();
 
 		return;
 	}
-
+	
 	void SSD1306::ClearDrawing() {
 		memset(caBlocks, 0, sizeof(sScreenBlock_t) * cnBlocksCnt);
 
@@ -1027,6 +1054,14 @@
 		return;
 	}
 
+	void SSD1306::InvertColors(bool bInvertOn) {
+		if (bInvertOn == true) {
+			SendByte(OLED_InverseDisplay);
+		} else {
+			SendByte(OLED_NormalDisplay);
+		}
+	}
+	
 	void SSD1306::DrawText(uint8_t nXLeft, uint8_t nYTop, char *Text) {
 		uint16_t nCharCtr, nIndex;
 		uint8_t nXCoord, nYCoord;
@@ -1066,55 +1101,131 @@
 		return;
 	}
 
-	void SSD1306::SPISendRegisterValue(uint8_t nRegister, uint8_t nValue) {
-		cpSpi->beginTransaction(SPISettings(OLED1306_CLKFREQ, MSBFIRST, SPI_MODE0)); //Max speed of device, most significant bit first, Mode 0: Output falling edge data capture rising edge 
+	void SSD1306::SendRegisterValue(uint8_t nRegister, uint8_t nValue) {
+		uint8_t nI2CDataCmd;
+		
+		if (cpSpi != NULL) {
+			cpSpi->beginTransaction(SPISettings(OLED1306_CLKFREQ, MSBFIRST, SPI_MODE0)); //Max speed of device, most significant bit first, Mode 0: Output falling edge data capture rising edge 
 
-		digitalWrite(cnDataCmdPin, LOW); //Put chip in command mode
-		digitalWrite(cnCSPin, LOW); //Select the chip
+			digitalWrite(cnDataCmdPin, LOW); //Put chip in command mode
+			digitalWrite(cnCSPin, LOW); //Select the chip
 
-		cpSpi->transfer(nRegister); //Send register location
-		cpSpi->transfer(nValue);  //Send value to record into register
+			cpSpi->transfer(nRegister); //Send register location
+			cpSpi->transfer(nValue);  //Send value to record into register
 
-		digitalWrite(cnCSPin, HIGH); //Unselect the chip
+			digitalWrite(cnCSPin, HIGH); //Unselect the chip
 
-		cpSpi->endTransaction();
+			cpSpi->endTransaction();
+		} else if (cpI2C != NULL) {
+			nI2CDataCmd = 0x00; //Co = 0, D/C = 0
+			
+			cpI2C->setClock(400000UL);
+			
+			cpI2C->beginTransmission(cnI2CAddr);
+			cpI2C->write(nI2CDataCmd);
+			cpI2C->write(nRegister);
+			cpI2C->endTransmission();
+			
+			cpI2C->beginTransmission(cnI2CAddr);
+			cpI2C->write(nI2CDataCmd);
+			cpI2C->write(nValue);
+			cpI2C->endTransmission();
+		}
 
 		return;
 	}
 
-	void SSD1306::SPISendByte(uint8_t nByte) {
-		cpSpi->beginTransaction(SPISettings(OLED1306_CLKFREQ, MSBFIRST, SPI_MODE0)); //Max speed of device, most significant bit first, Mode 0: Output falling edge data capture rising edge 
+	void SSD1306::SendByte(uint8_t nByte) {
+		uint8_t nI2CDataCmd;
+		
+		if (cpSpi != NULL) {
+			cpSpi->beginTransaction(SPISettings(OLED1306_CLKFREQ, MSBFIRST, SPI_MODE0)); //Max speed of device, most significant bit first, Mode 0: Output falling edge data capture rising edge 
 
-		digitalWrite(cnDataCmdPin, LOW); //Put chip in command mode
-		digitalWrite(cnCSPin, LOW); //Select the chip
+			digitalWrite(cnDataCmdPin, LOW); //Put chip in command mode
+			digitalWrite(cnCSPin, LOW); //Select the chip
 
-		cpSpi->transfer(nByte);
+			cpSpi->transfer(nByte);
 
-		digitalWrite(cnCSPin, HIGH); //Unselect the chip
+			digitalWrite(cnCSPin, HIGH); //Unselect the chip
 
-		cpSpi->endTransaction();
+			cpSpi->endTransaction();
+		} else if (cpI2C != NULL) {
+			nI2CDataCmd = 0x00; //Co = 0, D/C = 0
+			
+			cpI2C->setClock(400000UL);
+			
+			cpI2C->beginTransmission(cnI2CAddr);
+			cpI2C->write(nI2CDataCmd);
+			cpI2C->write(nByte);
+			cpI2C->endTransmission();
+		}
 
 		return;
 	}
 
-	void SSD1306::SPISendDataBlock(uint16_t nNumBytes, void *pDataBlock) {
-		int nCtr;
+	void SSD1306::SendDataBlock(uint16_t nNumBytes, void *pDataBlock, bool bIsDisplayData) {
+		int nCtr, nBytesSent;
 		uint8_t *aByteArray = (uint8_t *)pDataBlock;
 
+		if (cpI2C != NULL) {
+			cpI2C->setClock(400000UL);
+			
+			cpI2C->beginTransmission(cnI2CAddr);
+			if (bIsDisplayData == false) {
+				cpI2C->write(0x00);
+			} else {
+				cpI2C->write(OLED1306_I2CDCBIT);
+			}
+			
+			nBytesSent = 0;
+		}
+		
 		for (nCtr = 0; nCtr < nNumBytes; nCtr++) {
-			cpSpi->transfer((*aByteArray));
+			if (cpSpi != NULL) {
+				cpSpi->transfer((*aByteArray));
+			} else if (cpI2C != NULL) {
+				cpI2C->write((*aByteArray));
+				nBytesSent += 1;
+				
+				if (nBytesSent >= OLED1306_I2CBUFFLEN) {
+					cpI2C->endTransmission();
+					cpI2C->beginTransmission(cnI2CAddr);
+					if (bIsDisplayData == false) {
+						cpI2C->write(0x00);
+					} else {
+						cpI2C->write(OLED1306_I2CDCBIT);
+					}
+					
+					nBytesSent = 0;
+				}
+			}
+
 			aByteArray += 1; //Advance to the next byte
+			
+		}
+		
+		if (cpI2C != NULL) {
+			cpI2C->endTransmission();
 		}
 
 		return;
 	}
 
 	void SSD1306::Reset() {
-		digitalWrite(cnResetPin, HIGH);
-		delay(1);
-		digitalWrite(cnResetPin, LOW);
-		delay(1000);
-		digitalWrite(cnResetPin, HIGH);
+		if (cnResetPin != OLED1306_NOPIN) { //Reset pin is connected, use that
+			digitalWrite(cnResetPin, HIGH);
+			delay(1);
+			digitalWrite(cnResetPin, LOW);
+			delay(1000);
+			digitalWrite(cnResetPin, HIGH);
+		} else { //No hardware reset, try a command
+			SendByte(OLED_DisplayOff);
+			
+			ClearDrawing();
+			SendToScreen();
+			
+			SendByte(OLED_DisplayOn);
+		}
 
 		return;
 	}
@@ -1122,29 +1233,84 @@
 	void SSD1306::SendToScreen() {
 		uint8_t Cmds[3];
 
-		cpSpi->beginTransaction(SPISettings(OLED1306_CLKFREQ, MSBFIRST, SPI_MODE0)); //Max speed of device, most significant bit first, Mode 0: Output falling edge data capture rising edge 
-		digitalWrite(cnDataCmdPin, LOW); //Command Mode
-		digitalWrite(cnCSPin, LOW);
+		if (cpSpi != NULL) {
+			cpSpi->beginTransaction(SPISettings(OLED1306_CLKFREQ, MSBFIRST, SPI_MODE0)); //Max speed of device, most significant bit first, Mode 0: Output falling edge data capture rising edge 
+			digitalWrite(cnDataCmdPin, LOW); //Command Mode
+			digitalWrite(cnCSPin, LOW);
+		}
 		//All of this must be done in a single transaction or portions will be skipped
 		
 		//Make sure drawing always begins from top left corner
 		Cmds[0] = OLED_SetPageAddress;
 		Cmds[1] = 0x00; //Starting page
 		Cmds[2] = 0xFF; //Ending page
-		SPISendDataBlock(3, Cmds);
+		SendDataBlock(3, Cmds);
 
 		Cmds[0] = OLED_SetColumnAddress;
 		Cmds[1] = 0x00; //Starting column
 		Cmds[2] = cnScreenWidth - 1; //Ending column
-		SPISendDataBlock(3, Cmds);
+		SendDataBlock(3, Cmds);
 
-		digitalWrite(cnDataCmdPin, HIGH); //Data Mode
-		SPISendDataBlock(sizeof(sScreenBlock_t) * cnBlocksCnt, caBlocks);
+		if (cpSpi != NULL) {
+			digitalWrite(cnDataCmdPin, HIGH); //Data Mode
+		}
 		
-		digitalWrite(cnCSPin, HIGH);
-		cpSpi->endTransaction();
+		SendDataBlock(sizeof(sScreenBlock_t) * cnBlocksCnt, caBlocks, true);
+		
+		if (cpSpi != NULL) {
+			digitalWrite(cnCSPin, HIGH);
+			cpSpi->endTransaction();
+		}
 	
 		return;
+	}
+	
+	bool SSD1306::DeviceSetup() {
+		caBlocks = (sScreenBlock_t *)malloc(sizeof(sScreenBlock_t) * cnBlocksCnt);
+		if (caBlocks == NULL) {
+			Serial.print("SSD1306 Driver: Drawing Buffer Allocation Failed!\n");
+		}
+
+		ClearDrawing();
+
+		//Set reset pin mode
+		if (cnResetPin != OLED1306_NOPIN) {
+			pinMode(cnResetPin, OUTPUT);
+			digitalWrite(cnResetPin, HIGH);
+		}
+
+		//Initialize the chip
+		Reset();
+
+		SendByte(OLED_DisplayOff);
+
+		SendRegisterValue(OLED_DisplayClockDivide, OLED_ClockDivideDefault);
+		SendRegisterValue(OLED_MultiplexRatio, cnScreenHeight - 1);
+		SendRegisterValue(OLED_DisplayOffset, 0x00); //The first line is the start line
+		SendByte(OLED_DisplayStartLine | 0x00); //Set start line to zero
+		SendRegisterValue(OLED_SetChargePump, OLED_ChargePumpOn);
+		SendRegisterValue(OLED_SetMemoryMode, 0x00);
+		SendByte(OLED_SegmentRemapSegDriv);
+		SendByte(OLED_ComScanDecr);
+		
+		if (cnScreenHeight > 32) {
+			SendRegisterValue(OLED_SetComPins, 0x12);
+		} else {
+			SendRegisterValue(OLED_SetComPins, 0x02);
+		}
+		
+		SendRegisterValue(OLED_SetContrast, 0xCF);
+
+		SendRegisterValue(OLED_SetPreCharge, 0xF1); //Precharge 0x22 or 0xF1
+		SendRegisterValue(OLED_SetVComDeselect, 0x40);
+		SendByte(OLED_DeactivateScroll);
+		
+		SendByte(OLED_DisplayResume);
+		SendByte(OLED_NormalDisplay);
+		
+		SendByte(OLED_DisplayOn);
+		
+		return true;
 	}
 
 #endif
