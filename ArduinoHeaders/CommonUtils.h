@@ -17,6 +17,16 @@
 	*/
 	#define UINT8_MAXVALUE	255
 	
+	/**	The maximum integer value that will fit in a uint16_t data type
+		@ingroup	commonutils
+	*/
+	#define UINT16_MAXVALUE	0xFFFF
+	
+	/**	The maximum integer value that will fit in a uint32_t data type
+		@ingroup	commonutils
+	*/
+	#define UINT32_MAXVALUE	0xFFFFFFFF
+	
 	/** @brief		One of the arduino types, the Arduino/Genuino Uno
 		@details
 			- 14 Dedicated binary In/Out pins, 6 that can do PWM
