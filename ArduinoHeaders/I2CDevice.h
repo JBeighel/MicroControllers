@@ -12,14 +12,14 @@
 
 /***** Definitions	*****/
 	/**	@brief		Sending this address on the I2C bus attempts to reach all connected devices
-		@ingroup	pca9865driver
+		@ingroup	i2cdevice
 	*/
 	#define I2C_GENERALCALLADDR	0x00
 
 	/**	@brief		Base class to inherit when handling a device connected via I2C
 		@details	Contains functions and members that provide all the basic functionality needed to interact
 			with an I2C connected device.
-		@ingroup	pca9865driver
+		@ingroup	i2cdevice
 	*/
 	class cI2CDevice_t {
 	public:

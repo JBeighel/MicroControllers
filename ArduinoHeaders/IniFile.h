@@ -146,7 +146,7 @@ bool cIniFile_t::LoadIniFile(const char *pFileName) {
 			}
 
 			if (nStopIdx >= nStartIdx) {
-				NewSetting.pName = new char[(nStopIdx - nStartIdx) + 1]; //Create space for the name string and null terminator
+				NewSetting.pName = new char[(nStopIdx - nStartIdx) + 2]; //Create space for the name string and null terminator
 				if (NewSetting.pName == NULL) {
 					return false;
 				}
@@ -180,7 +180,7 @@ bool cIniFile_t::LoadIniFile(const char *pFileName) {
 			}
 
 			if (nStopIdx >= nStartIdx) {
-				NewSetting.pValue = new char[(nStopIdx - nStartIdx) + 1]; //Create space for the name string and null terminator
+				NewSetting.pValue = new char[(nStopIdx - nStartIdx) + 2]; //Create space for the name string and null terminator
 				if (NewSetting.pValue == NULL) {
 					return false;
 				}
