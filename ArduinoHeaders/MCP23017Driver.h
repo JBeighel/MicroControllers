@@ -408,6 +408,17 @@ bool cMCP23017_t::Read(eMCP23017_Port_t ePort, eMCP23017_Pin_t ePin) {
 	}
 }
 
+bool cMCP23017_t::Write(uint8_t nPinNum, bool bLogicLevel) {
+	eMCP23017_Port_t ePort;
+	eMCP23017_Pin_t ePin;
+	
+	if (DecodePinNum(nPinNum, &ePort, &ePin) == false) {
+		return false;
+	}
+	
+	return Write(ePort, ePin, bLogicLevel);
+}
+
 bool cMCP23017_t::Write(eMCP23017_Port_t ePort, eMCP23017_Pin_t ePin, bool bLogicLevel) {
 	uint8_t nRegAddrOffset, nRegVal;
 	 
@@ -426,7 +437,7 @@ bool cMCP23017_t::Write(eMCP23017_Port_t ePort, eMCP23017_Pin_t ePin, bool bLogi
 	}
 	
 	//Its an output lets request the status
-	nRegVal = I2CReadUint8Reg(cnI2CAddr, MCP23017_OLATB + nRegAddrOffset);
+	nRegVal = I2CReadUint8Reg(cnI2CAddr, MCP23017_OLATA + nRegAddrOffset);
 		
 	if (bLogicLevel == true) {
 		SetAllBitsInMask(nRegVal, ePin); //Set the latch bit to request logic true
@@ -434,7 +445,7 @@ bool cMCP23017_t::Write(eMCP23017_Port_t ePort, eMCP23017_Pin_t ePin, bool bLogi
 		ZeroAllBitsInMask(nRegVal, ePin); //Clear the latch bit to request logic false
 	}
 	
-	I2CWriteUint8Reg(cnI2CAddr, MCP23017_OLATB + nRegAddrOffset, nRegVal);
+	I2CWriteUint8Reg(cnI2CAddr, MCP23017_OLATA + nRegAddrOffset, nRegVal);
 	
 	return true;
 }

@@ -1,7 +1,8 @@
 /**	@defgroup	rfm69hcwdriver
 	@brief		Driver for the RFM69HCW LoRa radio module
 	@details	
-		
+	
+	Incomplete.  With the bluetooth on the Arduino Nano IoT this didn't seem as necessary
 */
 
 #ifndef __RFM69HCWDRIVER
