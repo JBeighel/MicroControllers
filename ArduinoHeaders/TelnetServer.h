@@ -16,10 +16,17 @@
 	#include <Ethernet.h>
 
 /***** Constants	*****/
+	/**	@brief		The default port that will be used if no port setting is supplied */
 	#define TELNET_DEFAULTPORT	23
 
+	/**	@brief		Value placed in a client connection ID to indicate that this is not in use */
 	#define	TELNET_IDINVALID	0
+	
+	/**	@brief		The first client ID that will be handed out, incrementing up from there*/*
 	#define	TELNET_IDFIRST		1
+	
+	/**	@brief		Number of milliseconds a client can be idle before it is closed */
+	#define TELNET_IDLETIMEOUT	30000
 
 /***** Definitions	*****/
 	typedef struct sTelnetClient_t {
@@ -28,6 +35,8 @@
 		uint32_t nBuffLen;
 		uint32_t nRecvLen;
 		char *pRecvBuff;
+		uint32_t tLastActive;
+		uint32_t tConnReq;
 	} sTelnetClient_t;
 
 	typedef void (*pfTelnetTextRecv_t)(uint32_t, const char *, uint32_t);
@@ -130,7 +139,10 @@ bool cTelnetServer_t::Initialize() {
 bool cTelnetServer_t::HandleConnections() {
 	uint16_t nClientCtr, nFreeClientID;
 	uint32_t nBytesAvail;
+	uint32_t tCurrTime, tEllapsedTime;
 	EthernetClient EthClient;
+
+	tCurrTime = millis();
 
 	//Look for a free client spot for incoming connections
 	nFreeClientID = cnMaxClients;
@@ -149,6 +161,7 @@ bool cTelnetServer_t::HandleConnections() {
 
 			//Received a new connection, put it in the list
 			caEthClients[nFreeClientID].nID = cnNextClientID;
+			caEthClients[nFreeClientID].tLastActive = millis();
 			cnNextClientID += 1;
 
 			if (cnNextClientID == TELNET_IDINVALID) {
@@ -175,7 +188,16 @@ bool cTelnetServer_t::HandleConnections() {
 			nBytesAvail = caEthClients[nClientCtr].Client.available();
 
 			if (nBytesAvail > 0) { //There are bytes waiting to be read
+				caEthClients[nClientCtr].tLastActive = tCurrTime;
+				caEthClients[nClientCtr].tConnReq = tCurrTime;
 				ClientDataRecv(&caEthClients[nClientCtr], nBytesAvail);
+			}
+			
+			nEllapsedTime = tCurrTime - caEthClients[nClientCtr].tLastActive;
+			if (nEllapsedTime >= TELNET_IDLETIMEOUT) { //This connection has been idle too long, release it
+				caEthClients[nClientCtr].Client.flush();
+				caEthClients[nClientCtr].Client.stop();
+				caEthClients[nClientCtr].nID = TELNET_IDINVALID;
 			}
 		}
 	}

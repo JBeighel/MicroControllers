@@ -528,7 +528,7 @@ bool cMCP23017_t::DecodePinNum(uint8_t nPinNum, eMCP23017_Port_t *ePort, eMCP230
 		return false;
 	}
 	
-	if (nPinNum > MCP23017_PORTIOCNT) {
+	if (nPinNum >= MCP23017_PORTIOCNT) {//nPinNum is zero based indexing, PORTIOCNT is 1 based indexing
 		nPinNum -= MCP23017_PORTIOCNT;
 		
 		(*ePort) = MCP23017_PortB;
