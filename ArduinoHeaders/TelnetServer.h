@@ -22,7 +22,7 @@
 	/**	@brief		Value placed in a client connection ID to indicate that this is not in use */
 	#define	TELNET_IDINVALID	0
 	
-	/**	@brief		The first client ID that will be handed out, incrementing up from there*/*
+	/**	@brief		The first client ID that will be handed out, incrementing up from there*/
 	#define	TELNET_IDFIRST		1
 	
 	/**	@brief		Number of milliseconds a client can be idle before it is closed */
@@ -193,8 +193,8 @@ bool cTelnetServer_t::HandleConnections() {
 				ClientDataRecv(&caEthClients[nClientCtr], nBytesAvail);
 			}
 			
-			nEllapsedTime = tCurrTime - caEthClients[nClientCtr].tLastActive;
-			if (nEllapsedTime >= TELNET_IDLETIMEOUT) { //This connection has been idle too long, release it
+			tEllapsedTime = tCurrTime - caEthClients[nClientCtr].tLastActive;
+			if (tEllapsedTime >= TELNET_IDLETIMEOUT) { //This connection has been idle too long, release it
 				caEthClients[nClientCtr].Client.flush();
 				caEthClients[nClientCtr].Client.stop();
 				caEthClients[nClientCtr].nID = TELNET_IDINVALID;
