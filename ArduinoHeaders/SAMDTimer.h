@@ -1,6 +1,6 @@
 /**	@defgroup	samdtimer
 	@brief		Timer module for the Arduino models using a SAMD processor
-	@details	v0.1
+	@details	v0.2
 		This module was tested on the Nano IoT.
 		
 */
@@ -58,6 +58,7 @@
 			iTimerModule_t();
 			~iTimerModule_t();
 			
+			bool Begin();
 			uint32_t GetTick(eTimerNum_t eTimer);
 			bool SetCallback(eTimerNum_t eTimer, pfTimerCallback_t pfCallback);
 			bool SetTick(eTimerNum_t eTimer, uint32_t tMicroSec);

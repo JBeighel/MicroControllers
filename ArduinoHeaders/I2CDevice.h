@@ -1,7 +1,9 @@
 /**	@defgroup	i2cdevice
 	@brief		Base class to provide core I2B bus functionality
-	@details	
-		
+	@details	v0.2
+		This is intended as a base framework of drivers for I2C connected components.  It
+		wraps the common functionality I2C devices have giving the driver a faster startup
+		time.
 */
 
 #ifndef __I2CDEVICE
@@ -52,6 +54,28 @@
 			@return		True if the write was successful, false on any error
 		*/
 		bool I2CWriteUint8Reg(uint8_t nDevAddr, uint8_t nRegAddr, uint8_t nValue);
+		
+		/**	@brief		Read an arbitrary number of bytes from the I2C bus
+			@details	Does not send any command to the device over the bus.  Merely
+				addresses it and requests a data read.  It will read until no further
+				data was recieved over the I2C bus.
+			@param		nDevAddr	Address of the device to read from
+			@param		nNumBytes	Maximum bytes to read, size of the receive buffer
+			@param		pDataBuff	Pointer to the buffer that will hold the bytes read
+			@return		The number of bytes read over the bus
+		*/
+		uint8_t I2CReadData(uint8_t nDevAddr, uint8_t nNumBytes, void *pDataBuff);
+		
+		/**	@brief		Writes an arbitrary number of bytes from the I2C bus
+			@details	Does not send any command to the device over the bus.  Merely
+				addresses it and begins sending data.  It will transmit all of the bytes
+				provided then end the transaction.
+			@param		nDevAddr	Address of the device to write to
+			@param		nNumBytes	Number of bytes to send
+			@param		pDataBuff	Pointer to the buffer contianin the bytes to send
+			@return		True if the send was successful, false on any error
+		*/
+		bool I2CWriteData(uint8_t nDevAddr, uint8_t nNumBytes, void *pDataBuff);
 		
 		/**	@brief		Write  value after an I2C All Call
 			@details	If address 0x00 is requested over the I2C bus it is considered an All Cll where all 
@@ -121,6 +145,39 @@ bool cI2CDevice_t::I2CWriteUint8Reg(uint8_t nDevAddr, uint8_t nRegAddr, uint8_t 
 		//Serial.println(nResult);
 		return false;
 	}
+}
+
+uint8_t cI2CDevice_t::I2CReadData(uint8_t nDevAddr, uint8_t nNumBytes, void *pDataBuff) {
+	uint8_t nCtr, nRead;
+	uint8_t *pData = (uint8_t *)pDataBuff;
+	
+	nRead = cpI2CBus->requestFrom(nDevAddr, nNumBytes);
+
+	nRead = 0;
+	for (nCtr = 0; nCtr < nNumBytes && cpI2CBus->available(); nCtr++) {
+		pData[nCtr] = cpI2CBus->read();
+		nRead++;
+	}
+	
+	return nRead;
+}
+
+bool cI2CDevice_t::I2CWriteData(uint8_t nDevAddr, uint8_t nNumBytes, void *pDataBuff) {
+	uint8_t nCtr;
+	uint8_t *pData = (uint8_t *)pDataBuff;
+	
+	//cpI2CBus->beginTransmission(nDevAddr);
+	Wire.beginTransmission(nDevAddr);
+	
+	for (nCtr = 0; nCtr < nNumBytes; nCtr++) {
+		//cpI2CBus->write(pData[nCtr]);
+		Wire.write(pData[nCtr]);
+	}
+	
+	//cpI2CBus->endTransmission();
+	Wire.endTransmission();
+	
+	return true;
 }
 
 bool cI2CDevice_t::I2CGeneralCall(uint8_t nValue) {
