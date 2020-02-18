@@ -117,11 +117,7 @@ uint8_t cI2CDevice_t::I2CReadUint8Reg(uint8_t nDevAddr, uint8_t nRegAddr) {
 
 	cpI2CBus->beginTransmission(nDevAddr);
 	cpI2CBus->write(nRegAddr);
-	nResult = cpI2CBus->endTransmission();
-	
-	if (nResult != 0) {
-		return false;
-	}
+	cpI2CBus->endTransmission();
 
 	cpI2CBus->requestFrom(nDevAddr, (uint8_t)1); //This function assumes registers have 1 byte
 	nByteRecv = cpI2CBus->read();
