@@ -16,15 +16,18 @@
 
 
 /***** Definitions *****/
-	class ArduinoSPI : public iSPIHandler {
+	class cArduinoSPI_t : public iSPIHandler_t {
 	public:
-		bool Initialize(uint32_t nBusClockFreq, eSPIDataOrder_t eDataOrder, u8 nCSPin);
+		cArduinoSPI_t();
+		~cArduinoSPI_t();
+		
+		bool Initialize(uint32_t nBusClockFreq, eSPIDataOrder_t eDataOrder);
 		bool SendByte(uint8_t nByte);
 		bool ByteArrived(uint8_t nByte);
-		bool BeginTransfer();
+		bool BeginTransfer(uint8_t nCSPin);
 		bool EndTransfer();
 
-		#ifndef ARDUINOSPI_USEINTERRUPT
+		#ifndef ARDUINOSPI_USEINTERRUPT //The interrupt will do the reads, if its dissabled add another method
 			bool ReadByte(uint8_t *pnByte);
 		#endif
 
@@ -59,8 +62,18 @@
 		}
 	#endif
 
-	bool ArduinoSPI::Initialize(uint32_t nBusClockFreq, eSPIDataOrder_t eDataOrder, u8 nCSPin) {
-		iSPIHandler::Initialize(nBusClockFreq, eDataOrder, nCSPin);
+	cArduinoSPI_t::cArduinoSPI_t() {
+
+		return;
+	}
+	
+	cArduinoSPI_t::~cArduinoSPI_t() {
+
+		return;
+	}
+
+	bool cArduinoSPI_t::Initialize(uint32_t nBusClockFreq, eSPIDataOrder_t eDataOrder) {
+		iSPIHandler_t::Initialize(nBusClockFreq, eDataOrder);
 
 		SPI.begin();
 
@@ -75,11 +88,11 @@
 		#endif
 	}
 
-	bool ArduinoSPI::ByteArrived(uint8_t nByte) {
+	bool cArduinoSPI_t::ByteArrived(uint8_t nByte) {
 		WriteToBuffer(nByte);
 	}
 
-	bool ArduinoSPI::SendByte(uint8_t nByte) {
+	bool cArduinoSPI_t::SendByte(uint8_t nByte) {
 		uint8_t nByteRead;
 
 		nByteRead = SPI.transfer(nByte);
@@ -89,7 +102,9 @@
 		return true;
 	}
 
-	bool ArduinoSPI::BeginTransfer() {
+	bool cArduinoSPI_t::BeginTransfer(uint8_t nCSPin) {
+		cnChipSelectPin = nCSPin;
+		
 		if (cnChipSelectPin != SPI_NOPIN) {
 			digitalWrite(cnChipSelectPin, LOW); //Select the chip
 		}
@@ -98,17 +113,18 @@
 		return true;
 	}
 
-	bool ArduinoSPI::EndTransfer() {
+	bool cArduinoSPI_t::EndTransfer() {
 		SPI.endTransaction();
+		
 		if (cnChipSelectPin != SPI_NOPIN) {
 			digitalWrite(cnChipSelectPin, HIGH); //Deselect the chip
 		}
-
+		
 		return true;
 	}
 
 	#ifndef ARDUINOSPI_USEINTERRUPT
-		bool ArduinoSPI::ReadByte(uint8_t *pnByte) {
+		bool cArduinoSPI_t::ReadByte(uint8_t *pnByte) {
 			if (BytesInBuffer() > 0) {
 				return ReadFromBuffer(pnByte);
 			} else {

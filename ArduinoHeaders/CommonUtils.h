@@ -1,6 +1,6 @@
 /**	@defgroup	commonutils
 	@brief		Common utilities and objects
-	@details	v 0.1
+	@details	v 0.2
 		This is a collection of commonly used utilities.
 		This includes variable types, macros, and constants.
 */
@@ -333,6 +333,8 @@
 		@ingroup	commonutils
 	*/
 	bool NumberInArray_u8(uint8_t nNumber, const uint8_t *aList, uint32_t nListCnt);
+	
+	uint8_t CalculateCRC8(uint8_t nPolynomial, uint8_t nInit, uint8_t nXOROut, const uint8_t *pData, uint32_t nDataLen);
 
 /***** Functions	*****/
 	bool NumberInArray_u8(uint8_t nNumber, const uint8_t *aList, uint32_t nListCnt) {
@@ -347,6 +349,45 @@
 		return false;
 	}
 
+	uint8_t ContinueCalcCRC8(uint8_t nPolynomial, uint8_t nByte, uint8_t nPrevCRC) {
+		uint16_t nBitCtr;
+		uint8_t nBit;
+		uint8_t nTemp;
+		
+		for (nBitCtr = 0; nBitCtr < 8; nBitCtr++) {
+			nBit = nByte & 0x80; //Get the highest bit
+			
+			nTemp = nPrevCRC & 0x80;
+			if (nBit != 0) {
+				nTemp ^= 0x80;
+			}
+			
+			nPrevCRC <<= 1;
+			
+			if (nTemp != 0) {
+				nPrevCRC ^= nPolynomial;
+			}
+			
+			nByte <<= 1;
+		}
+		
+		return nPrevCRC;
+	}
+
+	uint8_t CalculateCRC8(uint8_t nPolynomial, uint8_t nInit, uint8_t nXOROut, const uint8_t *pData, uint32_t nDataLen) {
+		uint8_t nCrc;
+		uint32_t nCtr;
+		
+		nCrc = nInit;
+		
+		for (nCtr = 0; nCtr < nDataLen; nCtr++) {
+			nCrc = ContinueCalcCRC8(nPolynomial, pData[nCtr], nCrc);
+		}
+		
+		nCrc ^= nXOROut;
+		
+		return nCrc;
+	}
 
 #endif
 

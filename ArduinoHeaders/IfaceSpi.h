@@ -46,16 +46,17 @@
 	} eSPIDataOrder_t;
 
 
-	class iSPIHandler {
+	class iSPIHandler_t {
 	public:
-		iSPIHandler();
-		~iSPIHandler();
+		iSPIHandler_t();
+		~iSPIHandler_t();
 
-		bool Initialize(uint32_t nBusClockFreq, eSPIDataOrder_t eDataOrder, uint8_t nCSPin);
-		virtual bool BeginTransfer();
+		bool Initialize(uint32_t nBusClockFreq, eSPIDataOrder_t eDataOrder);
+		virtual bool BeginTransfer(uint8_t nCSPin);
 		virtual bool EndTransfer();
 		virtual bool SendByte(uint8_t nByte);
 		virtual bool ReadByte(uint8_t *pnByte);
+		virtual bool EmptyReadBuffer();
 
 	protected:
 		uint16_t cnBuffReadIdx;
@@ -80,7 +81,7 @@
 
 
 /***** Functions   *****/
-	iSPIHandler::iSPIHandler() {
+	iSPIHandler_t::iSPIHandler_t() {
 		cnBuffReadIdx = 0;
 		cnBuffWriteIdx = 0;
 
@@ -89,11 +90,11 @@
 		return;
 	}
 
-	iSPIHandler::~iSPIHandler() {
+	iSPIHandler_t::~iSPIHandler_t() {
 		return;
 	}
 
-	bool iSPIHandler::WriteToBuffer(uint8_t nByte) {
+	bool iSPIHandler_t::WriteToBuffer(uint8_t nByte) {
 		caSpiBuffer[cnBuffWriteIdx] = nByte;
 
 		cnBuffWriteIdx += 1;
@@ -110,7 +111,7 @@
 		return true;
 	}
 
-	bool iSPIHandler::ReadFromBuffer(uint8_t *pnByte) {
+	bool iSPIHandler_t::ReadFromBuffer(uint8_t *pnByte) {
 		if (cnBuffReadIdx == cnBuffWriteIdx) {
 			//Buffer underflow, we don't have any data to read
 			(*pnByte) = 0;
@@ -126,22 +127,34 @@
 		}
 	}
 
-	bool iSPIHandler::ReadByte(uint8_t *pnByte) {
+	bool iSPIHandler_t::ReadByte(uint8_t *pnByte) {
 		return ReadFromBuffer(pnByte);
 	}
 
-	bool iSPIHandler::Initialize(uint32_t nBusClockFreq, eSPIDataOrder_t eDataOrder, uint8_t nCSPin) {
+	bool iSPIHandler_t::Initialize(uint32_t nBusClockFreq, eSPIDataOrder_t eDataOrder) {
 		cnBusFreq = nBusClockFreq;
 		ceDataOrder = eDataOrder;
 
-		cnChipSelectPin = nCSPin;
+		cnChipSelectPin = SPI_NOPIN;
 		pinMode(cnChipSelectPin, OUTPUT);
 		digitalWrite(cnChipSelectPin, HIGH); //Deselect the chip
 
-		return;
+		return true;
 	}
 
-	uint16_t iSPIHandler::BytesInBuffer() {
+	bool iSPIHandler_t::BeginTransfer(uint8_t nCSPin) {
+		return false;
+	}
+	
+	bool iSPIHandler_t::EndTransfer() {
+		return false;
+	}
+	
+	bool iSPIHandler_t::SendByte(uint8_t nByte) {
+		return false;
+	}
+	
+	uint16_t iSPIHandler_t::BytesInBuffer() {
 		uint16_t nNumBytes;
 
 		if (cnBuffReadIdx == cnBuffWriteIdx) {
@@ -154,6 +167,13 @@
 		}
 
 		return nNumBytes;
+	}
+	
+	bool iSPIHandler_t::EmptyReadBuffer() {
+		//Re-Initialize the buffer pointers so no data is available
+		cnBuffReadIdx = 0;
+		cnBuffWriteIdx = 0;
+		return true;
 	}
 
 #endif
