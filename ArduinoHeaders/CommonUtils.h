@@ -1,6 +1,6 @@
 /**	@defgroup	commonutils
 	@brief		Common utilities and objects
-	@details	v 0.2
+	@details	v 0.3
 		This is a collection of commonly used utilities.
 		This includes variable types, macros, and constants.
 */
@@ -334,7 +334,31 @@
 	*/
 	bool NumberInArray_u8(uint8_t nNumber, const uint8_t *aList, uint32_t nListCnt);
 	
+	/**	@brief		Determines the index of a given number in an array
+		@param		nNumber		The number to check for in the array
+		@param		aList		The array to search through
+		@param		nListCnt	The number of elements in the array
+		@return		The index if the number is found in the array, nListCnt if it is not
+		@ingroup	commonutils
+	*/
+	uint32_t IndexInArray_u8(uint8_t nNumber, const uint8_t *aList, uint32_t nListCnt);
+	
+	/**	@brief		Calculates an 8 bit CRC value for an array of data
+		@param		nPolynomial		The 8 bit polynomial to use while generating the CRC
+		@param		nInit			The starting value to use when generating the CRC
+		@param		nXOROut			Exclusive or the output with this value, set to 0x00 for no XOR
+		@param		pData			Pointer to the data to CRC
+		@param		nDataLen		The number of bytes in the data
+		@ingroup	commonutils
+	*/
 	uint8_t CalculateCRC8(uint8_t nPolynomial, uint8_t nInit, uint8_t nXOROut, const uint8_t *pData, uint32_t nDataLen);
+	
+	/**	@brief		Counts the 1 bits in an integer value
+		@param		nVal		The value to count the set bits in
+		@return		Count of the 1 bits in the value
+		@ingroup	commonutils
+	*/
+	uint32_t CountSetBitsInInt32(uint32_t nVal);
 
 /***** Functions	*****/
 	bool NumberInArray_u8(uint8_t nNumber, const uint8_t *aList, uint32_t nListCnt) {
@@ -348,6 +372,19 @@
 
 		return false;
 	}
+
+	uint32_t IndexInArray_u8(uint8_t nNumber, const uint8_t *aList, uint32_t nListCnt) {
+		uint32_t nCtr;
+
+		for (nCtr = 0; nCtr < nListCnt; nCtr++) {
+			if (nNumber == aList[nCtr]) {
+				return nCtr;
+			}
+		}
+
+		return nListCnt;
+	}
+
 
 	uint8_t ContinueCalcCRC8(uint8_t nPolynomial, uint8_t nByte, uint8_t nPrevCRC) {
 		uint16_t nBitCtr;
@@ -387,6 +424,16 @@
 		nCrc ^= nXOROut;
 		
 		return nCrc;
+	}
+
+	uint32_t CountSetBitsInInt32(uint32_t nVal) {
+		//SWAR algorithm
+		nVal = nVal - ((nVal >> 1) & 0x55555555); //Break into 1 counts of 2 bit chunks
+		nVal = (nVal & 0x33333333) + ((nVal >> 2) & 0x33333333); //Increase to 1 counts of 4 bit chunks
+		nVal = (nVal + (nVal >> 4)) & 0x0F0F0F0F; //Increase to 1 counts of 8 bit chunks
+		nVal = (nVal * 0x01010101) >> 24; //Sum all chunks into the highest byte, then shift down to lowest
+		
+		return nVal;
 	}
 
 #endif
