@@ -56,7 +56,7 @@
 		eUARTReturns_t	(*pfShutdown)			(sUARTIface_t *pUARTIface);
 		
 		eUARTReturns_t	(*pfUARTReadData)		(sUARTIface_t *pUARTIface, uint16_t nBuffSize, void *pDataBuff, uint16_t *pnBytesRead);
-		eUARTReturns_t	(*pfUARTWriteData)		(sUARTIface_t *pUARTIface, uint16_t nBuffSize, void *pDataBuff);
+		eUARTReturns_t	(*pfUARTWriteData)		(sUARTIface_t *pUARTIface, uint16_t nBuffSize, const void *pDataBuff);
 		eUARTReturns_t	(*pfUARTDataAvailable)	(sUARTIface_t *pUARTIface, uint16_t *pnBytesAvailable);
 		eUARTReturns_t	(*pfUARTWaitDataSend)	(sUARTIface_t *pUARTIface);
 		
@@ -79,9 +79,9 @@
 	eUARTReturns_t UARTShutdown(sUARTIface_t *pUARTIface);
 		
 	eUARTReturns_t UARTReadData(sUARTIface_t *pUARTIface, uint16_t nBuffSize, void *pDataBuff, uint16_t *pnBytesRead);
-	eUARTReturns_t UARTWriteData(sUARTIface_t *pUARTIface, uint16_t nBuffSize, void *pDataBuff);
+	eUARTReturns_t UARTWriteData(sUARTIface_t *pUARTIface, uint16_t nBuffSize, const void *pDataBuff);
 	eUARTReturns_t UARTDataAvailable(sUARTIface_t *pUARTIface, uint16_t *pnBytesAvailable);
-	eUARTReturns_t UARTWitDataSend(sUARTIface_t *pUARTIface);
+	eUARTReturns_t UARTWaitDataSend(sUARTIface_t *pUARTIface);
 
 /***** Functions	*****/
 	eUARTReturns_t UARTInterfaceInitialize(sUARTIface_t *pUARTIface) {
@@ -90,7 +90,7 @@
 		pUARTIface->pfUARTReadData = &UARTReadData;
 		pUARTIface->pfUARTWriteData = &UARTWriteData;
 		pUARTIface->pfUARTDataAvailable = &UARTDataAvailable;
-		pUARTIface->pfUARTWaitDataSend = &UARTWitDataSend;
+		pUARTIface->pfUARTWaitDataSend = &UARTWaitDataSend;
 		
 		return UART_Success;
 	}
@@ -107,7 +107,7 @@
 		return UART_Fail_Unsupported;
 	}
 	
-	eUARTReturns_t UARTWriteData(sUARTIface_t *pUARTIface, uint16_t nBuffSize, void *pDataBuff) {
+	eUARTReturns_t UARTWriteData(sUARTIface_t *pUARTIface, uint16_t nBuffSize, const void *pDataBuff) {
 		return UART_Fail_Unsupported;
 	}
 	
@@ -115,7 +115,7 @@
 		return UART_Fail_Unsupported;
 	}
 	
-	eUARTReturns_t UARTWitDataSend(sUARTIface_t *pUARTIface) {
+	eUARTReturns_t UARTWaitDataSend(sUARTIface_t *pUARTIface) {
 		return UART_Fail_Unsupported;
 	}
 

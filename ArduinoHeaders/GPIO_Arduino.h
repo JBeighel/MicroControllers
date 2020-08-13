@@ -19,8 +19,18 @@
 	#define GPIO_HWINFO		NULL
 	
 	#define GPIO_INIT		ArduinoGPIOPortInitialize
+	
+	#define DELAYMILLISEC		delay
+	
+	#define DELAYMICROSEC		delayMicroseconds
 
-	#if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega168__)	//Compiling for Arduino Uno
+	#undef ARDUINO_MODEL
+
+	//Defines for Arduino boards are found in:
+	//C:\Users\<Username>\AppData\Local\Arduino15\packages\<Vendor>\hardware\<Processor>\<Version>\boards.txt
+	//Look for the setting name that ends with .board=
+	//Prefix its value with ARDUINO_
+	#ifdef ARDUINO_AVR_UNO	//Compiling for Arduino Uno
 		#define ARDUINO_MODEL		"Arduino Uno"
 		
 		#error "Support for Arduino Uno incomplete"
@@ -92,6 +102,74 @@
 		#define ARDUINO_MODEL		"Arduino Mkr Zero"
 		
 		#error "Support for Arduino Mkr Zero incomplete"
+	#endif
+	
+	#ifdef ARDUINO_TRINKET_M0 //Compiling for Adafruit Trinket M0
+		#define ARDUINO_MODEL		"Adafruit Trinket M0"
+		
+		#error "Support for Adafruit Trinket M0 incomplete"
+	#endif
+	
+	#ifdef ARDUINO_NUCLEO_L412KB //Compiling for STM32 Nucleo-32 L412KB
+		#define ARDUINO_MODEL		"STM32 Nucleo-32 L412KB"
+		
+		//#error "Support for STM32 Nucleo-32 L412KB incomplete"
+		
+		/**	@brief		Count of available GPIO pins
+			@ingroup	gpioarduino
+		*/
+		#define ARDUINO_GPIOCNT		(sizeof(gArduinoGPIOList) / sizeof(uint8_t))
+		
+		#define ARDUINO_DACCNT		(sizeof(gArduinoDACList) / sizeof(uint8_t))
+		
+		#define ARDUINO_ADCCNT		(sizeof(gArduinoADCList) / sizeof(uint8_t))
+		
+		#define ARDUINO_PWMCNT		(sizeof(gArduinoPWMList) / sizeof(uint8_t))
+		
+		/**	@brief		Available bit depth for Analog Inputs
+			@ingroup	gpioarduino
+		*/
+		#define ARDUINO_ADCBITDEPTH	12
+		
+		/**	@brief		Available bit depth for Analog Outputs
+			@details	Arduino uses this same bit depth for PWM and DAC outputs.  So the values
+				must match.
+			@ingroup	gpioarduino
+		*/
+		#define ARDUINO_DACBITDEPTH	ARDUINO_PWMBITDEPTH
+		
+		/**	@brief		Available bit depth for PWM Outputs
+			@ingroup	gpioarduino
+		*/
+		#define ARDUINO_PWMBITDEPTH	10
+		
+		/** @brief		Constant array of all pin numbers to use for GPIO
+			@details	There are 22 potential GPIO pins, owever 7 are used by the peripheral buses
+				Pin 0 and 1 are used for the UART.
+				Pin 11 is MOSI, Pin 12 is MIS and Pin 13 are SCK; reserved for SPI
+				Pin 18/A4 is SDA and Pin 19/A5 is SCL; reserved for I2C
+			@ingroup	gpioarduino
+		*/
+		const uint8_t gArduinoGPIOList[] = { 2, 3, 4, 5, 6, 7, 8, 9, 10, 14, 15, 16, 17, 20, 21 };
+		
+		/** @brief		Constant array of all pin numbers that support Analog Input
+			@ingroup	gpioarduino
+		*/
+		const uint8_t gArduinoADCList[] = { 14, 15, 16, 17, 18, 19, 20, 21 }; //14 is A0 through 21 is A7
+		
+		/** @brief		Constant array of all pin numbers that support Analog Ouput
+			@ingroup	gpioarduino
+		*/
+		const uint8_t gArduinoDACList[] = { };
+		
+		/** @brief		Constant array of all pin numbers that support PWM Output
+			@ingroup	gpioarduino
+		*/
+		const uint8_t gArduinoPWMList[] = { };
+	#endif
+	
+	#ifndef ARDUINO_MODEL
+		#error "No arduino model detected, unable to compile GPIO Interface for Arduino"
 	#endif
 
 /***** Definitions	*****/
