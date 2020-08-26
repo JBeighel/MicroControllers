@@ -49,7 +49,7 @@
 	typedef enum eW5500Control_t {
 		W5500BSB_BSBFullMask	= 0xF8,
 		
-		W5500BSB_CommonRegister	= 0x00,
+		W5500BSB_CommonRegister	= 0x00,	/**< Flag to indicate use of the common registers */
 		
 		W5500BSB_SocketMask		= 0xE0,
 		W5500BSB_SocketLShift	= 5,	/**< Number of bits to left shift the socket number */
@@ -63,7 +63,7 @@
 		W5500BSB_Socket7		= 0xE0,
 		
 		W5500BSB_RegBuffMask	= 0x18,
-		W5500BSB_Register		= 0x08,
+		W5500BSB_Register		= 0x08,	/**< Flag to indicate use of the socket registers */
 		W5500BSB_TXBuffer		= 0x10,
 		W5500BSB_RXBuffer		= 0x18,
 		
@@ -279,15 +279,15 @@
 	};
 	
 	enum eW5500SckProt_t {
-		IPPROTO_TCP,
-		IPPROTO_UDP,
+		IPPROTO_TCP,		/**< TCP protocol, stream type */
+		IPPROTO_UDP,		/**< UDP protocol, datagram type */
+		IPPROTO_INVALID,	/**< Unknown or invalid protocol */
 	};
 	
 	typedef struct sW5500Obj_t {
 		sGPIOIface_t *pGPIO;		/**< Pointer to GPIO module for Chip Select and Interrupt */
 		uint8_t nChipSelectPin;		/**< Chip select pin in the GPIO module */
 		sSPIIface_t *pSPI;			/**< Pointer to SPI device for bus communication */
-		eW5500SckProt_t eProtocol;	/**< Protocol this etherney device is using */
 		uint16_t nNextPort;			/**< Next port to use for outbound communications */
 	} sW5500Obj_t;
 	
@@ -332,7 +332,7 @@
 
 
 /***** Prototypes 	*****/
-	eW5500Return_t W5500Initialize(sW5500Obj_t *pDev, sSPIIface_t *pSpiBus, sGPIOIface_t *pIOObj, uint8_t nCSPin, eW5500SckProt_t eProtocol);
+	eW5500Return_t W5500Initialize(sW5500Obj_t *pDev, sSPIIface_t *pSpiBus, sGPIOIface_t *pIOObj, uint8_t nCSPin);
 	eW5500Return_t W5500VerifyPart(sW5500Obj_t *pDev);
 	
 	/**	@brief		Reports if the hardwre link is up and available or not
@@ -364,7 +364,7 @@
 			be provided to indicate the failure
 		@ingroup	w5500driver
 	*/
-	eW5500Return_t W5500SocketListen(sW5500Obj_t *pDev, uint8_t *pnSocket, uint16_t nPort);
+	eW5500Return_t W5500SocketListen(sW5500Obj_t *pDev, uint8_t *pnSocket, uint16_t nPort, eW5500SckProt_t eProtocol);
 
 	/**	@brief		Attempt a connection to a TCP Server
 		@details	Used for TCP connection only.  
@@ -396,14 +396,13 @@
 	eW5500Return_t W5500WriteData(sW5500Obj_t *pDev, uint16_t nAddress, eW5500Control_t eControl, const uint8_t *pBuff, uint8_t nBytes);
 
 /***** Functions	*****/
-eW5500Return_t W5500Initialize(sW5500Obj_t *pDev, sSPIIface_t *pSpiBus, sGPIOIface_t *pIOObj, uint8_t nCSPin, eW5500SckProt_t eProtocol) {
+eW5500Return_t W5500Initialize(sW5500Obj_t *pDev, sSPIIface_t *pSpiBus, sGPIOIface_t *pIOObj, uint8_t nCSPin) {
 	uint8_t nCtr, nModeReg, nCmd, nControl;
 	
 	//Set up module object
 	pDev->pGPIO = pIOObj;
 	pDev->pSPI = pSpiBus;
 	pDev->nChipSelectPin = nCSPin;
-	pDev->eProtocol = eProtocol;
 	pDev->nNextPort = W5500_HIGHPORTSTART;
 	
 	//Prep the chip select pin
@@ -420,18 +419,9 @@ eW5500Return_t W5500Initialize(sW5500Obj_t *pDev, sSPIIface_t *pSpiBus, sGPIOIfa
 	nModeReg &= ~W5500CmdMode_PingBlock; //Turn off ping blockign 
 	W5500WriteData(pDev, W5500SckReg_Mode, W5500BSB_CommonRegister, &nModeReg, 1);
 	
-	//Set the protocol for all ports
-	switch (eProtocol) {
-		case IPPROTO_TCP:
-			nModeReg = W5500SckMode_ProtTCP | W5500SckMode_NDMCMMB;
-			break;
-		case IPPROTO_UDP:
-			nModeReg = W5500SckMode_ProtUDP;
-			break;
-		default:
-			return W5500Fail_Unsupported;
-	}
-	
+	//Set no protocol for all ports
+	nModeReg = W5500SckMode_ProtClosed;
+		
 	nCmd = W5500SckCmd_Close;
 	for (nCtr = 0; nCtr < W5500_NUMSOCKETS; nCtr++) {
 		nControl = nCtr << W5500BSB_SocketLShift;
@@ -543,7 +533,7 @@ eW5500Return_t W5500LinkStatus(sW5500Obj_t *pDev, bool *pbIsUp) {
 	return W5500_Success;
 }
 
-eW5500Return_t W5500SocketListen(sW5500Obj_t *pDev, uint8_t *pnSocket, uint16_t nPort) {
+eW5500Return_t W5500SocketListen(sW5500Obj_t *pDev, uint8_t *pnSocket, uint16_t nPort, eW5500SckProt_t eProtocol) {
 	uint8_t nCtr, nControl;
 	uint8_t anRegVal[2];
 	
@@ -575,10 +565,25 @@ eW5500Return_t W5500SocketListen(sW5500Obj_t *pDev, uint8_t *pnSocket, uint16_t 
 	anRegVal[1] = nPort & 0xFF;
 	W5500WriteData(pDev, W5500SckReg_SourcePort0, (eW5500Control_t)nControl, anRegVal, 2);
 	
-	anRegVal[0] = W5500SckCmd_Open; //Command it to open to establish the mode
+	switch (eProtocol) { //Set the socket to the requested protocol
+		case IPPROTO_TCP:
+			anRegVal[0] = W5500SckMode_ProtTCP;
+			break;
+			
+		case IPPROTO_UDP:
+			anRegVal[0] = W5500SckMode_ProtUDP;
+			break;
+			
+		default:
+			return W5500Fail_Unsupported;
+	}
+	
+	W5500WriteData(pDev, W5500SckReg_Mode, (eW5500Control_t)nControl, &(anRegVal[0]), 1);
+	
+	anRegVal[0] = W5500SckCmd_Open; //Command it to open to establish the socket
 	W5500WriteData(pDev, W5500SckReg_Command, (eW5500Control_t)nControl, &anRegVal[0], 1);
 	
-	//Should move the socket to INIT mdoe
+	//Should move the socket to INIT status
 	anRegVal[0] = W5500SckStat_Closed;
 	nCtr = 0;
 	while ((anRegVal[0] == W5500SckStat_Closed) && (nCtr < 10)) {
@@ -587,7 +592,7 @@ eW5500Return_t W5500SocketListen(sW5500Obj_t *pDev, uint8_t *pnSocket, uint16_t 
 		nCtr += 1;
 	}
 	
-	if (pDev->eProtocol == IPPROTO_TCP) { //Must command TCP sockets to listen next
+	if (eProtocol == IPPROTO_TCP) { //Must command TCP sockets to listen next
 		anRegVal[0] = W5500SckCmd_Listen;
 		W5500WriteData(pDev, W5500SckReg_Command, (eW5500Control_t)nControl, &anRegVal[0], 1);
 	}
@@ -650,7 +655,7 @@ eW5500Return_t W5500SocketConnect(sW5500Obj_t *pDev, uint8_t *pnSocket, in_addr 
 	return W5500_Success;
 }
 
-eW5500Return_t W5500SocketStatus(sW5500Obj_t *pDev, uint8_t nSocket, eW5500SckStat_t *eCurrState, uint16_t *nBytesWaiting, sockaddr_in *pConnAddr, uint8_t nConnAddrLen) {
+eW5500Return_t W5500SocketStatus(sW5500Obj_t *pDev, uint8_t nSocket, eW5500SckProt_t *eProtocol, eW5500SckStat_t *eCurrState, uint16_t *nBytesWaiting, sockaddr_in *pConnAddr, uint8_t nConnAddrLen) {
 	uint8_t nControl;
 	uint8_t aBytes[4];
 	uint16_t nVerify;
@@ -663,6 +668,20 @@ eW5500Return_t W5500SocketStatus(sW5500Obj_t *pDev, uint8_t nSocket, eW5500SckSt
 	nControl = nSocket << W5500BSB_SocketLShift;
 	nControl |= W5500BSB_Register;
 	W5500ReadData(pDev, W5500SckReg_Status, (eW5500Control_t)nControl, (uint8_t *)eCurrState, 1);
+
+	//Read the mode to get the protocol
+	W5500ReadData(pDev, W5500SckReg_Mode, (eW5500Control_t)nControl, &(aBytes[0]), 1);
+	aBytes[0] &= W5500SckMode_ProtMask; //Strip off anything that isn't the protocol flags
+	Serial.print("Mode ");
+	Serial.print(aBytes[0], HEX);
+	Serial.print("\n");
+	if (aBytes[0] == W5500SckMode_ProtTCP) {
+		*eProtocol = IPPROTO_TCP;
+	} else if (aBytes[0] == W5500SckMode_ProtUDP) {
+		*eProtocol = IPPROTO_UDP;
+	} else {
+		*eProtocol = IPPROTO_INVALID;
+	}
 	
 	//Look for bytes waiting in the socket
 	W5500ReadData(pDev, W5500SckReg_RXRecvSize0, (eW5500Control_t)nControl, aBytes, 2);
@@ -677,19 +696,20 @@ eW5500Return_t W5500SocketStatus(sW5500Obj_t *pDev, uint8_t nSocket, eW5500SckSt
 		pConnAddr->sin_port = aBytes[0] << 8;
 		pConnAddr->sin_port |= aBytes[1];
 			
-		//Read out the IP Address. it can change mid-read, read until we get a matched reading
+		//Read the recv byte count. it can change mid-read, read until we get a matched reading
 		nVerify = 0;
-		W5500ReadData(pDev, W5500SckReg_DestIPAddr0, (eW5500Control_t)nControl, aBytes, 4);
+		W5500ReadData(pDev, W5500SckReg_RXRecvSize0, (eW5500Control_t)nControl, aBytes, 2);
 		(*nBytesWaiting) = aBytes[0] << 8;
 		(*nBytesWaiting) |= aBytes[1];
 		while (nVerify != (*nBytesWaiting)) {
 			nVerify = (*nBytesWaiting);
 			
-			W5500ReadData(pDev, W5500SckReg_DestIPAddr0, (eW5500Control_t)nControl, aBytes, 4);
+			W5500ReadData(pDev, W5500SckReg_RXRecvSize0, (eW5500Control_t)nControl, aBytes, 2);
 			(*nBytesWaiting) = aBytes[0] << 8;
 			(*nBytesWaiting) |= aBytes[1];
 		}
 		
+		W5500ReadData(pDev, W5500SckReg_DestIPAddr0, (eW5500Control_t)nControl, aBytes, 4);
 		pConnAddr->sin_addr.S_un.S_un_b.s_b1 = aBytes[0];
 		pConnAddr->sin_addr.S_un.S_un_b.s_b2 = aBytes[1];
 		pConnAddr->sin_addr.S_un.S_un_b.s_b3 = aBytes[2];
