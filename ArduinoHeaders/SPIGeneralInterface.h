@@ -1,6 +1,6 @@
 /**	@defgroup	spiiface
 	@brief		General interface for using the SPI bus
-	@details	v0.1
+	@details	v0.2
 	# Intent #
 		This module is to create a common interface for interacting with a SPI bus.  Drivers 
 		for devices that operate over this bus should use this interface to operate the 
@@ -13,17 +13,23 @@
 		expected to implement and provide these functions.
 		
 	# Usage #
-		
+	
+	# File Info #
+		File:	SPIGeneralInterface.h
+		Author:	J. Beighel
+		Date:	08-27-2020
 */
 
 #ifndef __SPIGENIFACE
 	#define __SPIGENIFACE
 
 /***** Includes		*****/
-
+	#include <stddef.h>
+	#include <stdint.h>
+	#include <stdbool.h>
 
 /***** Definitions	*****/
-	typedef struct sSPIIface_t;  //Declaring this early, will define it later
+	typedef struct sSPIIface_t sSPIIface_t;  //Declaring this early, will define it later
 
 	/**	@brief		Enumeration of markers to indicate the order the bus sends data out 
 		@ingroup	spiiface
@@ -89,35 +95,6 @@
 	eSPIReturn_t SPITransferByte(sSPIIface_t *pIface, uint8_t nSendByte, uint8_t *pnReadByte);
 
 /***** Functions	*****/
-	eSPIReturn_t SPIInterfaceInitialize(sSPIIface_t *pIface) {
-		pIface->pfInitialise = &SPIPortInitialize;
-		pIface->pfBeginTransfer = &SPIBeginTransfer;
-		pIface->pfEndTransfer = &SPIEndTransfer;
-		pIface->pfTransferByte = &SPITransferByte;
-		
-		pIface->nBusClockFreq = 5000000;
-		pIface->pHWInfo = NULL;
-		pIface->eMode = SPI_Mode0;
-		pIface->eDataOrder = SPI_MSBFirst;
-		
-		return SPI_Success;
-	}
 	
-	eSPIReturn_t SPIPortInitialize(sSPIIface_t *pIface, void *pHWInfo, uint32_t nBusClockFreq, eSPIDataOrder_t eDataOrder, eSPIMode_t eMode) {
-		return SPIFail_Unsupported;
-	}
-
-	eSPIReturn_t SPIBeginTransfer(sSPIIface_t *pIface) {
-		return SPIFail_Unsupported;
-	}
-	
-	eSPIReturn_t SPIEndTransfer(sSPIIface_t *pIface) {
-		return SPIFail_Unsupported;
-	}
-		
-	eSPIReturn_t SPITransferByte(sSPIIface_t *pIface, uint8_t nSendByte, uint8_t *pnReadByte) {
-		return SPIFail_Unsupported;
-	}
-
 #endif
 

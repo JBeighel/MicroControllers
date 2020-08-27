@@ -1,6 +1,6 @@
 /**	@defgroup	gpioiface
 	@brief		General interface for using GPIO pins
-	@details	v0.1
+	@details	v0.2
 		
 */
 
@@ -8,7 +8,9 @@
 	#define __gpioiface
 
 /***** Includes		*****/
-
+	#include <stdint.h>
+	#include <stdbool.h>
+	#include <string.h>
 
 /***** Definitions	*****/
 	
@@ -19,7 +21,7 @@
 		#define GPIO_IOCNT		20
 	#endif
 	
-	typedef struct sGPIOIface_t; //Declarign this early, will define it later
+	typedef struct sGPIOIface_t sGPIOIface_t; //Declarign this early, will define it later
 
 	/**	@brief		Enumeration of all GPIO interface return values
 		@ingroup	gpioiface
@@ -62,19 +64,19 @@
 	
 	typedef eGPIOReturn_t (*pfGPIOPortInitialize_t)(sGPIOIface_t *pIface, void *pHWInfo);
 	
-	typedef eGPIOReturn_t (*pfGPIOSetModeByPin_t)(sGPIOIface_t *pIface, uint8_t nGPIOPin, eGPIOModes_t eMode);
+	typedef eGPIOReturn_t (*pfGPIOSetModeByPin_t)(sGPIOIface_t *pIface, uint16_t nGPIOPin, eGPIOModes_t eMode);
 	
-	typedef eGPIOReturn_t (*pfGPIOReadModeByPin_t)(sGPIOIface_t *pIface, uint8_t nGPIOPin, eGPIOModes_t *eMode);
+	typedef eGPIOReturn_t (*pfGPIOReadModeByPin_t)(sGPIOIface_t *pIface, uint16_t nGPIOPin, eGPIOModes_t *eMode);
 	
-	typedef eGPIOReturn_t (*pfGPIODigitalWriteByPin_t)(sGPIOIface_t *pIface, uint8_t nGPIOPin, bool bState);
+	typedef eGPIOReturn_t (*pfGPIODigitalWriteByPin_t)(sGPIOIface_t *pIface, uint16_t nGPIOPin, bool bState);
 	
-	typedef eGPIOReturn_t (*pfGPIODigitalReadByPin_t)(sGPIOIface_t *pIface, uint8_t nGPIOPin, bool *bState);
+	typedef eGPIOReturn_t (*pfGPIODigitalReadByPin_t)(sGPIOIface_t *pIface, uint16_t nGPIOPin, bool *bState);
 	
-	typedef eGPIOReturn_t (*pfGPIOPWMWriteByPin_t)(sGPIOIface_t *pIface, uint8_t nGPIOPin, uint32_t nPWMValue);
+	typedef eGPIOReturn_t (*pfGPIOPWMWriteByPin_t)(sGPIOIface_t *pIface, uint16_t nGPIOPin, uint32_t nPWMValue);
 	
-	typedef eGPIOReturn_t (*pfGPIOAnalogWriteByPin_t)(sGPIOIface_t *pIface, uint8_t nGPIOPin, uint32_t nAnaValue);
+	typedef eGPIOReturn_t (*pfGPIOAnalogWriteByPin_t)(sGPIOIface_t *pIface, uint16_t nGPIOPin, uint32_t nAnaValue);
 	
-	typedef eGPIOReturn_t (*pfGPIOAnalogReadByPin_t)(sGPIOIface_t *pIface, uint8_t nGPIOPin, uint32_t *nAnaValue);
+	typedef eGPIOReturn_t (*pfGPIOAnalogReadByPin_t)(sGPIOIface_t *pIface, uint16_t nGPIOPin, uint32_t *nAnaValue);
 
 	typedef struct sGPIOInfo_t {
 		eGPIOModes_t eCapabilities;
@@ -83,7 +85,7 @@
 		void *pHWInfo;
 	} sGPIOInfo_t;
 
-	typedef struct sGPIOIface_t {	
+	typedef struct sGPIOIface_t {
 		pfGPIOPortInitialize_t pfPortInit;
 		pfGPIOSetModeByPin_t pfSetModeByPin;
 		pfGPIOReadModeByPin_t pfReadModeByPin;
@@ -115,75 +117,22 @@
 	
 	eGPIOReturn_t GPIOPortInitialize(sGPIOIface_t *pIface, void *pHWInfo);
 	
-	eGPIOReturn_t GPIOSetModeByPin(sGPIOIface_t *pIface, uint8_t nGPIOPin, eGPIOModes_t eMode);
+	eGPIOReturn_t GPIOSetModeByPin(sGPIOIface_t *pIface, uint16_t nGPIOPin, eGPIOModes_t eMode);
 	
-	eGPIOReturn_t GPIOReadModeByPin(sGPIOIface_t *pIface, uint8_t nGPIOPin, eGPIOModes_t *eMode);
+	eGPIOReturn_t GPIOReadModeByPin(sGPIOIface_t *pIface, uint16_t nGPIOPin, eGPIOModes_t *eMode);
 	
-	eGPIOReturn_t GPIODigitalWriteByPin(sGPIOIface_t *pIface, uint8_t nGPIOPin, bool bState);
+	eGPIOReturn_t GPIODigitalWriteByPin(sGPIOIface_t *pIface, uint16_t nGPIOPin, bool bState);
 	
-	eGPIOReturn_t GPIODigitalReadByPin(sGPIOIface_t *pIface, uint8_t nGPIOPin, bool *bState);
+	eGPIOReturn_t GPIODigitalReadByPin(sGPIOIface_t *pIface, uint16_t nGPIOPin, bool *bState);
 	
-	eGPIOReturn_t GPIOPWMWriteByPin(sGPIOIface_t *pIface, uint8_t nGPIOPin, uint32_t nPWMValue);
+	eGPIOReturn_t GPIOPWMWriteByPin(sGPIOIface_t *pIface, uint16_t nGPIOPin, uint32_t nPWMValue);
 	
-	eGPIOReturn_t GPIOAnalogWriteByPin(sGPIOIface_t *pIface, uint8_t nGPIOPin, uint32_t nAnaValue);
+	eGPIOReturn_t GPIOAnalogWriteByPin(sGPIOIface_t *pIface, uint16_t nGPIOPin, uint32_t nAnaValue);
 	
-	eGPIOReturn_t GPIOAnalogReadByPin(sGPIOIface_t *pIface, uint8_t nGPIOPin, uint32_t *nAnaValue);
+	eGPIOReturn_t GPIOAnalogReadByPin(sGPIOIface_t *pIface, uint16_t nGPIOPin, uint32_t *nAnaValue);
 
 /***** Functions	*****/
 
-eGPIOReturn_t GPIOInterfaceInitialize(sGPIOIface_t *pIface) {
-	pIface->pfPortInit = &GPIOPortInitialize;
-	pIface->pfSetModeByPin = &GPIOSetModeByPin;
-	pIface->pfReadModeByPin = &GPIOReadModeByPin;
-	pIface->pfDigitalWriteByPin = &GPIODigitalWriteByPin;
-	pIface->pfDigitalReadByPin = &GPIODigitalReadByPin;
-	pIface->pfPWMWriteByPin = &GPIOPWMWriteByPin;
-	pIface->pfAnalogWriteByPin = &GPIOAnalogWriteByPin;
-	pIface->pfAnalogReadByPin = &GPIOAnalogReadByPin;
 	
-	memset(pIface->aGPIO, sizeof(sGPIOInfo_t) * GPIO_IOCNT, 0);
-	
-	pIface->nPWMBitDepth = 0;
-	pIface->nAnaInBitDepth = 0;
-	pIface->nAnaOutBitDepth = 0;
-	pIface->nGPIOCnt = 0;
-	
-	pIface->pHWInfo = NULL;
-	
-	return GPIO_Success;
-}
-
-eGPIOReturn_t GPIOPortInitialize(sGPIOIface_t *pIface, void *pHWInfo) {
-	return GPIOFail_Unsupported;
-}
-	
-eGPIOReturn_t GPIOSetModeByPin(sGPIOIface_t *pIface, uint8_t nGPIOPin, eGPIOModes_t eMode) {
-	return GPIOFail_Unsupported;
-}
-
-eGPIOReturn_t GPIOReadModeByPin(sGPIOIface_t *pIface, uint8_t nGPIOPin, eGPIOModes_t *eMode) {
-	return GPIOFail_Unsupported;
-}
-
-eGPIOReturn_t GPIODigitalWriteByPin(sGPIOIface_t *pIface, uint8_t nGPIOPin, bool bState) {
-	return GPIOFail_Unsupported;
-}
-
-eGPIOReturn_t GPIODigitalReadByPin(sGPIOIface_t *pIface, uint8_t nGPIOPin, bool *bState) {
-	return GPIOFail_Unsupported;
-}
-
-eGPIOReturn_t GPIOPWMWriteByPin(sGPIOIface_t *pIface, uint8_t nGPIOPin, uint32_t nPWMValue) {
-	return GPIOFail_Unsupported;
-}
-
-eGPIOReturn_t GPIOAnalogWriteByPin(sGPIOIface_t *pIface, uint8_t nGPIOPin, uint32_t nAnaValue) {
-	return GPIOFail_Unsupported;
-}
-
-eGPIOReturn_t GPIOAnalogReadByPin(sGPIOIface_t *pIface, uint8_t nGPIOPin, uint32_t *nAnaValue) {
-	return GPIOFail_Unsupported;
-}
-
 #endif
 
