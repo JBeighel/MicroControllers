@@ -1,31 +1,36 @@
 /**	@defgroup	GROUPNAME
 	@brief		
-	@details	
-		
+	@details	v
+	#Description
+	
+	#File Information
+		File:	???.c
+		Author:	J. Beighel
+		Date:	MM-DD-YYYY
 */
 
 #ifndef __NAME_H
 	#define __NAME_H
 
-/***** Includes		*****/
+/*****	Includes	*****/
 
 
 /*****	Constants	*****/
 
 
-/***** Definitions	*****/
+/*****	Definitions	*****/
 
 
-/***** Constants	*****/
+/*****	Constants	*****/
 
 
-/***** Globals		*****/
+/*****	Globals		*****/
 
 
-/***** Prototypes 	*****/
+/*****	Prototypes 	*****/
 
 
-/***** Functions	*****/
+/*****	Functions	*****/
 
 
 #endif
