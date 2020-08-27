@@ -44,6 +44,7 @@
 		W5500Fail_Unsupported	= -4,	/**< A request for an unsupported protocol or socket type */
 		W5500Fail_NoSockets		= -5,	/**< Unable to create a socket, all are in use */
 		W5500Fail_InvalidSocket	= -6,	/**< A request was made for an invalid socket number */
+		W5500Fail_TXFreeSpace	= -7	/**< Transmit data size was too large */
 	} eW5500Return_t;
 	
 	typedef enum eW5500Control_t {
@@ -381,14 +382,12 @@
 	//Detect accepted comms or see if data is waiting, connaddr is remote connection (tcp only)
 	eW5500Return_t W5500SocketStatus(sW5500Obj_t *pDev, uint8_t nSocket, eW5500SckStat_t *eCurrState, uint16_t *nBytesWaiting, sockaddr_in *pConnAddr, uint8_t nConnAddrLen);
 	
-	//Accept incoming data, addr is source of data
-	eW5500Return_t W5500SocketReceiveFrom(sW5500Obj_t *pDev, uint8_t nSocket, sockaddr_in *pAddr, uint16_t nAddrLen, uint8_t pBuff, uint16_t nBuffSize);
+	//Accept incoming data, chip never provids source of packet
+	eW5500Return_t W5500SocketReceive(sW5500Obj_t *pDev, uint8_t nSocket, uint8_t *pBuff, uint16_t nBuffSize, uint16_t *pnBytesRead);
 	
-	//TCP only
-	eW5500Return_t W5500SocketSend(sW5500Obj_t *pDev, uint8_t nSocket, uint8_t pBuff, uint16_t nBuffSize);
+	eW5500Return_t W5500SocketTCPSend(sW5500Obj_t *pDev, uint8_t nSocket, uint8_t *pBuff, uint16_t nBuffSize);
 
-	//UDP only, addr is destination of data
-	eW5500Return_t W5500SocketSendTo(sW5500Obj_t *pDev, uint8_t nSocket, sockaddr_in *pAddr, uint16_t nAddrLen, uint8_t pBuff, uint16_t nBuffSize);
+	eW5500Return_t W5500SocketUDPSend(sW5500Obj_t *pDev, uint8_t nSocket, in_addr *pAddr, uint16_t nPort, uint8_t *pBuff, uint16_t nBuffSize);
 	
 	eW5500Return_t W5500CloseSocket(sW5500Obj_t *pDev, uint8_t nSocket);
 	
@@ -567,7 +566,7 @@ eW5500Return_t W5500SocketListen(sW5500Obj_t *pDev, uint8_t *pnSocket, uint16_t 
 	
 	switch (eProtocol) { //Set the socket to the requested protocol
 		case IPPROTO_TCP:
-			anRegVal[0] = W5500SckMode_ProtTCP;
+			anRegVal[0] = W5500SckMode_ProtTCP | W5500SckMode_NDMCMMB;
 			break;
 			
 		case IPPROTO_UDP:
@@ -719,6 +718,167 @@ eW5500Return_t W5500SocketStatus(sW5500Obj_t *pDev, uint8_t nSocket, eW5500SckPr
 		pConnAddr->sin_port = 0;
 		pConnAddr->sin_addr.S_un.S_addr = 0;
 	}
+	
+	return W5500_Success;
+}
+
+eW5500Return_t W5500SocketReceive(sW5500Obj_t *pDev, uint8_t nSocket, uint8_t *pBuff, uint16_t nBuffSize, uint16_t *pnBytesRead) {
+	uint8_t nControl;
+	uint8_t aBytes[4];
+	uint16_t nReadAddr, nAvail;
+	
+	if (nSocket >= W5500_NUMSOCKETS) {
+		return W5500Fail_InvalidSocket;
+	}
+	
+	nControl = nSocket << W5500BSB_SocketLShift;
+	nControl |= W5500BSB_Register;
+	
+	//Find out how many bytes are available
+	nReadAddr = 0;
+	W5500ReadData(pDev, W5500SckReg_RXRecvSize0, (eW5500Control_t)nControl, aBytes, 2);
+	nAvail = aBytes[0] << 8;
+	nAvail |= aBytes[1];
+	while (nReadAddr != nAvail) { //Read till we get a match in case data is arriving
+		nReadAddr = nAvail;
+		
+		W5500ReadData(pDev, W5500SckReg_RXRecvSize0, (eW5500Control_t)nControl, aBytes, 2);
+		nAvail = aBytes[0] << 8;
+		nAvail |= aBytes[1];
+	}
+	
+	if (nBuffSize > nAvail) { //Can't read more data than what is available
+		nBuffSize = nAvail;
+	}
+	
+	//Get the RX read address
+	W5500ReadData(pDev, W5500SckReg_RXReadPtr0, (eW5500Control_t)nControl, aBytes, 2);
+	nReadAddr = aBytes[0] << 8;
+	nReadAddr |= aBytes[1];
+	
+	//Read from the RX buffer at RX read address (up to RX write or 0xFFFF)
+	*pnBytesRead = nBuffSize;
+	nControl = nSocket << W5500BSB_SocketLShift;
+	nControl |= W5500BSB_RXBuffer;
+	W5500ReadData(pDev, nReadAddr, (eW5500Control_t)nControl, pBuff, nBuffSize);
+	
+	//Update RX Read address with where we've read to
+	nControl = nSocket << W5500BSB_SocketLShift;
+	nControl |= W5500BSB_Register;
+	
+	nReadAddr += nBuffSize;
+	aBytes[0] = nReadAddr >> 8;
+	aBytes[1] = nReadAddr & 0xFF;
+	W5500WriteData(pDev, W5500SckReg_RXReadPtr0, (eW5500Control_t)nControl, aBytes, 2);
+	
+	//Issue RECV command to take receipt of the data
+	aBytes[0] = W5500SckCmd_Recv;
+	W5500WriteData(pDev, W5500SckReg_Command, (eW5500Control_t)nControl, aBytes, 1);
+	
+	return W5500_Success;
+}
+
+eW5500Return_t W5500SocketTCPSend(sW5500Obj_t *pDev, uint8_t nSocket, uint8_t *pBuff, uint16_t nBuffSize) {
+	uint8_t nControl;
+	uint8_t aBytes[4];
+	uint16_t nTXAddr, nAvail;
+	
+	if (nSocket >= W5500_NUMSOCKETS) {
+		return W5500Fail_InvalidSocket;
+	}
+	
+	nControl = nSocket << W5500BSB_SocketLShift;
+	nControl |= W5500BSB_Register;
+	
+	//Find out how many bytes are available
+	W5500ReadData(pDev, W5500SckReg_TXFreeSize0, (eW5500Control_t)nControl, aBytes, 2);
+	nAvail = aBytes[0] << 8;
+	nAvail |= aBytes[1];
+	
+	if (nBuffSize > nAvail) { //Can't send more data than what is available
+		return W5500Fail_TXFreeSpace;
+	}
+	
+	//Get the TX write address
+	W5500ReadData(pDev, W5500SckReg_TXWritePtr0, (eW5500Control_t)nControl, aBytes, 2);
+	nTXAddr = aBytes[0] << 8;
+	nTXAddr |= aBytes[1];
+	
+	//Read from the RX buffer at RX read address (up to RX write or 0xFFFF)
+	nControl = nSocket << W5500BSB_SocketLShift;
+	nControl |= W5500BSB_TXBuffer;
+	W5500WriteData(pDev, nTXAddr, (eW5500Control_t)nControl, pBuff, nBuffSize);
+	
+	//Update RX Read address with where we've read to
+	nControl = nSocket << W5500BSB_SocketLShift;
+	nControl |= W5500BSB_Register;
+	
+	nTXAddr += nBuffSize;
+	aBytes[0] = nTXAddr >> 8;
+	aBytes[1] = nTXAddr & 0xFF;
+	W5500WriteData(pDev, W5500SckReg_TXWritePtr0, (eW5500Control_t)nControl, aBytes, 2);
+	
+	//Issue RECV command to take receipt of the data
+	aBytes[0] = W5500SckCmd_Send;
+	W5500WriteData(pDev, W5500SckReg_Command, (eW5500Control_t)nControl, aBytes, 1);
+	
+	return W5500_Success;
+}
+
+eW5500Return_t W5500SocketUDPSend(sW5500Obj_t *pDev, uint8_t nSocket, in_addr *pAddr, uint16_t nPort, uint8_t *pBuff, uint16_t nBuffSize) {
+	uint8_t nControl;
+	uint8_t aBytes[4];
+	uint16_t nTXAddr, nAvail;
+	
+	if (nSocket >= W5500_NUMSOCKETS) {
+		return W5500Fail_InvalidSocket;
+	}
+	
+	nControl = nSocket << W5500BSB_SocketLShift;
+	nControl |= W5500BSB_Register;
+	
+	//Setup the IP and port to send to
+	aBytes[0] = pAddr->S_un.S_un_b.S_b1;
+	aBytes[1] = pAddr->S_un.S_un_b.S_b2;
+	aBytes[2] = pAddr->S_un.S_un_b.S_b3;
+	aBytes[3] = pAddr->S_un.S_un_b.S_b4;
+	W5500WriteData(pDev, W5500SckReg_DestIPAddr0, (eW5500Control_t)nControl, aBytes, 4);
+	
+	aBytes[0] = nPort >> 8;
+	aBytes[1] = nPort & 0xFF;;
+	W5500WriteData(pDev, W5500SckReg_DestPort0, (eW5500Control_t)nControl, aBytes, 2);
+	
+	//Find out how many bytes are available
+	W5500ReadData(pDev, W5500SckReg_TXFreeSize0, (eW5500Control_t)nControl, aBytes, 2);
+	nAvail = aBytes[0] << 8;
+	nAvail |= aBytes[1];
+	
+	if (nBuffSize > nAvail) { //Can't send more data than what is available
+		return W5500Fail_TXFreeSpace;
+	}
+	
+	//Get the TX write address
+	W5500ReadData(pDev, W5500SckReg_TXWritePtr0, (eW5500Control_t)nControl, aBytes, 2);
+	nTXAddr = aBytes[0] << 8;
+	nTXAddr |= aBytes[1];
+	
+	//Read from the RX buffer at RX read address (up to RX write or 0xFFFF)
+	nControl = nSocket << W5500BSB_SocketLShift;
+	nControl |= W5500BSB_TXBuffer;
+	W5500WriteData(pDev, nTXAddr, (eW5500Control_t)nControl, pBuff, nBuffSize);
+	
+	//Update RX Read address with where we've read to
+	nControl = nSocket << W5500BSB_SocketLShift;
+	nControl |= W5500BSB_Register;
+	
+	nTXAddr += nBuffSize;
+	aBytes[0] = nTXAddr >> 8;
+	aBytes[1] = nTXAddr & 0xFF;
+	W5500WriteData(pDev, W5500SckReg_TXWritePtr0, (eW5500Control_t)nControl, aBytes, 2);
+	
+	//Issue RECV command to take receipt of the data
+	aBytes[0] = W5500SckCmd_Send;
+	W5500WriteData(pDev, W5500SckReg_Command, (eW5500Control_t)nControl, aBytes, 1);
 	
 	return W5500_Success;
 }
