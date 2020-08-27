@@ -2,10 +2,19 @@
 	@brief		Driver for the Wizner W5500 Ethernet device
 	@details	v0.1
 	# Description #
-		The device does not allow multiple socket types.  Once you pick TCP/UDP all of them get
-		set that way
+		This is an ethernet device that includes buffers for transmit/receive as well as includes
+		the entire Ethernet stack.  It will allow 8 sockets to be used for Ethernet communication
 	
 	# Usage #
+		You must first establish a Generic Interface to a SPI bus.  Then create an instance of 
+		this driver connected to that SPI interface.
+		
+		To prepare the device for use you must set the IP address, default gateway, sugnet mask
+		and mac address.  At this point you should be able to ping the device.
+		
+		Socket Listen and Socket Connect functions will create sockets as client or server for 
+		a specified protocol (TCP or UDP).  The Socket number can be used in Socket Status to
+		see the condition of the socker.
 	
 	# File Info #
 		File:	W5500Driver.c
@@ -65,14 +74,14 @@
 		
 		W5500BSB_SocketMask		= 0xE0,
 		W5500BSB_SocketLShift	= 5,	/**< Number of bits to left shift the socket number */
-		W5500BSB_Socket0		= 0x00,
-		W5500BSB_Socket1		= 0x20,
-		W5500BSB_Socket2		= 0x40,
-		W5500BSB_Socket3		= 0x60,
-		W5500BSB_Socket4		= 0x80,
-		W5500BSB_Socket5		= 0xA0,
-		W5500BSB_Socket6		= 0xC0,
-		W5500BSB_Socket7		= 0xE0,
+		W5500BSB_Socket0		= 0x00,	/**< Indicate socket 0 to be used */
+		W5500BSB_Socket1		= 0x20,	/**< Indicate socket 1 to be used */
+		W5500BSB_Socket2		= 0x40,	/**< Indicate socket 2 to be used */
+		W5500BSB_Socket3		= 0x60,	/**< Indicate socket 3 to be used */
+		W5500BSB_Socket4		= 0x80,	/**< Indicate socket 4 to be used */
+		W5500BSB_Socket5		= 0xA0,	/**< Indicate socket 5 to be used */
+		W5500BSB_Socket6		= 0xC0,	/**< Indicate socket 6 to be used */
+		W5500BSB_Socket7		= 0xE0,	/**< Indicate socket 7 to be used */
 		
 		W5500BSB_RegBuffMask	= 0x18,
 		W5500BSB_Register		= 0x08,	/**< Flag to indicate use of the socket registers */
@@ -344,7 +353,25 @@
 
 
 /***** Prototypes 	*****/
+	/**	@brief		Initializes the Wiznet W5500 object
+		@details	Prepares the object for use, will alsoe reach out to the peripheral to
+			restart it and apply some basic configuration.
+		@param		pDev		Pointer to the object structure to prepare
+		@param		pSpiBus		Pointer to the SPI bus interface for this object to use
+		@param		pIOObj		Pointer to the GPIO interface for this object to use
+		@param		nCSPin		Identifier for the GPIO pin to use as chip select
+		@return		W5500_Success on successful completion, or a code indicating the failure
+		@ingroup	w5500driver
+	*/
 	eW5500Return_t W5500Initialize(sW5500Obj_t *pDev, sSPIIface_t *pSpiBus, sGPIOIface_t *pIOObj, uint8_t nCSPin);
+	
+	/**	@brief		Discovers the peripheral on the bus
+		@details	Does not configure the device, only queries it to determine the correct part
+			is connected to the bus.
+		@param		pDev		Pointer to the device object
+		@return		W5500_Success on successful completion, or a code indicating the failure
+		@ingroup	w5500driver
+	*/
 	eW5500Return_t W5500VerifyPart(sW5500Obj_t *pDev);
 	
 	/**	@brief		Reports if the hardwre link is up and available or not
@@ -393,7 +420,18 @@
 	//Detect accepted comms or see if data is waiting, connaddr is remote connection (tcp only)
 	eW5500Return_t W5500SocketStatus(sW5500Obj_t *pDev, uint8_t nSocket, eW5500SckProt_t *eProtocol, eW5500SckStat_t *eCurrState, uint16_t *nBytesWaiting, SOCKADDR_IN *pConnAddr, uint8_t nConnAddrLen);
 	
-	//Accept incoming data, chip never provids source of packet
+	/**	@brief		Reads in any data waiting for a specific socket
+		@details	The W5500 does not provide information on the source of the data.  Will read
+			until either the buffer is filled or all available data has been read.
+		@param		pDev		Pointer to the W5500 driver object that owns this socket
+		@param		nSocket		The iedintifier of the socket to read from
+		@param		pBuff		Pointer to the buffer that will receive the data
+		@param		nBuffSize	The maximum number of bytes the buffer can holding
+		@param		pnBytesRead	Used to return the number of bytes that were actually read
+		@return		W5500_Success if the port is correctly bind, an error or warning code will
+			be provided to indicate the failure
+		@ingroup	w5500driver
+	*/
 	eW5500Return_t W5500SocketReceive(sW5500Obj_t *pDev, uint8_t nSocket, uint8_t *pBuff, uint16_t nBuffSize, uint16_t *pnBytesRead);
 	
 	eW5500Return_t W5500SocketTCPSend(sW5500Obj_t *pDev, uint8_t nSocket, uint8_t *pBuff, uint16_t nBuffSize);
