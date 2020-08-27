@@ -1,6 +1,6 @@
 /**	@defgroup	gpioarduino
 	@brief		Implementation of the GPIO General Interface for Arduino
-	@details	v0.1
+	@details	v0.2
 		
 */
 
@@ -182,19 +182,19 @@
 
 
 /***** Prototypes 	*****/
-	eGPIOReturn_t ArduinoGPIOSetModeByPin(sGPIOIface_t *pIface, uint8_t nGPIOPin, eGPIOModes_t eMode);
+	eGPIOReturn_t ArduinoGPIOSetModeByPin(sGPIOIface_t *pIface, uint16_t nGPIOPin, eGPIOModes_t eMode);
 	
-	eGPIOReturn_t ArduinoGPIOReadModeByPin(sGPIOIface_t *pIface, uint8_t nGPIOPin, eGPIOModes_t *eMode);
+	eGPIOReturn_t ArduinoGPIOReadModeByPin(sGPIOIface_t *pIface, uint16_t nGPIOPin, eGPIOModes_t *eMode);
 	
-	eGPIOReturn_t ArduinoGPIODigitalWriteByPin(sGPIOIface_t *pIface, uint8_t nGPIOPin, bool bState);
+	eGPIOReturn_t ArduinoGPIODigitalWriteByPin(sGPIOIface_t *pIface, uint16_t nGPIOPin, bool bState);
 	
-	eGPIOReturn_t ArduinoGPIODigitalReadByPin(sGPIOIface_t *pIface, uint8_t nGPIOPin, bool *bState);
+	eGPIOReturn_t ArduinoGPIODigitalReadByPin(sGPIOIface_t *pIface, uint16_t nGPIOPin, bool *bState);
 	
-	eGPIOReturn_t ArduinoGPIOPWMWriteByPin(sGPIOIface_t *pIface, uint8_t nGPIOPin, uint32_t nPWMValue);
+	eGPIOReturn_t ArduinoGPIOPWMWriteByPin(sGPIOIface_t *pIface, uint16_t nGPIOPin, uint32_t nPWMValue);
 	
-	eGPIOReturn_t ArduinoGPIOAnalogWriteByPin(sGPIOIface_t *pIface, uint8_t nGPIOPin, uint32_t nAnaValue);
+	eGPIOReturn_t ArduinoGPIOAnalogWriteByPin(sGPIOIface_t *pIface, uint16_t nGPIOPin, uint32_t nAnaValue);
 	
-	eGPIOReturn_t ArduinoGPIOAnalogReadByPin(sGPIOIface_t *pIface, uint8_t nGPIOPin, uint32_t *nAnaValue);
+	eGPIOReturn_t ArduinoGPIOAnalogReadByPin(sGPIOIface_t *pIface, uint16_t nGPIOPin, uint32_t *nAnaValue);
 
 /***** Functions	*****/
 
@@ -254,7 +254,7 @@ eGPIOReturn_t ArduinoGPIOPortInitialize(sGPIOIface_t *pIface, void *pHWInfo) {
 	return GPIO_Success;
 }
 	
-eGPIOReturn_t ArduinoGPIOSetModeByPin(sGPIOIface_t *pIface, uint8_t nGPIOPin, eGPIOModes_t eMode) {
+eGPIOReturn_t ArduinoGPIOSetModeByPin(sGPIOIface_t *pIface, uint16_t nGPIOPin, eGPIOModes_t eMode) {
 	uint8_t nIdx = IndexInArray_u8(nGPIOPin, gArduinoGPIOList, ARDUINO_GPIOCNT);
 	
 	if (nIdx >= ARDUINO_GPIOCNT) {
@@ -296,7 +296,7 @@ eGPIOReturn_t ArduinoGPIOSetModeByPin(sGPIOIface_t *pIface, uint8_t nGPIOPin, eG
 	return GPIO_Success;
 }
 	
-eGPIOReturn_t ArduinoGPIOReadModeByPin(sGPIOIface_t *pIface, uint8_t nGPIOPin, eGPIOModes_t *eMode) {
+eGPIOReturn_t ArduinoGPIOReadModeByPin(sGPIOIface_t *pIface, uint16_t nGPIOPin, eGPIOModes_t *eMode) {
 	uint8_t nIdx = IndexInArray_u8(nGPIOPin, gArduinoGPIOList, ARDUINO_GPIOCNT);
 	
 	if (nIdx >= ARDUINO_GPIOCNT) {
@@ -308,7 +308,7 @@ eGPIOReturn_t ArduinoGPIOReadModeByPin(sGPIOIface_t *pIface, uint8_t nGPIOPin, e
 	return GPIO_Success;
 }
 
-eGPIOReturn_t ArduinoGPIODigitalWriteByPin(sGPIOIface_t *pIface, uint8_t nGPIOPin, bool bState) {
+eGPIOReturn_t ArduinoGPIODigitalWriteByPin(sGPIOIface_t *pIface, uint16_t nGPIOPin, bool bState) {
 	uint8_t nIdx = IndexInArray_u8(nGPIOPin, gArduinoGPIOList, ARDUINO_GPIOCNT);
 	
 	if (nIdx >= ARDUINO_GPIOCNT) {
@@ -324,7 +324,7 @@ eGPIOReturn_t ArduinoGPIODigitalWriteByPin(sGPIOIface_t *pIface, uint8_t nGPIOPi
 	return GPIO_Success;
 }
 
-eGPIOReturn_t ArduinoGPIODigitalReadByPin(sGPIOIface_t *pIface, uint8_t nGPIOPin, bool *bState) {
+eGPIOReturn_t ArduinoGPIODigitalReadByPin(sGPIOIface_t *pIface, uint16_t nGPIOPin, bool *bState) {
 	if (digitalRead(nGPIOPin) == HIGH) {
 		*bState = true;
 	} else {
@@ -334,7 +334,7 @@ eGPIOReturn_t ArduinoGPIODigitalReadByPin(sGPIOIface_t *pIface, uint8_t nGPIOPin
 	return GPIO_Success;
 }
 
-eGPIOReturn_t ArduinoGPIOPWMWriteByPin(sGPIOIface_t *pIface, uint8_t nGPIOPin, uint32_t nPWMValue) {
+eGPIOReturn_t ArduinoGPIOPWMWriteByPin(sGPIOIface_t *pIface, uint16_t nGPIOPin, uint32_t nPWMValue) {
 	uint8_t nIdx = IndexInArray_u8(nGPIOPin, gArduinoGPIOList, ARDUINO_GPIOCNT);
 	
 	if (nIdx >= ARDUINO_GPIOCNT) {
@@ -350,7 +350,7 @@ eGPIOReturn_t ArduinoGPIOPWMWriteByPin(sGPIOIface_t *pIface, uint8_t nGPIOPin, u
 	return GPIO_Success;
 }
 
-eGPIOReturn_t ArduinoGPIOAnalogWriteByPin(sGPIOIface_t *pIface, uint8_t nGPIOPin, uint32_t nAnaValue) {
+eGPIOReturn_t ArduinoGPIOAnalogWriteByPin(sGPIOIface_t *pIface, uint16_t nGPIOPin, uint32_t nAnaValue) {
 	uint8_t nIdx = IndexInArray_u8(nGPIOPin, gArduinoGPIOList, ARDUINO_GPIOCNT);
 	
 	if (nIdx >= ARDUINO_GPIOCNT) {
@@ -366,7 +366,7 @@ eGPIOReturn_t ArduinoGPIOAnalogWriteByPin(sGPIOIface_t *pIface, uint8_t nGPIOPin
 	return GPIO_Success;
 }
 
-eGPIOReturn_t ArduinoGPIOAnalogReadByPin(sGPIOIface_t *pIface, uint8_t nGPIOPin, uint32_t *nAnaValue) {
+eGPIOReturn_t ArduinoGPIOAnalogReadByPin(sGPIOIface_t *pIface, uint16_t nGPIOPin, uint32_t *nAnaValue) {
 	uint8_t nIdx = IndexInArray_u8(nGPIOPin, gArduinoGPIOList, ARDUINO_GPIOCNT);
 	
 	if (nIdx >= ARDUINO_GPIOCNT) {
