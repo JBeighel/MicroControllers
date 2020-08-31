@@ -2,10 +2,19 @@
 	@brief		Driver for the Wizner W5500 Ethernet device
 	@details	v0.1
 	# Description #
-		The device does not allow multiple socket types.  Once you pick TCP/UDP all of them get
-		set that way
+		This is an ethernet device that includes buffers for transmit/receive as well as includes
+		the entire Ethernet stack.  It will allow 8 sockets to be used for Ethernet communication
 	
 	# Usage #
+		You must establish a Generic Interface to GPIO and a SPI bus.  Then create an instance
+		of this driver connected to those interfaces.
+		
+		To prepare the device for use you must set the IP address, default gateway, sugnet mask
+		and mac address.  At this point you should be able to ping the device.
+		
+		Socket Listen and Socket Connect functions will create sockets as client or server for 
+		a specified protocol (TCP or UDP).  The Socket number can be used in Socket Status to
+		see the condition of the socker.
 	
 	# File Info #
 		File:	W5500Driver.c
@@ -41,11 +50,14 @@
 	*/
 	#define W5500_MICROSECCSHIGH	1
 	
-	/** @brief		The port number to begin with when making outbound connections
+	/**	@brief		The port number to begin with when making outbound connections
 		@ingroup	w5500driver
 	*/
 	#define W5500_HIGHPORTSTART		50000
 	
+	/**	@brief		All return codes for the W5500 driver 
+		@ingroup	w5500driver
+	*/
 	typedef enum eW5500Return_t {
 		W5500Warn_Unknown		= 1,	/**< An unknown but recoverable error happened during the operation */
 		W5500_Success			= 0,	/**< The operation completed successfully */
@@ -58,6 +70,9 @@
 		W5500Fail_TXFreeSpace	= -7	/**< Transmit data size was too large */
 	} eW5500Return_t;
 	
+	/**	@brief		Control codes for area of memory in W5500 to access
+		@ingroup	w5500driver
+	*/
 	typedef enum eW5500Control_t {
 		W5500BSB_BSBFullMask	= 0xF8,
 		
@@ -65,14 +80,14 @@
 		
 		W5500BSB_SocketMask		= 0xE0,
 		W5500BSB_SocketLShift	= 5,	/**< Number of bits to left shift the socket number */
-		W5500BSB_Socket0		= 0x00,
-		W5500BSB_Socket1		= 0x20,
-		W5500BSB_Socket2		= 0x40,
-		W5500BSB_Socket3		= 0x60,
-		W5500BSB_Socket4		= 0x80,
-		W5500BSB_Socket5		= 0xA0,
-		W5500BSB_Socket6		= 0xC0,
-		W5500BSB_Socket7		= 0xE0,
+		W5500BSB_Socket0		= 0x00,	/**< Indicate socket 0 to be used */
+		W5500BSB_Socket1		= 0x20,	/**< Indicate socket 1 to be used */
+		W5500BSB_Socket2		= 0x40,	/**< Indicate socket 2 to be used */
+		W5500BSB_Socket3		= 0x60,	/**< Indicate socket 3 to be used */
+		W5500BSB_Socket4		= 0x80,	/**< Indicate socket 4 to be used */
+		W5500BSB_Socket5		= 0xA0,	/**< Indicate socket 5 to be used */
+		W5500BSB_Socket6		= 0xC0,	/**< Indicate socket 6 to be used */
+		W5500BSB_Socket7		= 0xE0,	/**< Indicate socket 7 to be used */
 		
 		W5500BSB_RegBuffMask	= 0x18,
 		W5500BSB_Register		= 0x08,	/**< Flag to indicate use of the socket registers */
@@ -90,6 +105,9 @@
 		W5500BSB_OM4ByteLen		= 0x03,
 	} eW5500Control_t;
 	
+	/**	@brief		W5500 Common register addresses
+		@ingroup	w5500driver
+	*/
 	typedef enum eW5500CmnReg_t {
 		W5500CmnReg_Mode		= 0x0000,
 		
@@ -157,15 +175,21 @@
 		
 		W5500CmnReg_Version		= 0x0039,
 	} eW5500CmnReg_t;
-	
+
+	/**	@brief		W5500 Common register Mode bit values
+		@ingroup	w5500driver
+	*/
 	typedef enum eW5500CmdMode_t {
-		W5500CmdMode_Reset		= 0x80,
-		W5500CmdMode_WakeOnLAN	= 0x20,
-		W5500CmdMode_PingBlock	= 0x10,
+		W5500CmdMode_Reset		= 0x80,	/**< Set to reset the device, will clear automatically */
+		W5500CmdMode_WakeOnLAN	= 0x20,	
+		W5500CmdMode_PingBlock	= 0x10,	/**< Set to disable ping responses, clear to allow */
 		W5500CmdMode_PPPoE		= 0x08,
 		W5500CmdMode_ForceARP	= 0x02,
 	} eW5500CmdMode_t;
 	
+	/**	@brief		Socket register addresses
+		@ingroup	w5500driver
+	*/
 	typedef enum eW5500SockReg_t {
 		W5500SckReg_Mode		= 0x0000,
 		W5500SckReg_Command		= 0x0001,
@@ -209,6 +233,9 @@
 		W5500SckReg_KeepAliveTmr= 0x002F,
 	} eW5500SockReg_t;
 	
+	/**	@brief		Individual socket mode configuration register
+		@ingroup	w5500driver
+	*/
 	typedef enum eW5500SckMode_t{
 		W5500SckMode_MultiMFEn	= 0x80,	/**< UDP Mode Set Enable/Clear Disable Multicastng, MAC Raw Set Enable/Clear Disabel MAC filtering */
 		W5500SckMode_BCastBl	= 0x40,	/**< Set Enable/Clear Disable broadcast blcoking in MAC Raw mode */
@@ -222,6 +249,9 @@
 		W5500SckMode_ProtMACRAW	= 0x04,	/**< Socket is intended for MAC Raw (Socket 0 only) */
 	} eW5500SckMode_t;
 	
+	/**	@brief		Individual socket command register values
+		@ingroup	w5500driver
+	*/
 	typedef enum eW5500SckCmd_t{
 		W5500SckCmd_Open		= 0x01,
 		W5500SckCmd_Listen		= 0x02,
@@ -234,6 +264,9 @@
 		W5500SckCmd_Recv		= 0x40,
 	} eW5500SckCmd_t;
 	
+	/**	@brief		Individual socket interrupt register values
+		@ingroup	w5500driver
+	*/
 	typedef enum eW5500SckInt_t {
 		W5500SckInt_SendOK		= 0x10,
 		W5500SckInt_Timeout		= 0x08,
@@ -244,13 +277,16 @@
 		W5500SckInt_AllMask		= 0x1F,	/**< Mask of all interrupt bits */
 	} eW5500SckInt_t;
 	
+	/**	@brief		Individual socket status register values
+		@ingroup	w5500driver
+	*/
 	typedef enum eW5500SckStat_t {
-		W5500SckStat_Closed		= 0x00,
-		W5500SckStat_Init		= 0x13,
-		W5500SckStat_Listen		= 0x14,
-		W5500SckStat_Establish	= 0x17,
-		W5500SckStat_CloseWait	= 0x1C,
-		W5500SckStat_UDP		= 0x22,
+		W5500SckStat_Closed		= 0x00,	/**< Socket is closed */
+		W5500SckStat_Init		= 0x13,	/**< Socket has been initialized, but is not is use */
+		W5500SckStat_Listen		= 0x14,	/**< Socket is listening for incoming connections (TCP only) */
+		W5500SckStat_Establish	= 0x17,	/**< Socket is connected to a remote device */
+		W5500SckStat_CloseWait	= 0x1C,	/**< Socket is closing, will switch to Closed when done */
+		W5500SckStat_UDP		= 0x22,	/**< Socket is listening for incoming data (UDP only) */
 		W5500SckStat_MACRaw		= 0x42,
 		W5500SckStat_SynSent	= 0x15,
 		W5500SckStat_SynRecv	= 0x16,
@@ -260,6 +296,9 @@
 		W5500SckStat_LastAck	= 0x1D,
 	} eW5500SckStat_t;
 	
+	/**	@brief		Phy configuration register values
+		@ingroup	w5500driver
+	*/
 	typedef enum eW5500PhyCfg_t {
 		W5500Phy_LinkStatus		= 0x01,	/**< Set if Link is up, clear if Down */
 		W5500Phy_SpeedStatus	= 0x02,	/**< Set for 100 Mbps speed, clear for 10 Mbps */
@@ -277,6 +316,9 @@
 		W5500Phy_CfgAllCapAuto	= 0x38,	/**< Set Phy to allow all capabilities and auto-negotiation enabled */
 	} eW5500PhyCfg_t;
 	
+	/**< @brief		Individual socket transmit an recieve buffer size values
+		@ingroup	w5500driver
+	*/
 	typedef enum eW5500SckBuffSz_t {
 		W5500SckBuff_0KB		= 0,	/**< Set socket buffer to 0 bytes in size */
 		W5500SckBuff_1KB		= 1,	/**< Set socket buffer to 1K bytes in size */
@@ -296,6 +338,7 @@
 		IPPROTO_INVALID,	/**< Unknown or invalid protocol */
 	} eW5500SckProt_t;
 	
+	/**< @brief		Object representing the W5500 device
 	typedef struct sW5500Obj_t {
 		sGPIOIface_t *pGPIO;		/**< Pointer to GPIO module for Chip Select and Interrupt */
 		uint8_t nChipSelectPin;		/**< Chip select pin in the GPIO module */
@@ -344,7 +387,25 @@
 
 
 /***** Prototypes 	*****/
+	/**	@brief		Initializes the Wiznet W5500 object
+		@details	Prepares the object for use, will alsoe reach out to the peripheral to
+			restart it and apply some basic configuration.
+		@param		pDev		Pointer to the object structure to prepare
+		@param		pSpiBus		Pointer to the SPI bus interface for this object to use
+		@param		pIOObj		Pointer to the GPIO interface for this object to use
+		@param		nCSPin		Identifier for the GPIO pin to use as chip select
+		@return		W5500_Success on successful completion, or a code indicating the failure
+		@ingroup	w5500driver
+	*/
 	eW5500Return_t W5500Initialize(sW5500Obj_t *pDev, sSPIIface_t *pSpiBus, sGPIOIface_t *pIOObj, uint8_t nCSPin);
+	
+	/**	@brief		Discovers the peripheral on the bus
+		@details	Does not configure the device, only queries it to determine the correct part
+			is connected to the bus.
+		@param		pDev		Pointer to the device object
+		@return		W5500_Success on successful completion, or a code indicating the failure
+		@ingroup	w5500driver
+	*/
 	eW5500Return_t W5500VerifyPart(sW5500Obj_t *pDev);
 	
 	/**	@brief		Reports if the hardwre link is up and available or not
@@ -356,11 +417,49 @@
 	*/
 	eW5500Return_t W5500LinkStatus(sW5500Obj_t *pDev, bool *pbIsUp);
 	
+	/**	@brief		Set the MAC address for the W5500 to use
+		@param		pDev		Pointer to the W5500 driver object to configure
+		@param		aMac		6 byte array containing the max address to use
+		@return		W5500_Success if the port is correctly bind, an error or warning code will
+			be provided to indicate the failure
+		@ingroup	w5500driver
+	*/
 	eW5500Return_t W5500SetMACAddress(sW5500Obj_t *pDev, const uint8_t aMac[6]);
+	
+	/**	@brief		Set the IP address for the W5500 to use
+		@param		pDev		Pointer to the W5500 driver object to configure
+		@param		Address		IP address to set in the device
+		@return		W5500_Success if the port is correctly bind, an error or warning code will
+			be provided to indicate the failure
+		@ingroup	w5500driver
+	*/
 	eW5500Return_t W5500SetIPAddress(sW5500Obj_t *pDev, const IN_ADDR *Address);
+	
+	/**	@brief		Set the subnet mask for the W5500 to use
+		@param		pDev		Pointer to the W5500 driver object to configure
+		@param		Address		Subnet mask to set in the device
+		@return		W5500_Success if the port is correctly bind, an error or warning code will
+			be provided to indicate the failure
+		@ingroup	w5500driver
+	*/
 	eW5500Return_t W5500SetSubnetMask(sW5500Obj_t *pDev, const IN_ADDR *Address);
+	
+	/**	@brief		Set the default gateway address for the W5500 to use
+		@param		pDev		Pointer to the W5500 driver object to configure
+		@param		Address		Default gateway address to set in the device
+		@return		W5500_Success if the port is correctly bind, an error or warning code will
+			be provided to indicate the failure
+		@ingroup	w5500driver
+	*/
 	eW5500Return_t W5500SetDefaultGateway(sW5500Obj_t *pDev, const IN_ADDR *Address);
 	
+	/**	@brief		Reads the IP address in use by the W5500
+		@param		pDev		Pointer to the W5500 driver object to read from
+		@param		Address		Returns the IP address configured into the device
+		@return		W5500_Success if the port is correctly bind, an error or warning code will
+			be provided to indicate the failure
+		@ingroup	w5500driver
+	*/
 	eW5500Return_t W5500ReadIPAddress(sW5500Obj_t *pDev, IN_ADDR *Address);
 		
 	/**	@brief		Sets a socket to listen for incoming connections
@@ -390,10 +489,35 @@
 	*/
 	eW5500Return_t W5500SocketConnect(sW5500Obj_t *pDev, uint8_t *pnSocket, IN_ADDR *Address, uint16_t nPort);
 
-	//Detect accepted comms or see if data is waiting, connaddr is remote connection (tcp only)
+	/**	@brief		Retrieve information regarding a created socket
+		@details	The state of socket is the main indicator or connection status.  Outside of
+			interrupts from the device this is the only way to know if a connection attempt 
+			succeeded or if a connection has been closed down.
+		@param		pDev			Pointer to the W5500 driver object that owns this socket
+		@param		nSocket			Identifier of the socket to retrieve the status from
+		@param		eProtocol		Returns the protocol this socket is using
+		@param		eCurrState		Returns the current state of this socket
+		@param		nBytesWaiting	Number of bytes of data waiting to be reqad from this socket
+		@param		pConnAddr		Will receive the IP address this socket is connected to
+		@param		nConnAddrLen	Size of the pConnAddr object
+		@return		W5500_Success if the port is correctly bind, an error or warning code will
+			be provided to indicate the failure
+		@ingroup	w5500driver
+	*/
 	eW5500Return_t W5500SocketStatus(sW5500Obj_t *pDev, uint8_t nSocket, eW5500SckProt_t *eProtocol, eW5500SckStat_t *eCurrState, uint16_t *nBytesWaiting, SOCKADDR_IN *pConnAddr, uint8_t nConnAddrLen);
 	
-	//Accept incoming data, chip never provids source of packet
+	/**	@brief		Reads in any data waiting for a specific socket
+		@details	The W5500 does not provide information on the source of the data.  Will read
+			until either the buffer is filled or all available data has been read.
+		@param		pDev		Pointer to the W5500 driver object that owns this socket
+		@param		nSocket		The iedintifier of the socket to read from
+		@param		pBuff		Pointer to the buffer that will receive the data
+		@param		nBuffSize	The maximum number of bytes the buffer can holding
+		@param		pnBytesRead	Used to return the number of bytes that were actually read
+		@return		W5500_Success if the port is correctly bind, an error or warning code will
+			be provided to indicate the failure
+		@ingroup	w5500driver
+	*/
 	eW5500Return_t W5500SocketReceive(sW5500Obj_t *pDev, uint8_t nSocket, uint8_t *pBuff, uint16_t nBuffSize, uint16_t *pnBytesRead);
 	
 	eW5500Return_t W5500SocketTCPSend(sW5500Obj_t *pDev, uint8_t nSocket, uint8_t *pBuff, uint16_t nBuffSize);
