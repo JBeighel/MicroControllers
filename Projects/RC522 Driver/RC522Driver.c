@@ -48,14 +48,22 @@ eRC522Return_t RC522Initialize(sRC522Obj_t *pRC522, sSPIIface_t *pSpiObj, sGPIOI
 }
 
 eRC522Return_t RC522ReadRegister(sRC522Obj_t *pRC522, uint8_t nRegAddr, uint8_t *pnRegVal) {
+	uint8_t aData[2], aRecv[2];
+
 	//If I2C/UART the register address is unchanged, for SPI some extra framing is needed
 	nRegAddr = RC522Reg_SPIRead | (nRegAddr << RC522Reg_SPILShift);
+
+	aData[0] = nRegAddr;
+	aData[1] = 0x00; //The device continually reads registers until it gets 0x00
 
 	pRC522->pGPIO->pfDigitalWriteByPin(pRC522->pGPIO, pRC522->nCSPin, false);
 	pRC522->pSpi->pfBeginTransfer(pRC522->pSpi);
 
-	pRC522->pSpi->pfTransferByte(pRC522->pSpi, nRegAddr, pnRegVal);
-	pRC522->pSpi->pfTransferByte(pRC522->pSpi, 0x00, pnRegVal); //The device continually reads registers until it gets 0x00
+	pRC522->pSpi->pfTransfer2Bytes(pRC522->pSpi, aData, aRecv);
+	*pnRegVal = aRecv[1]; //The data received with the first address is disregarded
+
+	//pRC522->pSpi->pfTransferByte(pRC522->pSpi, nRegAddr, pnRegVal);
+	//pRC522->pSpi->pfTransferByte(pRC522->pSpi, 0x00, pnRegVal); //The device continually reads registers until it gets 0x00
 
 	pRC522->pSpi->pfEndTransfer(pRC522->pSpi);
 	pRC522->pGPIO->pfDigitalWriteByPin(pRC522->pGPIO, pRC522->nCSPin, true);

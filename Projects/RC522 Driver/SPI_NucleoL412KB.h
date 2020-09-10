@@ -18,7 +18,7 @@
 	//#include <stdint.h>
 	//#include <stdbool.h>
 
-	//#include "main.h"
+	#include "main.h"
 	#include "stm32l4xx.h"
 
 	#include "SPIGeneralInterface.h"
@@ -53,6 +53,8 @@
 	eSPIReturn_t NucleoSPIEndTransfer(sSPIIface_t *pIface);
 
 	eSPIReturn_t NucleoSPITransferByte(sSPIIface_t *pIface, uint8_t nSendByte, uint8_t *pnReadByte);
+
+	eSPIReturn_t NucleoSPITransfer2Bytes(sSPIIface_t *pIface, const uint8_t *anSendBytes, uint8_t *anReadBytes);
 
 	eSPICapabilities_t NucleoSPIGetCapabilities(sSPIIface_t *pIface);
 

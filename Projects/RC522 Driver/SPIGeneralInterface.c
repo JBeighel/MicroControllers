@@ -1,7 +1,7 @@
 /*
 		File:	SPIGeneralInterface.c
 		Author:	J. Beighel
-		Date:	09-04-2020
+		Created:09-04-2020
 */
 
 /***** Includes		*****/
@@ -25,6 +25,7 @@ eSPIReturn_t SPIInterfaceInitialize(sSPIIface_t *pIface) {
 	pIface->pfBeginTransfer = &SPIBeginTransfer;
 	pIface->pfEndTransfer = &SPIEndTransfer;
 	pIface->pfTransferByte = &SPITransferByte;
+	pIface->pfTransfer2Bytes = &SPITransfer2Bytes;
 	pIface->pfGetCapabilities = &SPIGetCapabilities;
 
 	pIface->nBusClockFreq = 5000000;
@@ -48,6 +49,10 @@ eSPIReturn_t SPIEndTransfer(sSPIIface_t *pIface) {
 }
 	
 eSPIReturn_t SPITransferByte(sSPIIface_t *pIface, uint8_t nSendByte, uint8_t *pnReadByte) {
+	return SPIFail_Unsupported;
+}
+
+eSPIReturn_t SPITransfer2Bytes(sSPIIface_t *pIface, const uint8_t *anSendBytes, uint8_t *anReadBytes) {
 	return SPIFail_Unsupported;
 }
 
