@@ -18,10 +18,19 @@
 	#include "UARTGeneralInterface.h"
 
 /*****	Constants	*****/
+	/**	@brief		UART capabilities needed by the TF02 driver
+		@ingroup	tf02driver
+	*/
 	#define TF02_UARTCAPS		(UART_ReadData)
 	
+	/**	@brief		Bytes sent as a start of frame by the TF02 device
+		@ingroup	tf02driver
+	*/
 	#define TF02_HEADERBYTE		0x59
-	
+
+	/**	@brief		Number of bytes in a data frame of the TF02
+		@ingroup	tf02driver
+	*/
 	#define TF02_FRAMESIZE		9
 	
 
@@ -43,11 +52,10 @@
 		@ingroup	tf02driver
 	*/
 	typedef union uTF02Data_t {
-		uint8_t aRaw[9];
+		/**	Raw bytes recieved over the UART */
+		uint8_t aRaw[TF02_FRAMESIZE];
 		
-		/**	@brief		Structure that parses out bytes of data from the received frame
-			@ingroup	tf02driver
-		*/
+		/**	Structure that parses out bytes of data from the received frame */
 		struct {
 			uint8_t nHeader[2];		/**< Two header bytes that start the message */
 			uint8_t nDistLow;		/**< Low byte of distance reading */
@@ -83,6 +91,15 @@
 		@ingroup	tf02driver
 	*/
 	eTF02Returns_t TF02Initialize(sTF02Device_t *pTF02Obj, sUARTIface_t *pUART);
+	
+	/**	@brief		Blocks until a reading is receved from the TF02
+		@details	Will wait until a frame of data is received from the TF02 over the UART.  If
+			the port has no data waiting it will stop waiting.
+		@param		pTF02Obj		Pointer to the TF02 device object
+		@param		pnDistCM		Distance reading fom the sensor, in centimeters
+		@param		pnSigStr		Signal strength reported by the sensor
+		@ingorup	tf02driver
+	*/
 	eTF02Returns_t TF02GetReading(sTF02Device_t *pTF02Obj, uint16_t *pnDistCM, uint16_t *pnSigStr);
 
 /*****	Functions	*****/
