@@ -17,9 +17,9 @@
 
 
 /*****	Prototypes 	*****/
-	eRC522Return_t RC522ReadRegister(sRC522Obj_t *pRC522, uint8_t nRegAddr, uint8_t *pnRegVal);
+	eRC522Return_t RC522ReadRegisterSPI(sRC522Obj_t *pRC522, uint8_t nRegAddr, uint8_t *pnRegVal);
 
-	eRC522Return_t RC522WriteRegister(sRC522Obj_t *pRC522, uint8_t nRegAddr, uint8_t nRegVal);
+	eRC522Return_t RC522WriteRegisterSPI(sRC522Obj_t *pRC522, uint8_t nRegAddr, uint8_t nRegVal);
 
 /*****	Functions	*****/
 eRC522Return_t RC522Initialize(sRC522Obj_t *pRC522, sSPIIface_t *pSpiObj, sGPIOIface_t *pGPIOObj, uint16_t nChipSelectPin) {
@@ -33,7 +33,7 @@ eRC522Return_t RC522Initialize(sRC522Obj_t *pRC522, sSPIIface_t *pSpiObj, sGPIOI
 	pRC522->pGPIO->pfDigitalWriteByPin(pRC522->pGPIO, pRC522->nCSPin, true); //Chip select is normally high
 
 	//Check the device version
-	eReturn = RC522ReadRegister(pRC522, RC522Reg_Version, &nRegVal);
+	eReturn = RC522ReadRegisterSPI(pRC522, RC522Reg_Version, &nRegVal);
 
 	if (eReturn != RC522_Success) { //SPI communications failure
 		return eReturn;
@@ -47,7 +47,7 @@ eRC522Return_t RC522Initialize(sRC522Obj_t *pRC522, sSPIIface_t *pSpiObj, sGPIOI
 	return RC522_Success;
 }
 
-eRC522Return_t RC522ReadRegister(sRC522Obj_t *pRC522, uint8_t nRegAddr, uint8_t *pnRegVal) {
+eRC522Return_t RC522ReadRegisterSPI(sRC522Obj_t *pRC522, uint8_t nRegAddr, uint8_t *pnRegVal) {
 	uint8_t aData[2], aRecv[2];
 
 	//If I2C/UART the register address is unchanged, for SPI some extra framing is needed
@@ -71,7 +71,7 @@ eRC522Return_t RC522ReadRegister(sRC522Obj_t *pRC522, uint8_t nRegAddr, uint8_t 
 	return RC522_Success;
 }
 
-eRC522Return_t RC522WriteRegister(sRC522Obj_t *pRC522, uint8_t nRegAddr, uint8_t nRegVal) {
+eRC522Return_t RC522WriteRegisterSPI(sRC522Obj_t *pRC522, uint8_t nRegAddr, uint8_t nRegVal) {
 	uint8_t nReadByte;
 
 	//If I2C/UART the register address is unchanged, for SPI some extra framing is needed
