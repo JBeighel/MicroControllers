@@ -24,7 +24,7 @@
 
 		sUARTIface_t UartObj;
 
-		UART_1_PORTINIT(&UartObj, 9600, UART_8None1, UART_1_HWINFO);
+		UART_PORTINITIALIZE(&UartObj, 9600, UART_8None1, UART_1_HWINFO);
 
 		The last thing the driver must do is create a define of the capabilities that it allows.
 		This define should be options from the eUARTCapabilities_t enumeration ORed together. 
