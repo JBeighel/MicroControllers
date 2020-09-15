@@ -25,32 +25,23 @@ void loop() {
   eTF02Returns_t eReturn;
   uint16_t nDist, nAmp;
   
-  Serial.print("Reading...");
+  //Serial.print("Reading...");
 
-  eReturn = TF02GetReading(&gTF02);
+  eReturn = TF02GetReading(&gTF02, &nDist, &nAmp);
 
   if (eReturn != TF02_Success) {
-    Serial.print("Fail ");
-    Serial.print(eReturn);
-    Serial.print("\n");
+    //Serial.print("Fail ");
+    //Serial.print(eReturn);
+    //Serial.print("\n");
   } else {
     Serial.print("Pass\n");
-
-    nDist = gTF02.uData.sParse.nDistLow;
-    nDist |= gTF02.uData.sParse.nDistHigh << 8;
-  
-    nAmp = gTF02.uData.sParse.nSigStrLow;
-    nAmp |= gTF02.uData.sParse.nSigStrHigh << 8;
-  
     Serial.print("Dist: ");
     Serial.print(nDist);
     Serial.print(" SigStr: ");
     Serial.print(nAmp);
-    Serial.print(" Relia: ");
-    Serial.print(gTF02.uData.sParse.nReliability);
     Serial.print("\n");
   }
 
-  delay(75);
+  delay(50);
   return;
 }

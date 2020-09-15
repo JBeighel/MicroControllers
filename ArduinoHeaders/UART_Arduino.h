@@ -1,7 +1,14 @@
 /**	@defgroup	uartifcae_arduino
 	@brief		
-	@details	v0.1
-		
+	@details	v0.2
+	# Description #
+	
+	# Usage #
+	
+	# File Information #
+		File:	UART_Arduino.h
+		Author:	J. Beighel
+		Created:09-15-2020
 */
 
 #ifndef __NAME_H
@@ -30,6 +37,10 @@
 	#ifndef mSecDelay
 		#define mSecDelay	delay
 	#endif
+	
+	#define UART_1_CAPS		(UART_Configure | UART_Shutdown | UART_ReadData | UART_WriteData | UART_DataAvailable | UART_DataWaitSend)
+	
+	#define UART_2_CAPS		(UART_Configure | UART_Shutdown | UART_ReadData | UART_WriteData | UART_DataAvailable | UART_DataWaitSend)
 	
 /***** Constants	*****/
 
