@@ -40,6 +40,8 @@
 	
 	#define UART_1_CAPS		(UART_Configure | UART_Shutdown | UART_ReadData | UART_WriteData | UART_DataAvailable | UART_DataWaitSend)
 	
+	#define UART_2_CAPS		(UART_Configure | UART_Shutdown | UART_ReadData | UART_WriteData | UART_DataAvailable | UART_DataWaitSend)
+	
 /***** Constants	*****/
 
 
