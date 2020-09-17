@@ -1,7 +1,8 @@
 /**	@defgroup	spiiface_nucleoL412KB
-	@brief
+	@brief		Implementation of the SPI General Interface on an STM32 Nucleo board
 	@details	v0.1
 	# Description #
+		This was created and tested on an STM32 Nucleo L412KB board.
 
 	# Usage #
 
@@ -15,9 +16,6 @@
 	#define SPI_NUCLEOL412KB_H_
 
 /*****	Includes	*****/
-	//#include <stdint.h>
-	//#include <stdbool.h>
-
 	#include "main.h"
 	#include "stm32l4xx.h"
 
@@ -31,7 +29,7 @@
 	#endif
 	#define SPI_1_PORTINIT	NucleoSPIPortInitialize
 
-	#define SPI_1_CAPS		(SPI_BeginTransfer | SPI_EndTransfer | SPI_BiDir1Byte)
+	#define SPI_1_CAPS		(SPI_BeginTransfer | SPI_EndTransfer | SPI_BiDir1Byte | SPI_BiDir2Bytes)
 
 	#ifndef mSecDelay
 		#define mSecDelay	osDelay
