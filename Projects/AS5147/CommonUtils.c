@@ -1,3 +1,9 @@
+/*
+	File:	CommonUtils.h
+	Author:	J. Beighel
+	Date:	09-30-2020
+*/
+
 /***** Includes		*****/
 	#include "CommonUtils.h"
 

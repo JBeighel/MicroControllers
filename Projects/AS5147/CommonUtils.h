@@ -1,8 +1,16 @@
 /**	@defgroup	commonutils
 	@brief		Common utilities and objects
-	@details	v 0.3
+	@details	v 0.4
+	# Description #
 		This is a collection of commonly used utilities.
 		This includes variable types, macros, and constants.
+		
+	# Usage #
+		
+	# File Info #
+		File:	CommonUtils.h
+		Author:	J. Beighel
+		Date:	09-30-2020
 */
 
 #ifndef __COMMONUTILS
