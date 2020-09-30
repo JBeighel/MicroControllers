@@ -86,10 +86,13 @@
 		AS5147RegDiag_AGCMask	= 0x00FF,	/**< Automatic gain fain; 0x00 no gain, 0xFF full gain */
 	} eAS5147RegDiag;
 	
+	/**	@brief		Structure containing all information for the AS5147 device
+		@ingroup	as5147driver
+	*/
 	typedef struct sAS5147Dev_t {
-		sGPIOIface_t *pGpio;
-		sSPIIface_t *pSpi;
-		uint16_t nCSPin;
+		sGPIOIface_t *pGpio;			/**< Pointer to the GPIO interface */
+		sSPIIface_t *pSpi;				/**< Pointer to the SPI interface */
+		uint16_t nCSPin;				/**< Chip select pin number */
 	} sAS5147Dev_t;
 
 /*****	Constants	*****/
@@ -99,8 +102,20 @@
 
 
 /*****	Prototypes 	*****/
+	/**	@brief		Initializes the device driver object and readies the device
+		@details	Will attempt to set the chip select pin mode as well as set it to the
+			devices unselected value.  In addtion it will communicate with the peripheral
+			in order to confirm it is using the correct configuration.
+		@ingroup	as5147driver
+	*/
 	eAS5147Return_t AS5147Init(sAS5147Dev_t *pDev, sGPIOIface_t *pGpio, sSPIIface_t *pSpi, uint16_t nCSPin);
 	
+	/**< @brief		Reads all information relevant to the sensors reading
+		@details	Reads multiple values from the device and returns them.  This is meant 
+			for initial testing of the device.  Specific functions will be added that get
+			targetted data from it for application use.
+		@ingroup	as5147driver
+	*/
 	eAS5147Return_t AS5147TakeReading(sAS5147Dev_t *pDev, uint16_t *pnAngleUnc, uint16_t *pnAngleCom, uint16_t *pnMag, uint16_t *pnAGC);
 
 /*****	Functions	*****/

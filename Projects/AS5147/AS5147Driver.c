@@ -17,9 +17,16 @@
 
 
 /*****	Prototypes 	*****/
-eAS5147Return_t AS5147RegRead(sAS5147Dev_t *pDev, eAS5147Registers_t eReg, uint16_t *pnRegValue);
 
-eAS5147Return_t AS5147RegWrite(sAS5147Dev_t *pDev, eAS5147Registers_t eReg, uint16_t nRegValue);
+	/**	@brief		Read a value from a register in the AS5147 device
+		@ingroup	as5147driver
+	*/
+	eAS5147Return_t AS5147RegRead(sAS5147Dev_t *pDev, eAS5147Registers_t eReg, uint16_t *pnRegValue);
+
+	/**	@brief		Write a value to a register in the AS5147 device
+		@ingroup	as5147driver
+	*/
+	eAS5147Return_t AS5147RegWrite(sAS5147Dev_t *pDev, eAS5147Registers_t eReg, uint16_t nRegValue);
 
 /*****	Functions	*****/
 eAS5147Return_t AS5147Init(sAS5147Dev_t *pDev, sGPIOIface_t *pGpio, sSPIIface_t *pSpi, uint16_t nCSPin) {
