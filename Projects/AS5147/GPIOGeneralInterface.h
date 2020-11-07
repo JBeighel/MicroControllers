@@ -1,6 +1,6 @@
 /**	@defgroup	gpioiface
 	@brief		General interface for using GPIO pins
-	@details	v0.4
+	@details	v0.2
 		
 */
 
@@ -21,32 +21,7 @@
 		#define GPIO_IOCNT		20
 	#endif
 	
-	/**	@brief		Value to use for an index to indicate this pin is not in use
-		@ingroup	gpioiface
-	*/
-	#define GPIO_NOPIN			(0xFFFF)
-	
 	typedef struct sGPIOIface_t sGPIOIface_t; //Declarign this early, will define it later
-	typedef struct sTimeIface_t sTimeIface_t;
-		
-	typedef enum eGPIOCapabilities_t {
-		GPIOCap_None			= 0x0000,
-		GPIOCap_SetPinMode		= 0x0001,
-		GPIOCap_ReadPinMode		= 0x0002,
-		GPIOCap_DigitalWrite	= 0x0004,
-		GPIOCap_DigitalRead		= 0x0008,
-		GPIOCap_PWMWrite		= 0x0010,
-		GPIOCap_AnalogWrite		= 0x0020,
-		GPIOCap_AnalogRead		= 0x0040,
-	} eGPIOCapabilities_t;
-	
-	typedef enum eTimeCapabilities_t {
-		TimeCap_None			= 0x0000,
-		TimeCap_GetTicks		= 0x0001,
-		TimeCap_DelaySec		= 0x0002,
-		TimeCap_DelayMilliSec	= 0x0004,
-		TimeCap_DelayMicroSec	= 0x0008,
-	} eTimeCapabilities_t;
 
 	/**	@brief		Enumeration of all GPIO interface return values
 		@ingroup	gpioiface
@@ -79,16 +54,13 @@
 						at some point
 		@ingroup	gpioiface
 	*/
-	typedef uint32_t (*pfGetCurrentTicks_t)(void);
+	typedef uint32_t (*pfGetCurrentTicks_t)();
 	
-	/**	@brief		Function type to use in order to delay for a specified time period
-		@details	The time period can be in any units
+	/**	@brief		Function type to use in order to delay for a number of milliseconds
 		@param		nDelayTime		Number of milliseconds to delay for
 		@ingroup	gpioiface
 	*/
-	typedef bool (*pfTimeDelay_t)(uint32_t nDelayAmount);
-	
-	typedef bool (*pfTimeIfaceInitialize_t)(sTimeIface_t *pTime);
+	typedef void (*pfMilliSecondDelay_t)(uint32_t nDelayTime);
 	
 	typedef eGPIOReturn_t (*pfGPIOPortInitialize_t)(sGPIOIface_t *pIface, void *pHWInfo);
 	
@@ -131,14 +103,7 @@
 		uint8_t nGPIOCnt;
 		
 		void *pHWInfo;
-	} sGPIOIface_t;
-	
-	typedef struct sTimeIface_t {
-		pfGetCurrentTicks_t pfGetTicks;
-		pfTimeDelay_t pfDelaySeconds;
-		pfTimeDelay_t pfDelayMilliSeconds;
-		pfTimeDelay_t pfDelayMicroSeconds;
-	} sTimeIface_t;
+	} sGPIOHWObj_t;
 	
 
 /***** Constants	*****/
@@ -165,13 +130,6 @@
 	eGPIOReturn_t GPIOAnalogWriteByPin(sGPIOIface_t *pIface, uint16_t nGPIOPin, uint32_t nAnaValue);
 	
 	eGPIOReturn_t GPIOAnalogReadByPin(sGPIOIface_t *pIface, uint16_t nGPIOPin, uint32_t *nAnaValue);
-	
-	bool TimeInterfaceInitialize(sTimeIface_t *pIface);
-	
-	uint32_t TimeCurrentTicks(void);
-	
-	bool TimeDelay(uint32_t nDelayAmount);
-
 
 /***** Functions	*****/
 
