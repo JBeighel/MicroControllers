@@ -1,6 +1,6 @@
 /**	@defgroup	gpioarduino
 	@brief		Implementation of the GPIO General Interface for Arduino
-	@details	v0.2
+	@details	v0.3
 		
 */
 

@@ -26,6 +26,26 @@
 		include headers of the hardware I2C bus driver.  They should receive an instance of the 
 		I2C Interface object and be able to communicate over the pus to the peripheral entirely 
 		through the function pointers provided.
+		
+		The driver must also define values for each hardware object that it covers.  This should
+		take the form of I2C_#_HWINFO
+
+		In addition the driver must define a value to reach the I2CPortInitialize() function.
+		This should take the form of I2C_#_PORTINIT
+
+		Having these defined gives a very consistent and generic means of establishing the
+		interface object in the application that looks like this:
+
+		sI2CIface_t I2CObj;
+
+		I2C_#_PORTINIT(&I2CObj, true, 100000, I2C_1_HWINFO);
+
+		The last thing the driver must do is create a define of the capabilities that it allows.
+		This define should be options from the eI2CCapabilities_t enumeration ORed together. 
+		The peripheral drivers will similarly provide a define a value listing the capabilities
+		that it requires.  Using these defines the application should be able to determine at
+		compilation whether or not a peripheral will work on a particular bus.  This define
+		should take the form of I2C_#_CAPS
 */
 
 /**	@defgroup i2ciface_priv : Private Objects
@@ -71,6 +91,19 @@
 		I2C_Fail_NackAddr		= 4,
 		I2C_Fail_NackData		= 5,
 	} eI2CReturns_t;
+	
+	/**	@brief		Enumeration of all capabilities this interface provides
+		@ingroup	i2ciface
+	*/
+	typedef enum eI2CCapabilities_t {
+		I2CCap_None				= 0x0000,	/**< No supported capabilities */
+		I2CCap_Shutdown			= 0x0001,	/**< Port can be shut down */
+		I2CCap_ReadUint8Reg		= 0x0002,	/**< Can send an 8 bit address and read an 8 bit value */
+		I2CCap_ReadData			= 0x0004,	/**< Can read an arbitrary number of bytes */
+		I2CCap_WriteUint8Reg	= 0x0008,	/**< Can send an 8 bit address and write an 8 bit value */
+		I2CCap_WriteData		= 0x0010,	/**< Can write an arbitrary number of bytes */
+		I2CCap_GeneralCall		= 0x0020,	/**< Can send a signle byte value to the general call address */
+	} eI2CCapabilities_t;
 	
 	/**	@brief		Prototype for function that will initizlize the hardware for an I2C interface
 		@ingroup	i2ciface

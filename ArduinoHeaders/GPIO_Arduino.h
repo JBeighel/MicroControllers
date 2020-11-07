@@ -1,6 +1,6 @@
 /**	@defgroup	gpioarduino
 	@brief		Implementation of the GPIO General Interface for Arduino
-	@details	v0.2
+	@details	v0.3
 		
 */
 
@@ -19,6 +19,12 @@
 	#define GPIO_HWINFO		NULL
 	
 	#define GPIO_INIT		ArduinoGPIOPortInitialize
+	
+	#define GPIO_CAPS		GPIOCap_SetPinMode | GPIOCap_ReadPinMode | GPIOCap_DigitalWrite | GPIOCap_DigitalRead | GPIOCap_PWMWrite | GPIOCap_AnalogWrite | GPIOCap_AnalogRead;
+	
+	#define TIME_INIT		ArduinoTimeIfaceInitialize
+	
+	#define TIME_CAPS		TimeCap_GetTicks | TimeCap_DelaySec | TimeCap_DelayMilliSec | TimeCap_DelayMicroSec;
 	
 	#define DELAYMILLISEC		delay
 	
@@ -106,8 +112,58 @@
 	
 	#ifdef ARDUINO_TRINKET_M0 //Compiling for Adafruit Trinket M0
 		#define ARDUINO_MODEL		"Adafruit Trinket M0"
+	
+		/** @brief    Count of available GPIO pins
+		  @ingroup  gpioarduino
+		*/
+		#define ARDUINO_GPIOCNT   (sizeof(gArduinoGPIOList) / sizeof(uint8_t))
 		
-		#error "Support for Adafruit Trinket M0 incomplete"
+		#define ARDUINO_DACCNT    (sizeof(gArduinoDACList) / sizeof(uint8_t))
+		
+		#define ARDUINO_ADCCNT    (sizeof(gArduinoADCList) / sizeof(uint8_t))
+		
+		#define ARDUINO_PWMCNT    (sizeof(gArduinoPWMList) / sizeof(uint8_t))
+		
+		/** @brief    Available bit depth for Analog Inputs
+		  @ingroup  gpioarduino
+		*/
+		#define ARDUINO_ADCBITDEPTH 12
+		
+		/** @brief    Available bit depth for Analog Outputs
+		  @details  Arduino uses this same bit depth for PWM and DAC outputs.  So the values
+			must match.
+		  @ingroup  gpioarduino
+		*/
+		#define ARDUINO_DACBITDEPTH ARDUINO_PWMBITDEPTH
+		
+		/** @brief    Available bit depth for PWM Outputs
+		  @ingroup  gpioarduino
+		*/
+		#define ARDUINO_PWMBITDEPTH 10
+		
+		/** @brief    Constant array of all pin numbers to use for GPIO
+		  @details  There are 5 potential GPIO pins, most are shared with the peripheral buses
+			Pin 3 is RX and 4 is TX are used for the UART.
+			Pin 0 is MOSI, Pin 1 is MISO and Pin 2 are SCK; reserved for SPI
+			Pin 0 is SDA and Pin 2 is SCL; reserved for I2C
+		  @ingroup  gpioarduino
+		*/
+		const uint8_t gArduinoGPIOList[] = { 0, 1, 2, 3, 4 };
+		
+		/** @brief    Constant array of all pin numbers that support Analog Input
+		  @ingroup  gpioarduino
+		*/
+		const uint8_t gArduinoADCList[] = { 2, 3, 4 };
+		
+		/** @brief    Constant array of all pin numbers that support Analog Ouput
+		  @ingroup  gpioarduino
+		*/
+		const uint8_t gArduinoDACList[] = {  };
+		
+		/** @brief    Constant array of all pin numbers that support PWM Output
+		  @ingroup  gpioarduino
+		*/
+		const uint8_t gArduinoPWMList[] = { 0, 1, 2, 3, 4 };
 	#endif
 	
 	#ifdef ARDUINO_NUCLEO_L412KB //Compiling for STM32 Nucleo-32 L412KB
@@ -182,6 +238,8 @@
 
 
 /***** Prototypes 	*****/
+	eGPIOReturn_t ArduinoGPIOPortInitialize(sGPIOIface_t *pIface, void *pHWInfo);
+
 	eGPIOReturn_t ArduinoGPIOSetModeByPin(sGPIOIface_t *pIface, uint16_t nGPIOPin, eGPIOModes_t eMode);
 	
 	eGPIOReturn_t ArduinoGPIOReadModeByPin(sGPIOIface_t *pIface, uint16_t nGPIOPin, eGPIOModes_t *eMode);
@@ -195,6 +253,16 @@
 	eGPIOReturn_t ArduinoGPIOAnalogWriteByPin(sGPIOIface_t *pIface, uint16_t nGPIOPin, uint32_t nAnaValue);
 	
 	eGPIOReturn_t ArduinoGPIOAnalogReadByPin(sGPIOIface_t *pIface, uint16_t nGPIOPin, uint32_t *nAnaValue);
+	
+	bool ArduinoTimeIfaceInitialize(sTimeIface_t *pTime);
+	
+	uint32_t ArduinoGetTicks(void);
+	
+	bool ArduinoDelaySeconds(uint32_t nDelayAmount);
+	
+	bool ArduinoDelayMilliSeconds(uint32_t nDelayAmount);
+	
+	bool ArduinoDelayMicroSeconds(uint32_t nDelayAmount);
 
 /***** Functions	*****/
 
@@ -380,6 +448,39 @@ eGPIOReturn_t ArduinoGPIOAnalogReadByPin(sGPIOIface_t *pIface, uint16_t nGPIOPin
 	*nAnaValue = analogRead(nGPIOPin);
 	
 	return GPIO_Success;
+}
+
+bool ArduinoTimeIfaceInitialize(sTimeIface_t *pTime) {
+	TimeInterfaceInitialize(pTime);
+	
+	pTime->pfGetTicks = &ArduinoGetTicks;
+	pTime->pfDelaySeconds = &ArduinoDelaySeconds;
+	pTime->pfDelayMilliSeconds = &ArduinoDelayMilliSeconds;
+	pTime->pfDelayMicroSeconds = &ArduinoDelayMicroSeconds;
+	
+	return true;
+}
+
+uint32_t ArduinoGetTicks(void) {
+	return millis();
+}
+
+bool ArduinoDelaySeconds(uint32_t nDelayAmount) {
+	delay(1000 * nDelayAmount);
+	
+	return true;
+}
+
+bool ArduinoDelayMilliSeconds(uint32_t nDelayAmount) {
+	delay(nDelayAmount);
+	
+	return true;
+}
+
+bool ArduinoDelayMicroSeconds(uint32_t nDelayAmount) {
+	delayMicroseconds(nDelayAmount);
+	
+	return true;
 }
 
 #endif
