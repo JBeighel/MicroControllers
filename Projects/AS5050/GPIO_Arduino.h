@@ -1,6 +1,6 @@
 /**	@defgroup	gpioarduino
 	@brief		Implementation of the GPIO General Interface for Arduino
-	@details	v0.3
+	@details	v0.2
 		
 */
 
@@ -19,12 +19,6 @@
 	#define GPIO_HWINFO		NULL
 	
 	#define GPIO_INIT		ArduinoGPIOPortInitialize
-	
-	#define GPIO_CAPS		GPIOCap_SetPinMode | GPIOCap_ReadPinMode | GPIOCap_DigitalWrite | GPIOCap_DigitalRead | GPIOCap_PWMWrite | GPIOCap_AnalogWrite | GPIOCap_AnalogRead;
-	
-	#define TIME_INIT		ArduinoTimeIfaceInitialize
-	
-	#define TIME_CAPS		TimeCap_GetTicks | TimeCap_DelaySec | TimeCap_DelayMilliSec | TimeCap_DelayMicroSec;
 	
 	#define DELAYMILLISEC		delay
 	
@@ -238,8 +232,6 @@
 
 
 /***** Prototypes 	*****/
-	eGPIOReturn_t ArduinoGPIOPortInitialize(sGPIOIface_t *pIface, void *pHWInfo);
-
 	eGPIOReturn_t ArduinoGPIOSetModeByPin(sGPIOIface_t *pIface, uint16_t nGPIOPin, eGPIOModes_t eMode);
 	
 	eGPIOReturn_t ArduinoGPIOReadModeByPin(sGPIOIface_t *pIface, uint16_t nGPIOPin, eGPIOModes_t *eMode);
@@ -253,16 +245,6 @@
 	eGPIOReturn_t ArduinoGPIOAnalogWriteByPin(sGPIOIface_t *pIface, uint16_t nGPIOPin, uint32_t nAnaValue);
 	
 	eGPIOReturn_t ArduinoGPIOAnalogReadByPin(sGPIOIface_t *pIface, uint16_t nGPIOPin, uint32_t *nAnaValue);
-	
-	bool ArduinoTimeIfaceInitialize(sTimeIface_t *pTime);
-	
-	uint32_t ArduinoGetTicks(void);
-	
-	bool ArduinoDelaySeconds(uint32_t nDelayAmount);
-	
-	bool ArduinoDelayMilliSeconds(uint32_t nDelayAmount);
-	
-	bool ArduinoDelayMicroSeconds(uint32_t nDelayAmount);
 
 /***** Functions	*****/
 
@@ -448,39 +430,6 @@ eGPIOReturn_t ArduinoGPIOAnalogReadByPin(sGPIOIface_t *pIface, uint16_t nGPIOPin
 	*nAnaValue = analogRead(nGPIOPin);
 	
 	return GPIO_Success;
-}
-
-bool ArduinoTimeIfaceInitialize(sTimeIface_t *pTime) {
-	TimeInterfaceInitialize(pTime);
-	
-	pTime->pfGetTicks = &ArduinoGetTicks;
-	pTime->pfDelaySeconds = &ArduinoDelaySeconds;
-	pTime->pfDelayMilliSeconds = &ArduinoDelayMilliSeconds;
-	pTime->pfDelayMicroSeconds = &ArduinoDelayMicroSeconds;
-	
-	return true;
-}
-
-uint32_t ArduinoGetTicks(void) {
-	return millis();
-}
-
-bool ArduinoDelaySeconds(uint32_t nDelayAmount) {
-	delay(1000 * nDelayAmount);
-	
-	return true;
-}
-
-bool ArduinoDelayMilliSeconds(uint32_t nDelayAmount) {
-	delay(nDelayAmount);
-	
-	return true;
-}
-
-bool ArduinoDelayMicroSeconds(uint32_t nDelayAmount) {
-	delayMicroseconds(nDelayAmount);
-	
-	return true;
 }
 
 #endif

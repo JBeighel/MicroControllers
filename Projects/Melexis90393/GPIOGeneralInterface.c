@@ -67,18 +67,3 @@ eGPIOReturn_t GPIOAnalogWriteByPin(sGPIOIface_t *pIface, uint16_t nGPIOPin, uint
 eGPIOReturn_t GPIOAnalogReadByPin(sGPIOIface_t *pIface, uint16_t nGPIOPin, uint32_t *nAnaValue) {
 	return GPIOFail_Unsupported;
 }
-
-bool TimeInterfaceInitialize(sTimeIface_t *pIface) {
-	pIface->pfGetTicks = &TimeCurrentTicks;
-	pIface->pfDelaySeconds = &TimeDelay;
-	pIface->pfDelayMilliSeconds = &TimeDelay;
-	pIface->pfDelayMicroSeconds = &TimeDelay;
-}
-	
-uint32_t TimeCurrentTicks(void) {
-	return 0;
-}
-
-bool TimeDelay(uint32_t nDelayAmount) {
-	return false;
-}

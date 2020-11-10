@@ -4,6 +4,9 @@
 	#Description
 		Device connects of 3.3v UART port.  It runs at 115200 baud with 8 data bits, no parity 
 		bit, and 1 stop bit.
+		
+		This also works for the DF Mini LiDAR, except byte 7 is reserved and byte 8 is the 
+		signal quality.  If you ignore the Unreliable returns you will read distances.
 	
 	#File Information
 		File:	TF02Driver.c
