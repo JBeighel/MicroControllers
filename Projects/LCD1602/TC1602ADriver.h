@@ -144,16 +144,34 @@
 		@param		nData5			GPIO pin connected to data bit 5
 		@param		nData6			GPIO pin connected to data bit 6
 		@param		nData7			GPIO pin connected to data bit 7
+		@return		TC1602A_Success on success or a code indicating the error
 		@ingroup	tc1602adriver
 	*/
 	eTC1602AReturn_t TC1602AInit4Data(sTC1602AInfo_t *pDev, sTimeIface_t *pTime, sGPIOIface_t *pGpio, bool bFlipCursorDir, uint8_t nColCnt, uint8_t nRowCnt, uint16_t nEnPin, uint16_t nReadWritePin, uint16_t nRegSelPin, uint16_t nData4, uint16_t nData5, uint16_t nData6, uint16_t nData7);
 	
 	eTC1602AReturn_t TC1602AInit8Data(sTC1602AInfo_t *pDev, sTimeIface_t *pTime, sGPIOIface_t *pGpio, bool bFlipCursorDir, uint8_t nColCnt, uint8_t nRowCnt, uint16_t nEnPin, uint16_t nReadWritePin, uint16_t nRegSelPin, uint16_t nData0, uint16_t nData1, uint16_t nData2, uint16_t nData3, uint16_t nData4, uint16_t nData5, uint16_t nData6, uint16_t nData7);
 	
+	/**	@brief		Clears all text displayed on the screen
+		@param		pDev	Pointer to the peripheral object
+		@return		TC1602A_Success on success or a code indicating the error
+		@ingroup	tc1602adriver
+	*/
 	eTC1602AReturn_t TC1602AInitClearDisplay(sTC1602AInfo_t *pDev);
 	
+	/**	@brief		Turns teh display on
+		@param		pDev	Pointer to the peripheral object
+		@return		TC1602A_Success on success or a code indicating the error
+		@ingroup	tc1602adriver
+	*/
 	eTC1602AReturn_t TC1602AInitDisplayOn(sTC1602AInfo_t *pDev);
 	
+	/**	@brief		Turns teh display off
+		@details	Does not clear the display, when it is turned back on the
+			previous contents will be shown
+		@param		pDev	Pointer to the peripheral object
+		@return		TC1602A_Success on success or a code indicating the error
+		@ingroup	tc1602adriver
+	*/
 	eTC1602AReturn_t TC1602AInitDisplayOff(sTC1602AInfo_t *pDev);
 	
 	eTC1602AReturn_t TC1602AInitSetCursorPosition(sTC1602AInfo_t *pDev, uint8_t nCol, uint8_t nRow);
