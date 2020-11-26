@@ -1,3 +1,9 @@
+/*
+	File:	CommonUtils.h
+	Author:	J. Beighel
+	Date:	11-25-2020
+*/
+
 /***** Includes		*****/
 	#include "CommonUtils.h"
 
@@ -109,6 +115,16 @@ uint32_t CountSetBitsInInt32(uint32_t nVal) {
 	nVal = (nVal & 0x33333333) + ((nVal >> 2) & 0x33333333); //Increase to 1 counts of 4 bit chunks
 	nVal = (nVal + (nVal >> 4)) & 0x0F0F0F0F; //Increase to 1 counts of 8 bit chunks
 	nVal = (nVal * 0x01010101) >> 24; //Sum all chunks into the highest byte, then shift down to lowest
+
+	return nVal;
+}
+
+uint16_t CountSetBitsInInt16(uint32_t nVal) {
+	//SWAR algorithm
+	nVal = nVal - ((nVal >> 1) & 0x5555); //Break into 1 counts of 2 bit chunks
+	nVal = (nVal & 0x3333) + ((nVal >> 2) & 0x3333); //Increase to 1 counts of 4 bit chunks
+	nVal = (nVal + (nVal >> 4)) & 0x0F0F; //Increase to 1 counts of 8 bit chunks
+	nVal = (nVal * 0x0101) >> 8; //Sum all chunks into the highest byte, then shift down to lowest
 
 	return nVal;
 }

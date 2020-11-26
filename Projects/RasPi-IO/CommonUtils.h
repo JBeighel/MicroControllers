@@ -1,8 +1,16 @@
 /**	@defgroup	commonutils
 	@brief		Common utilities and objects
-	@details	v 0.4
+	@details	v 0.5
+	# Description #
 		This is a collection of commonly used utilities.
 		This includes variable types, macros, and constants.
+		
+	# Usage #
+		
+	# File Info #
+		File:	CommonUtils.h
+		Author:	J. Beighel
+		Date:	11-25-2020
 */
 
 #ifndef __COMMONUTILS
@@ -157,6 +165,13 @@
 		@ingroup	commonutils
 	*/
 	uint32_t CountSetBitsInInt32(uint32_t nVal);
+	
+	/**	@brief		Counts the 1 bits in an integer value
+		@param		nVal		The value to count the set bits in
+		@return		Count of the 1 bits in the value
+		@ingroup	commonutils
+	*/
+	uint16_t CountSetBitsInInt16(uint32_t nVal);
 
 /***** Functions	*****/
 
