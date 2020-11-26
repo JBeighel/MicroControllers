@@ -35,6 +35,26 @@ int32_t main(int32_t nArgCnt, char *aArgVals) {
 	}
 	
 	for (nCtr = 0; nCtr < 10; nCtr++) {
+		eResult = gGPIO.pfSetModeByPin(&gGPIO, nCtr, GPIO_DigitalOutput);
+		if (eResult != GPIO_Success) {
+			printf("Failed to set mode for pin %d: %d\r\n", nCtr, eResult);
+		}
+		
+		eResult = gGPIO.pfDigitalWriteByPin(&gGPIO, nCtr, false);
+		if (eResult != GPIO_Success) {
+			printf("Failed to output set state for pin %d: %d\r\n", nCtr, eResult);
+		}
+	}
+	
+	for (nCtr = 10; nCtr < 20; nCtr++) {
+		eResult = gGPIO.pfSetModeByPin(&gGPIO, nCtr, GPIO_DigitalInput);
+		
+		if (eResult != GPIO_Success) {
+			printf("Failed to set mode for pin %d: %d\r\n", nCtr, eResult);
+		}
+	}
+	
+	for (nCtr = 0; nCtr < 20; nCtr++) {
 		gGPIO.pfReadModeByPin(&gGPIO, nCtr, &ePinMode);
 		
 		switch (ePinMode) {
