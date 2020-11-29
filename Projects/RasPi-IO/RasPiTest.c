@@ -2,7 +2,10 @@
 	//Pin supported (micro hardware and buses)
 	#include "CommonUtils.h"
 	#include "GPIOGeneralInterface.h"
+	#include "I2CGeneralInterface.h"
+	
 	#include "GPIO_RaspberryPi.h"
+	#include "I2C_RaspberryPi.h"
 	
 	//Board support (peripherals)
 
@@ -14,6 +17,7 @@
 
 /*****	Globals		*****/
 sGPIOIface_t gGPIO;
+sI2CIface_t gI2C;
 
 /*****	Prototypes 	*****/
 
@@ -21,6 +25,7 @@ sGPIOIface_t gGPIO;
 /*****	Functions	*****/
 int32_t main(int32_t nArgCnt, char *aArgVals) {
 	eGPIOReturn_t eResult;
+	 eI2CReturns_t eI2CResult;
 	eGPIOModes_t ePinMode;
 	bool bPinState;
 	uint16_t nCtr;
@@ -70,6 +75,14 @@ int32_t main(int32_t nArgCnt, char *aArgVals) {
 				break;
 		}
 	}
+	
+	eI2CResult = I2C_1_PORTINIT(&gI2C, true, 100000, I2C_1_HWINFO);
+	if (eI2CResult != I2C_Success) {
+		printf("I2C Failed to Initialize: %d\r\n", eI2CResult);
+		return 0;
+	}
+	
+	gI2C.pfShutdown(&gI2C);
 	
 	return 0;
 }

@@ -15,6 +15,7 @@
 /*****	Includes	*****/
 	#include <unistd.h>
 	#include <fcntl.h>
+	#include <errno.h>
 	#include <sys/ioctl.h>
 	#include <linux/i2c-dev.h>
 	
@@ -22,6 +23,8 @@
 	#include "I2CGeneralInterface.h"
 
 /*****	Constants	*****/
+	#define I2C_1_CAPS			(I2CCap_Shutdown | I2CCap_ReadUint8Reg | I2CCap_WriteUint8Reg)
+
 	#define I2C_1_PORTINIT		RasPiInitializeI2CBus
 	
 	#define I2C_1_HWINFO		((void *)&(gI2CHWInfo[0]))
@@ -33,11 +36,7 @@
 	} sRasPiI2CHWInfo_t;
 
 /*****	Constants	*****/
-	const char cgI2C1File[] = "/dev/i2c-1";
-
-	sRasPiI2CHWInfo_t gI2CHWInfo [] = {
-		{ .pcFilePath = cgI2C1File, .I2CFile = 0, },
-	};
+	extern sRasPiI2CHWInfo_t gI2CHWInfo[];
 
 /*****	Globals		*****/
 	int32_t gI2CFile;
