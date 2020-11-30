@@ -13,8 +13,14 @@
 
 
 /*****	Constants	*****/
+	/**	@brief		Path and file name of the filesystem object for the I2C bus
+		@ingroup	i2craspberrypi
+	*/
 	const char cgI2C1File[] = "/dev/i2c-1";
 
+	/**	@brief		Array of all I2C buses for the Raspberry Pi
+		@ingroup	i2craspberrypi
+	*/
 	sRasPiI2CHWInfo_t gI2CHWInfo [] = {
 		{ .pcFilePath = cgI2C1File, .I2CFile = -1, },
 	};
@@ -118,6 +124,47 @@ eI2CReturns_t RasPiI2CWriteUint8Reg(sI2CIface_t *pI2CIface, uint8_t nDevAddr, ui
 	//Read the byte value from the address
 	nReturn = write(pI2C->I2CFile, &nValue, 1); //Length is one for uint8 registers
 	if (nReturn != 1) { //Didn't write the correct number of bytes
+		//Global errno holds the error code
+		return I2C_Fail_Unknown;
+	}
+	
+	return I2C_Success;
+}
+
+eI2CReturns_t RasPiI2CReadData(sI2CIface_t *pI2CIface, uint8_t nDevAddr, uint8_t nNumBytes, void *pDataBuff, uint8_t *pnBytesRead) {
+	sRasPiI2CHWInfo_t *pI2C = (sRasPiI2CHWInfo_t *)(pI2CIface->pHWInfo);
+	int32_t nReturn;
+	
+	nReturn = ioctl(pI2C->I2CFile, I2C_SLAVE, nDevAddr);
+	if (nReturn < 0) { //Faired to aquire the bus or reach the slave
+		//Global errno holds the error code
+		return I2C_Fail_Unknown;
+	}
+	
+	//Try reading from the peripheral
+	nReturn = read(pI2C->I2CFile, pDataBuff, nNumBytes); //Length is one for uint8 registers
+	*pnBytesRead = nReturn;
+	if (nReturn != nNumBytes) { //Didn't write the correct number of bytes
+		//Global errno holds the error code
+		return I2C_Fail_Unknown;
+	}
+	
+	return I2C_Success;
+}
+
+eI2CReturns_t RasPiI2CWriteData(sI2CIface_t *pI2CIface, uint8_t nDevAddr, uint8_t nNumBytes, void *pDataBuff) {
+	sRasPiI2CHWInfo_t *pI2C = (sRasPiI2CHWInfo_t *)(pI2CIface->pHWInfo);
+	int32_t nReturn;
+	
+	nReturn = ioctl(pI2C->I2CFile, I2C_SLAVE, nDevAddr);
+	if (nReturn < 0) { //Faired to aquire the bus or reach the slave
+		//Global errno holds the error code
+		return I2C_Fail_Unknown;
+	}
+	
+	//Write the data to the peripheral
+	nReturn = write(pI2C->I2CFile, pDataBuff, nNumBytes); //Length is one for uint8 registers
+	if (nReturn != nNumBytes) { //Didn't write the correct number of bytes
 		//Global errno holds the error code
 		return I2C_Fail_Unknown;
 	}

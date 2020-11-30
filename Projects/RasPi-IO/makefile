@@ -33,10 +33,10 @@ ifeq ($(OS),Linux)
 endif
 
 #Targets that are not file dependents
-.PHONY: all clean debug main setenv
+.PHONY: all clean debug main dispenv
 
 #Target to build entire project
-main: setenv $(DEPS) $(TARGET)
+main: dispenv $(DEPS) $(TARGET)
 	@ echo "----------------------------------------------------------"
 	@ echo "Compiled All Components"
 	@ echo "Deps: $(DEPS)"
@@ -52,7 +52,7 @@ debug:
 	$(eval CCARGS = $(CCDBG) $(CCARGS))
 	$(eval CPPARGS = $(CPPDBG) $(CPPARGS))
 
-setenv: 
+dispenv: 
 	@ echo "----------------------------------------------------------"
 	@ echo "Using Environment: $(ENV)"
 	@ echo ""
