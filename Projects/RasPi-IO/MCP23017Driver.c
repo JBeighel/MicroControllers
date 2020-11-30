@@ -3,9 +3,6 @@
 	Date:	11-28-2020
 */
 
-#ifndef __NAME_H
-	#define __NAME_H
-
 /*****	Includes	*****/
 	#include "MCP23017Driver.h"
 
@@ -22,6 +19,13 @@
 
 
 /*****	Prototypes 	*****/
+	/**	@brief		Convert from 0-15 pin notation to Port/Pin notation
+		@param		nPinNum		The pin number, from 0 to 15
+		@param		ePort		Returns the port for the specified pin
+		@param		ePin		Returns the enum for the pin in the peripheral
+		@return		True if the pin could be translated, false on any error
+		@ingroup	mcp23017driver
+	*/
 	bool MCP23017DecodePinNum(uint8_t nPinNum, eMCP23017_Port_t *ePort, eMCP23017_Pin_t *ePin);
 
 /*****	Functions	*****/
@@ -61,7 +65,7 @@ eMCP23017Returns_t MCP23017PinModeByPin(sMCP23017Info_t *pDev, uint8_t nPinNum, 
 	eMCP23017_Pin_t ePin;
 	
 	if (MCP23017DecodePinNum(nPinNum, &ePort, &ePin) == false) {
-		return false;
+		return MCP23017Fail_InvalidPin;
 	}
 	
 	return MCP23017PinModeByPort(pDev, ePort, ePin, eMode);
@@ -149,6 +153,78 @@ eMCP23017Returns_t MCP23017PinModeByPort(sMCP23017Info_t *pDev, eMCP23017_Port_t
 	return true;
 }
 
+eMCP23017Returns_t MCP23017ReadInputByPin(sMCP23017Info_t *pDev, uint8_t nPinNum) {
+	eMCP23017_Port_t ePort;
+	eMCP23017_Pin_t ePin;
+	
+	if (MCP23017DecodePinNum(nPinNum, &ePort, &ePin) == false) {
+		return MCP23017Fail_InvalidPin;
+	}
+	
+	return MCP23017ReadInputByPort(pDev, ePort, ePin);
+}
+ 
+eMCP23017Returns_t MCP23017ReadInputByPort(sMCP23017Info_t *pDev, eMCP23017_Port_t ePort, eMCP23017_Pin_t ePin) {
+	uint8_t nRegAddrOffset, nRegVal;
+	 
+	//Default mode is IOCON.Bank=0 Port Grouping
+	if (ePort == MCP23017_PortA) {
+		nRegAddrOffset = 0;
+	} else {
+		nRegAddrOffset = MCP23017_PortOffset;
+	}
+	 
+	pDev->pI2C->pfI2CReadUint8Reg(pDev->pI2C, pDev->nAddr, MCP23017_GPIOA + nRegAddrOffset, &nRegVal);
+
+	if (CheckAllBitsInMask(nRegVal, ePin) == true) {
+		return true;
+	} else {
+		return false;
+	}
+}
+
+eMCP23017Returns_t MCP23017WriteOutputByBin(sMCP23017Info_t *pDev, uint8_t nPinNum, bool bLogicLevel) {
+	eMCP23017_Port_t ePort;
+	eMCP23017_Pin_t ePin;
+	
+	if (MCP23017DecodePinNum(nPinNum, &ePort, &ePin) == false) {
+		return MCP23017Fail_InvalidPin;
+	}
+	
+	return MCP23017WriteOutputByPort(pDev, ePort, ePin, bLogicLevel);
+}
+
+eMCP23017Returns_t MCP23017WriteOutputByPort(sMCP23017Info_t *pDev, eMCP23017_Port_t ePort, eMCP23017_Pin_t ePin, bool bLogicLevel) {
+	uint8_t nRegAddrOffset, nRegVal;
+	 
+	//Default mode is IOCON.Bank=0 Port Grouping
+	if (ePort == MCP23017_PortA) {
+		nRegAddrOffset = 0;
+	} else {
+		nRegAddrOffset = MCP23017_PortOffset;
+	}
+	
+	//See if the pin is an output pin
+	pDev->pI2C->pfI2CReadUint8Reg(pDev->pI2C, pDev->nAddr, MCP23017_IODIRA + nRegAddrOffset, &nRegVal);
+	
+	if (CheckAllBitsInMask(nRegVal, ePin) == true) {
+		return false; //This pin is configured for inputs
+	}
+	
+	//Its an output lets request the status
+	pDev->pI2C->pfI2CReadUint8Reg(pDev->pI2C, pDev->nAddr, MCP23017_OLATA + nRegAddrOffset, &nRegVal);
+		
+	if (bLogicLevel == true) {
+		SetAllBitsInMask(nRegVal, ePin); //Set the latch bit to request logic true
+	} else {
+		ZeroAllBitsInMask(nRegVal, ePin); //Clear the latch bit to request logic false
+	}
+	
+	pDev->pI2C->pfI2CWriteUint8Reg(pDev->pI2C, pDev->nAddr, MCP23017_OLATA + nRegAddrOffset, nRegVal);
+	
+	return true;
+}
+
 bool MCP23017DecodePinNum(uint8_t nPinNum, eMCP23017_Port_t *ePort, eMCP23017_Pin_t *ePin) {
 	uint8_t nPinBit;
 	
@@ -173,6 +249,4 @@ bool MCP23017DecodePinNum(uint8_t nPinNum, eMCP23017_Port_t *ePort, eMCP23017_Pi
 	
 	return true;
 }
-
-#endif
 

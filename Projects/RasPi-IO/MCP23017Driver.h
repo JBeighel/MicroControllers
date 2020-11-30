@@ -32,6 +32,7 @@
 		MCP23017Warn_Unknown	= -1,	/**< An unknown but recoverable error occurred */
 		MCP23017_Success		= 0,	/**< Operation completed successfully */
 		MCP23017Fail_Unknown	= 1,	/**< An unknown and unrecoverable occured */
+		MCP23017Fail_InvalidPin	= 2,	/**< Pin requested is invalid */
 	} eMCP23017Returns_t;
 
 	/**	@brief		Values for the I2C address of the MCP23017
@@ -175,6 +176,7 @@
 		@param		nPinNum		Number of the pin to read; 0-7 for port A, 8-15 for port B
 		@param		eMode		Bitwise OR of all mode flahs to set for this pin
 		@return		True if the flags are valid and were correctly applied, false on any error
+		@ingroup	mcp23017driver
 	*/
 	eMCP23017Returns_t MCP23017PinModeByPin(sMCP23017Info_t *pDev, uint8_t nPinNum, eMCP23017_PinMode_t eMode);
 	
@@ -184,8 +186,45 @@
 		@param		ePin		Which pin in the port is to be set
 		@param		eMode		Bitwise OR of all mode flahs to set for this pin
 		@return		True if the flags are valid and were correctly applied, false on any error
+		@ingroup	mcp23017driver
 	*/
 	eMCP23017Returns_t MCP23017PinModeByPort(sMCP23017Info_t *pDev, eMCP23017_Port_t ePort, eMCP23017_Pin_t ePin, eMCP23017_PinMode_t eMode);
+	
+	/**	@brief		Read the current logic level of the pin
+		@param		pDev		The peripheral device object to use
+		@param		nPinNum		Number of the pin to read; 0-7 for port A, 8-15 for port B
+		@return		True if the operation was completed correctly, false on any error
+		@ingroup	mcp23017driver
+	*/
+	eMCP23017Returns_t MCP23017ReadInputByPin(sMCP23017Info_t *pDev, uint8_t nPinNum);
+	
+	/**	@brief		Read the current logic level of the pin
+		@param		pDev		The peripheral device object to use
+		@param		ePort		Which port the pin is on, Port A is 0-7 and Port B is 8-15
+		@param		ePin		Which pin in the port is to be set
+		@return		True if the operation was completed correctly, false on any error
+		@ingroup	mcp23017driver
+	*/
+	eMCP23017Returns_t MCP23017ReadInputByPort(sMCP23017Info_t *pDev, eMCP23017_Port_t ePort, eMCP23017_Pin_t ePin);
+	
+	/**	@brief		Write a logic level to a pin configured for output
+		@param		pDev		The peripheral device object to use
+		@param		nPinNum		Number of the pin to read; 0-7 for port A, 8-15 for port B
+		@param		bLogicLevel	The logic level to apply to the output pin
+		@return		True if the operation was completed correctly, false on any error
+		@ingroup	mcp23017driver
+	*/
+	eMCP23017Returns_t MCP23017WriteOutputByBin(sMCP23017Info_t *pDev, uint8_t nPinNum, bool bLogicLevel);
+	
+	/**	@brief		Write a logic level to a pin configured for output
+		@param		pDev		The peripheral device object to use
+		@param		ePort		Which port the pin is on, Port A is 0-7 and Port B is 8-15
+		@param		ePin		Which pin in the port is to be set
+		@param		bLogicLevel	The logic level to apply to the output pin
+		@return		True if the operation was completed correctly, false on any error
+		@ingroup	mcp23017driver
+	*/
+	eMCP23017Returns_t MCP23017WriteOutputByPort(sMCP23017Info_t *pDev, eMCP23017_Port_t ePort, eMCP23017_Pin_t ePin, bool bLogicLevel);
 
 /*****	Functions	*****/
 
