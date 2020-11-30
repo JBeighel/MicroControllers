@@ -1,6 +1,6 @@
 /**	@defgroup	commonutils
 	@brief		Common utilities and objects
-	@details	v 0.4
+	@details	v 0.6
 	# Description #
 		This is a collection of commonly used utilities.
 		This includes variable types, macros, and constants.
@@ -10,7 +10,7 @@
 	# File Info #
 		File:	CommonUtils.h
 		Author:	J. Beighel
-		Date:	09-30-2020
+		Date:	11-25-2020
 */
 
 #ifndef __COMMONUTILS
@@ -50,7 +50,7 @@
 			If any 1 bits in Mask are 0 in Register will return false.
 		@ingroup	commonutils
 	*/
-	#define CheckAllBitsInMask(Register, Mask)	(((Register & Mask) == Mask) ? true : false)
+	#define CheckAllBitsInMask(Register, Mask)	((((Register) & (Mask)) == (Mask)) ? true : false)
 
 	/**	@brief		Check if any bits set in Mask, are set in Register
 		@param		Register	The value to test
@@ -59,7 +59,7 @@
 			1 bits in Mask are 1 in Register will return false.
 		@ingroup	commonutils
 	*/
-	#define CheckAnyBitsInMask(Register, Mask)	(((Register & Mask) != 0) ? true : false)
+	#define CheckAnyBitsInMask(Register, Mask)	((((Register) & (Mask)) != 0) ? true : false)
 
 	/**	@brief		Gives the value from Register with the bits set in mask cleared/zeroed
 		@details	The Register value will be updated by calling this macro, its return
@@ -73,7 +73,11 @@
 		@return		The value of Register after it is updated
 		@ingroup	commonutils
 	*/
-	#define ZeroAllBitsInMask(Register, Mask)	Register = ((typeof(Register))(((uint32_t)Register) & (~(uint32_t)(Mask))))
+	#ifdef __cplusplus
+		#define ZeroAllBitsInMask(Register, Mask)	Register = ((typeof(Register))(((uint32_t)Register) & (~(uint32_t)(Mask))))
+	#else
+		#define ZeroAllBitsInMask(Register, Mask)	Register = (((uint32_t)Register) & (~(uint32_t)(Mask)))
+	#endif
 
 	/**	@brief		Gives the value from Register with the bits set in mask set to 1
 		@details	The Register value will not be updated by calling this macro, its 
@@ -84,7 +88,11 @@
 		@return		The value of Register after it is updated
 		@ingroup	commonutils
 	*/
-	#define SetAllBitsInMask(Register, Mask)	Register = ((typeof(Register))(((uint32_t)Register) | ((uint32_t)(Mask))))
+	#ifdef __cplusplus
+		#define SetAllBitsInMask(Register, Mask)	Register = ((typeof(Register))(((uint32_t)Register) | ((uint32_t)(Mask))))
+	#else
+		#define SetAllBitsInMask(Register, Mask)	Register = (((uint32_t)Register) | ((uint32_t)(Mask)))
+	#endif
 
 	/**	@brief		Returns the larger of two numeric values
 		@param		nNum1	The first number to compare
@@ -174,6 +182,7 @@
 	uint16_t CountSetBitsInInt16(uint32_t nVal);
 
 /***** Functions	*****/
+
 
 #endif
 
