@@ -13,6 +13,7 @@
 	#define __MCP23017DRIVER_H
 
 /*****	Includes	*****/
+	#include "CommonUtils.h"
 	#include "I2CGeneralInterface.h"
 
 /*****	Constants	*****/
