@@ -4,6 +4,7 @@
 */
 
 /*****	Includes	*****/
+	#include <stdio.h>
 	#include "I2C_RaspberryPi.h"
 
 /*****	Constants	*****/
@@ -57,6 +58,7 @@ eI2CReturns_t RasPiInitializeI2CBus(sI2CIface_t *pI2CIface, bool bActAsMaster, u
 	pI2C->I2CFile = open(pI2C->pcFilePath, O_RDWR);
 	
 	if (pI2C->I2CFile < 0) {
+		pI2C->nLastErr = errno;
 		return I2C_Fail_Unknown;
 	}
 	
@@ -84,6 +86,8 @@ eI2CReturns_t RasPiI2CReadUint8Reg(sI2CIface_t *pI2CIface, uint8_t nDevAddr, uin
 	nReturn = ioctl(pI2C->I2CFile, I2C_SLAVE, nDevAddr);
 	if (nReturn < 0) { //Faired to aquire the bus or reach the slave
 		//Global errno holds the error code
+		printf("ioctl() fail \r\n");
+		pI2C->nLastErr = errno;
 		return I2C_Fail_Unknown;
 	}
 	
@@ -91,6 +95,8 @@ eI2CReturns_t RasPiI2CReadUint8Reg(sI2CIface_t *pI2CIface, uint8_t nDevAddr, uin
 	nReturn = write(pI2C->I2CFile, &nRegAddr, 1); //Length is one for uint8 registers
 	if (nReturn != 1) { //Didn't write the correct number of bytes
 		//Global errno holds the error code
+		printf("write() fail \r\n");
+		pI2C->nLastErr = errno;
 		return I2C_Fail_Unknown;
 	}
 	
@@ -98,6 +104,8 @@ eI2CReturns_t RasPiI2CReadUint8Reg(sI2CIface_t *pI2CIface, uint8_t nDevAddr, uin
 	nReturn = read(pI2C->I2CFile, pnValue, 1); //Length is one for uint8 registers
 	if (nReturn != 1) { //Didn't write the correct number of bytes
 		//Global errno holds the error code
+		printf("read() fail \r\n");
+		pI2C->nLastErr = errno;
 		return I2C_Fail_Unknown;
 	}
 	
@@ -111,6 +119,7 @@ eI2CReturns_t RasPiI2CWriteUint8Reg(sI2CIface_t *pI2CIface, uint8_t nDevAddr, ui
 	nReturn = ioctl(pI2C->I2CFile, I2C_SLAVE, nDevAddr);
 	if (nReturn < 0) { //Faired to aquire the bus or reach the slave
 		//Global errno holds the error code
+		pI2C->nLastErr = errno;
 		return I2C_Fail_Unknown;
 	}
 	
@@ -118,6 +127,7 @@ eI2CReturns_t RasPiI2CWriteUint8Reg(sI2CIface_t *pI2CIface, uint8_t nDevAddr, ui
 	nReturn = write(pI2C->I2CFile, &nRegAddr, 1); //Length is one for uint8 registers
 	if (nReturn != 1) { //Didn't write the correct number of bytes
 		//Global errno holds the error code
+		pI2C->nLastErr = errno;
 		return I2C_Fail_Unknown;
 	}
 	
@@ -125,6 +135,7 @@ eI2CReturns_t RasPiI2CWriteUint8Reg(sI2CIface_t *pI2CIface, uint8_t nDevAddr, ui
 	nReturn = write(pI2C->I2CFile, &nValue, 1); //Length is one for uint8 registers
 	if (nReturn != 1) { //Didn't write the correct number of bytes
 		//Global errno holds the error code
+		pI2C->nLastErr = errno;
 		return I2C_Fail_Unknown;
 	}
 	
@@ -138,6 +149,7 @@ eI2CReturns_t RasPiI2CReadData(sI2CIface_t *pI2CIface, uint8_t nDevAddr, uint8_t
 	nReturn = ioctl(pI2C->I2CFile, I2C_SLAVE, nDevAddr);
 	if (nReturn < 0) { //Faired to aquire the bus or reach the slave
 		//Global errno holds the error code
+		pI2C->nLastErr = errno;
 		return I2C_Fail_Unknown;
 	}
 	
@@ -146,6 +158,7 @@ eI2CReturns_t RasPiI2CReadData(sI2CIface_t *pI2CIface, uint8_t nDevAddr, uint8_t
 	*pnBytesRead = nReturn;
 	if (nReturn != nNumBytes) { //Didn't write the correct number of bytes
 		//Global errno holds the error code
+		pI2C->nLastErr = errno;
 		return I2C_Fail_Unknown;
 	}
 	
@@ -159,6 +172,7 @@ eI2CReturns_t RasPiI2CWriteData(sI2CIface_t *pI2CIface, uint8_t nDevAddr, uint8_
 	nReturn = ioctl(pI2C->I2CFile, I2C_SLAVE, nDevAddr);
 	if (nReturn < 0) { //Faired to aquire the bus or reach the slave
 		//Global errno holds the error code
+		pI2C->nLastErr = errno;
 		return I2C_Fail_Unknown;
 	}
 	
@@ -166,6 +180,7 @@ eI2CReturns_t RasPiI2CWriteData(sI2CIface_t *pI2CIface, uint8_t nDevAddr, uint8_
 	nReturn = write(pI2C->I2CFile, pDataBuff, nNumBytes); //Length is one for uint8 registers
 	if (nReturn != nNumBytes) { //Didn't write the correct number of bytes
 		//Global errno holds the error code
+		pI2C->nLastErr = errno;
 		return I2C_Fail_Unknown;
 	}
 	

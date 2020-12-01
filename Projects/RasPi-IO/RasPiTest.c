@@ -1,4 +1,6 @@
 /*****	Includes	*****/
+	#include <string.h>
+
 	//Pin supported (micro hardware and buses)
 	#include "CommonUtils.h"
 	#include "GPIOGeneralInterface.h"
@@ -28,7 +30,8 @@ sMCP23017Info_t gExp;
 /*****	Functions	*****/
 int32_t main(int32_t nArgCnt, char *aArgVals) {
 	eGPIOReturn_t eResult;
-	 eI2CReturns_t eI2CResult;
+	eI2CReturns_t eI2CResult;
+	eMCP23017Returns_t eExpResult;
 	eGPIOModes_t ePinMode;
 	bool bPinState, bLevel;
 	uint16_t nCtr;
@@ -88,19 +91,44 @@ int32_t main(int32_t nArgCnt, char *aArgVals) {
 	MCP23017Initialize(&gExp, (eMCP23017Address_t)(MCP23017_Base | MCP23017_A0 | MCP23017_A1 | MCP23017_A2), &gI2C);
 
 	for (nCtr = 0; nCtr < 8; nCtr++) {
-		MCP23017PinModeByPin(&gExp, nCtr, MCP23017_Input);
-		MCP23017PinModeByPin(&gExp, nCtr + 8, MCP23017_Output);
+		eExpResult = MCP23017PinModeByPin(&gExp, nCtr, MCP23017_Input);
+		if (eExpResult != MCP23017_Success) {
+			printf("Setting mode for pin %d failed, code: %d\r\n", nCtr, gI2CHWInfo[0].nLastErr);
+			return 0;
+		}
+		
+		eExpResult = MCP23017PinModeByPin(&gExp, nCtr + 8, MCP23017_Output);
+		if (eExpResult != MCP23017_Success) {
+			printf("Setting mode for pin %d failed, code: %d\r\n", nCtr, gI2CHWInfo[0].nLastErr);
+			return 0;
+		}
 	}
 	
-	MCP23017WriteOutputByPin(&gExp, 8, true);
-	MCP23017ReadInputByPin(&gExp, 8, &bLevel);
+	eExpResult = MCP23017WriteOutputByPin(&gExp, 8, true);
+	if (eExpResult != MCP23017_Success) {
+		printf("Writing value for for pin 8 failed, code: %d\r\n", gI2CHWInfo[0].nLastErr);
+		return 0;
+	}
+	
+	eExpResult = MCP23017ReadInputByPin(&gExp, 8, &bLevel);
+	if (eExpResult != MCP23017_Success) {
+		printf("Reading value for for pin 8 failed, code: %d / %d\r\n", eExpResult, gI2CHWInfo[0].nLastErr);
+		printf("%s\r\n", strerror(gI2CHWInfo[0].nLastErr));
+		return 0;
+	}
+	
 	if (bLevel == true) {
 		printf("Pin B0 set HIGH\r\n");
 	} else {
 		printf("Pin B0 set low\r\n");
 	}
 	
-	MCP23017ReadInputByPin(&gExp, 0, &bLevel);
+	eExpResult = MCP23017ReadInputByPin(&gExp, 0, &bLevel);
+	if (eExpResult != MCP23017_Success) {
+		printf("Reading value for for pin 0 failed, code: %d\r\n", gI2CHWInfo[0].nLastErr);
+		return 0;
+	}
+	
 	if (bLevel == true) {
 		printf("Pin A0 reads HIGH\r\n");
 	} else {

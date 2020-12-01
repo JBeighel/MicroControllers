@@ -37,6 +37,7 @@
 		MCP23017Fail_InvalidPin	= 2,	/**< Pin requested is invalid */
 		MCP23017Fail_InvalidMode= 3,	/**< Pin mode requested is invalid */
 		MCP23017Fail_WrongMode	= 4,	/**< Output requested for Input pin*/
+		MCP23017Fail_BusError	= 5,	/**< Error reported from the I2C interface */
 	} eMCP23017Returns_t;
 
 	/**	@brief		Values for the I2C address of the MCP23017

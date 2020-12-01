@@ -166,6 +166,7 @@ eMCP23017Returns_t MCP23017ReadInputByPin(sMCP23017Info_t *pDev, uint8_t nPinNum
  
 eMCP23017Returns_t MCP23017ReadInputByPort(sMCP23017Info_t *pDev, eMCP23017_Port_t ePort, eMCP23017_Pin_t ePin, bool *pbValue) {
 	uint8_t nRegAddrOffset, nRegVal;
+	eI2CReturns_t eResult;
 	 
 	//Default mode is IOCON.Bank=0 Port Grouping
 	if (ePort == MCP23017_PortA) {
@@ -174,7 +175,11 @@ eMCP23017Returns_t MCP23017ReadInputByPort(sMCP23017Info_t *pDev, eMCP23017_Port
 		nRegAddrOffset = MCP23017_PortOffset;
 	}
 	 
-	pDev->pI2C->pfI2CReadUint8Reg(pDev->pI2C, pDev->nAddr, MCP23017_GPIOA + nRegAddrOffset, &nRegVal);
+	eResult = pDev->pI2C->pfI2CReadUint8Reg(pDev->pI2C, pDev->nAddr, MCP23017_GPIOA + nRegAddrOffset, &nRegVal);
+	
+	if (eResult != I2C_Success) {
+		return MCP23017Fail_BusError;
+	}
 
 	if (CheckAllBitsInMask(nRegVal, ePin) == true) {
 		*pbValue = true;

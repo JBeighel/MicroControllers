@@ -45,6 +45,7 @@
 	typedef struct sRasPiI2CHWInfo_t {
 		const char *pcFilePath;	/**< Path to the filesystem object for this bus */
 		int32_t I2CFile;		/**< File handle to use when interacting with this bus */
+		int32_t nLastErr;
 	} sRasPiI2CHWInfo_t;
 
 /*****	Constants	*****/
