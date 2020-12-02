@@ -39,7 +39,8 @@ eMCP23017Returns_t MCP23017Initialize(sMCP23017Info_t *pDev, eMCP23017Address_t 
 	
 	//Set the initial configuration for the IO Expander.  Listing a bit sets it to 1, excluing it sets it to zero.
 	nIOConVal = MCP23017_BANK | MCP23017_SEQOP | MCP23017_HAEN;
-	pDev->pI2C->pfI2CWriteUint8Reg(pDev->pI2C, pDev->nAddr, MCP23017_B0_IOCON, nIOConVal); //Write to both possible IOCON addresses just to be sure
+	pDev->pI2C->pfI2CWriteUint8Reg(pDev->pI2C, pDev->nAddr, MCP23017_B0_IOCON, nIOConVal);
+	//Write to both possible IOCON addresses just to be sure
 	pDev->pI2C->pfI2CWriteUint8Reg(pDev->pI2C, pDev->nAddr, MCP23017_IOCON, nIOConVal);
 	
 	pDev->pI2C->pfI2CReadUint8Reg(pDev->pI2C, pDev->nAddr, MCP23017_IOCON, &nRegVal);
@@ -51,11 +52,11 @@ eMCP23017Returns_t MCP23017Initialize(sMCP23017Info_t *pDev, eMCP23017Address_t 
 	pDev->pI2C->pfI2CWriteUint8Reg(pDev->pI2C, pDev->nAddr, MCP23017_IODIRA, MCP23017_Pin_All);
 	pDev->pI2C->pfI2CWriteUint8Reg(pDev->pI2C, pDev->nAddr, MCP23017_IODIRB, MCP23017_Pin_All);
 	pDev->pI2C->pfI2CWriteUint8Reg(pDev->pI2C, pDev->nAddr, MCP23017_IPOLA, MCP23017_Pin_None);
-	pDev->pI2C->pfI2CWriteUint8Reg(pDev->pI2C, pDev->nAddr, MCP23017_IPOLA, MCP23017_Pin_None);
+	pDev->pI2C->pfI2CWriteUint8Reg(pDev->pI2C, pDev->nAddr, MCP23017_IPOLB, MCP23017_Pin_None);
 	pDev->pI2C->pfI2CWriteUint8Reg(pDev->pI2C, pDev->nAddr, MCP23017_GPPUA, MCP23017_Pin_All);
 	pDev->pI2C->pfI2CWriteUint8Reg(pDev->pI2C, pDev->nAddr, MCP23017_GPPUB, MCP23017_Pin_All);
 	pDev->pI2C->pfI2CWriteUint8Reg(pDev->pI2C, pDev->nAddr, MCP23017_OLATA, MCP23017_Pin_None); //Not outputs by default, but have a predictable level when set
-	pDev->pI2C->pfI2CWriteUint8Reg(pDev->pI2C, pDev->nAddr, MCP23017_OLATA, MCP23017_Pin_None);
+	pDev->pI2C->pfI2CWriteUint8Reg(pDev->pI2C, pDev->nAddr, MCP23017_OLATB, MCP23017_Pin_None);
 	
 	return MCP23017_Success;
 }
@@ -166,6 +167,7 @@ eMCP23017Returns_t MCP23017ReadInputByPin(sMCP23017Info_t *pDev, uint8_t nPinNum
  
 eMCP23017Returns_t MCP23017ReadInputByPort(sMCP23017Info_t *pDev, eMCP23017_Port_t ePort, eMCP23017_Pin_t ePin, bool *pbValue) {
 	uint8_t nRegAddrOffset, nRegVal;
+	eI2CReturns_t eResult;
 	 
 	//Default mode is IOCON.Bank=0 Port Grouping
 	if (ePort == MCP23017_PortA) {
@@ -174,7 +176,11 @@ eMCP23017Returns_t MCP23017ReadInputByPort(sMCP23017Info_t *pDev, eMCP23017_Port
 		nRegAddrOffset = MCP23017_PortOffset;
 	}
 	 
-	pDev->pI2C->pfI2CReadUint8Reg(pDev->pI2C, pDev->nAddr, MCP23017_GPIOA + nRegAddrOffset, &nRegVal);
+	eResult = pDev->pI2C->pfI2CReadUint8Reg(pDev->pI2C, pDev->nAddr, MCP23017_GPIOA + nRegAddrOffset, &nRegVal);
+	
+	if (eResult != I2C_Success) {
+		return MCP23017Fail_BusError;
+	}
 
 	if (CheckAllBitsInMask(nRegVal, ePin) == true) {
 		*pbValue = true;

@@ -45,7 +45,7 @@ int32_t main(int32_t nArgCnt, char *aArgVals) {
 		printf("GPIO Init succeeded\r\n");
 	}
 	
-	for (nCtr = 0; nCtr < 10; nCtr++) {
+	for (nCtr = 4; nCtr < 10; nCtr++) {
 		eResult = gGPIO.pfSetModeByPin(&gGPIO, nCtr, GPIO_DigitalOutput);
 		if (eResult != GPIO_Success) {
 			printf("Failed to set mode for pin %d: %d\r\n", nCtr, eResult);
@@ -88,7 +88,11 @@ int32_t main(int32_t nArgCnt, char *aArgVals) {
 		return 0;
 	}
 	
-	MCP23017Initialize(&gExp, (eMCP23017Address_t)(MCP23017_Base | MCP23017_A0 | MCP23017_A1 | MCP23017_A2), &gI2C);
+	eExpResult = MCP23017Initialize(&gExp, (eMCP23017Address_t)(MCP23017_Base | MCP23017_A0 | MCP23017_A1 | MCP23017_A2), &gI2C);
+	if (eExpResult != MCP23017_Success) {
+		printf("Failed to initialize GPIO expander\r\n");
+		return 0;
+	}
 
 	for (nCtr = 0; nCtr < 8; nCtr++) {
 		eExpResult = MCP23017PinModeByPin(&gExp, nCtr, MCP23017_Input);
@@ -105,6 +109,9 @@ int32_t main(int32_t nArgCnt, char *aArgVals) {
 	}
 	
 	eExpResult = MCP23017WriteOutputByPin(&gExp, 8, true);
+	eExpResult = MCP23017WriteOutputByPin(&gExp, 9, true);
+	eExpResult = MCP23017WriteOutputByPin(&gExp, 10, false);
+	eExpResult = MCP23017WriteOutputByPin(&gExp, 11, false);
 	if (eExpResult != MCP23017_Success) {
 		printf("Writing value for for pin 8 failed, code: %d\r\n", gI2CHWInfo[0].nLastErr);
 		return 0;
@@ -133,6 +140,18 @@ int32_t main(int32_t nArgCnt, char *aArgVals) {
 		printf("Pin A0 reads HIGH\r\n");
 	} else {
 		printf("Pin A0 reads low\r\n");
+	}
+	
+	eExpResult = MCP23017ReadInputByPin(&gExp, 1, &bLevel);
+	if (eExpResult != MCP23017_Success) {
+		printf("Reading value for for pin 1 failed, code: %d\r\n", gI2CHWInfo[0].nLastErr);
+		return 0;
+	}
+	
+	if (bLevel == true) {
+		printf("Pin A1 reads HIGH\r\n");
+	} else {
+		printf("Pin A1 reads low\r\n");
 	}
 	
 	gI2C.pfShutdown(&gI2C);
