@@ -28,6 +28,8 @@
 
 //----- Arduino Functions -----//
 int main(int nArg, char *pArgV) {
+	uint32_t nCurrTime, nStartTime;
+	
 	//General Interface setup
 	TIME_INIT(&gTime);
 	GPIO_INIT(&gGPIO, GPIO_HWINFO);
@@ -41,5 +43,14 @@ int main(int nArg, char *pArgV) {
 	
 	US2066Init4Data(&gDisp, &gTime, &gGPIO, false, 20, 4, 255, 255, 255, 256, 257, 258, 259);
 
-  return 0;
+	nStartTime = gTime.pfGetTicks();
+	do {
+	
+		nCurrTime = gTime.pfGetTicks();
+		//printf("Curr: %d\r\n", nCurrTime);
+		
+		gTime.pfDelayMilliSeconds(10);
+	} while (nCurrTime - nStartTime < 5000);
+	
+	return 0;
 }

@@ -35,7 +35,7 @@
 
 
 /*****	Prototypes 	*****/
-
+	bool KeypadFindButtonInMap(const sKeypadMap_t *pMap, uint32_t nMapSize, uint8_t nOutIdx, uint8_t nInIdx, char *pKey);
 
 /*****	Functions	*****/
 eReturn_t KeypadInit(sKeypadInfo_t *pKeypadInfo, sGPIOIface_t *pGPIOIface, GPIOID_t aOutPins[KEYPAD_OUTPINS], GPIOID_t aInPins[KEYPAD_INPINS]) {
@@ -80,13 +80,36 @@ eReturn_t KeypadCheckPress(sKeypadInfo_t *pKeypadInfo, bool *bKeyDown, char *Key
 			pKeypadInfo->pGpio->pfDigitalReadByPin(pKeypadInfo->pGpio, pKeypadInfo->anPinIn[nInCtr], &bState);
 			
 			if (bState == true) { //Found a pressed button
-				//Index nOutCtr, nInCtr
-				//Set *Key accordingly
 				*bKeyDown = true;
+				
+				KeypadFindButtonInMap(gaKeyMap, KEYPAD_OUTPINS * KEYPAD_INPINS, nOutCtr, nInCtr, Key);
+				
+				return Success;
 			}
 		}
 		
 		//Return it low to avoid confusion on the next out
 		pKeypadInfo->pGpio->pfDigitalWriteByPin(pKeypadInfo->pGpio, pKeypadInfo->anPinOut[nOutCtr], false);
 	}
+}
+
+bool KeypadFindButtonInMap(const sKeypadMap_t *pMap, uint32_t nMapSize, uint8_t nOutIdx, uint8_t nInIdx, char *pKey) {
+	uint32_t nCtr;
+	
+	*pKey = 0;
+	
+	for (nCtr = 0; nCtr < nMapSize; nCtr++) {
+		if (pMap[nCtr].nOutIdx != nOutIdx) {
+			continue;
+		}
+		
+		if (pMap[nCtr].nInIdx != nInIdx) {
+			continue;
+		}
+		
+		*pKey = pMap[nCtr].Key;
+		return true;
+	}
+	
+	return false;
 }

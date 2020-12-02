@@ -254,5 +254,13 @@ bool RasPiTimeInit(sTimeIface_t *pTime) {
 }
 
 uint32_t RasPiGetCurrentTicks(void) {
-	return time(NULL);
+	uint32_t tTime;
+	struct timespec TimeInfo;
+
+    clock_gettime(CLOCK_REALTIME, &TimeInfo);
+	
+	tTime = (uint32_t)(TimeInfo.tv_nsec / 1000000);
+	tTime += (uint32_t)(TimeInfo.tv_sec * 1000);
+	
+	return tTime;
 }
