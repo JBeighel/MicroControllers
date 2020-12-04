@@ -83,7 +83,8 @@ eReturn_t KeypadCheckPress(sKeypadInfo_t *pKeypadInfo, bool *bKeyDown, char *Key
 				*bKeyDown = true;
 				
 				KeypadFindButtonInMap(gaKeyMap, KEYPAD_OUTPINS * KEYPAD_INPINS, nOutCtr, nInCtr, Key);
-				
+		
+				pKeypadInfo->pGpio->pfDigitalWriteByPin(pKeypadInfo->pGpio, pKeypadInfo->anPinOut[nOutCtr], false);
 				return Success;
 			}
 		}

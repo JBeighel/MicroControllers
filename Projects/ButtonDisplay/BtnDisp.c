@@ -29,6 +29,9 @@
 //----- Arduino Functions -----//
 int main(int nArg, char *pArgV) {
 	uint32_t nCurrTime, nStartTime;
+	bool bKeyDown;
+	char Key;
+	uint8_t nCol = 0, nRow = 0;
 	
 	//General Interface setup
 	TIME_INIT(&gTime);
@@ -42,14 +45,25 @@ int main(int nArg, char *pArgV) {
 	KeypadInit(&gKeys, &gGPIO, aOuts, aIns);
 	
 	US2066Init4Data(&gDisp, &gTime, &gGPIO, false, 20, 4, 255, 255, 255, 256, 257, 258, 259);
+	
+	US2066InitClearDisplay(&gDisp);
 
 	nStartTime = gTime.pfGetTicks();
 	do {
-	
-		nCurrTime = gTime.pfGetTicks();
-		//printf("Curr: %d\r\n", nCurrTime);
+		KeypadCheckPress(&gKeys, &bKeyDown, &Key);
+		if (bKeyDown == true) {
+			printf("Pressed Key: %c\r\n", Key);
+			US2066InitSetCursorPosition(&gDisp, nCol, nRow);
+			
+			nCol += 1;
+			if (nCol >= 20) {
+				nCol = 0;
+				nRow += 1;
+			}
+		}
 		
 		gTime.pfDelayMilliSeconds(10);
+		nCurrTime = gTime.pfGetTicks();
 	} while (nCurrTime - nStartTime < 5000);
 	
 	return 0;

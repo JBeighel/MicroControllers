@@ -18,7 +18,7 @@
 		/**	@brief		Number of GPIO points to allocate space for
 			@ingroup	gpioiface
 		*/
-		#define GPIO_IOCNT		20
+		#define GPIO_IOCNT		30
 	#endif
 	
 	/**	@brief		Value to use for an index to indicate this pin is not in use
