@@ -44,9 +44,14 @@ int main(int nArg, char *pArgV) {
 	GPIOID_t aIns[] = { 23, 24, 25 };
 	KeypadInit(&gKeys, &gGPIO, aOuts, aIns);
 	
-	US2066Init4Data(&gDisp, &gTime, &gGPIO, false, 20, 4, 255, 255, 255, 256, 257, 258, 259);
+	US2066Init4Data(&gDisp, &gTime, &gGPIO, false, 20, 4, 21, 20, 16, 5, 6, 13, 19);
 	
 	US2066InitClearDisplay(&gDisp);
+	US2066InitDisplayOn(&gDisp);
+
+	US2066InitSetCursorPosition(&gDisp, 0, 0);
+	US2066InitPrintCharacter(&gDisp, 'H');
+	US2066InitPrintCharacter(&gDisp, 'i');
 
 	nStartTime = gTime.pfGetTicks();
 	do {
@@ -54,6 +59,7 @@ int main(int nArg, char *pArgV) {
 		if (bKeyDown == true) {
 			printf("Pressed Key: %c\r\n", Key);
 			US2066InitSetCursorPosition(&gDisp, nCol, nRow);
+			US2066InitPrintCharacter(&gDisp, Key);
 			
 			nCol += 1;
 			if (nCol >= 20) {
