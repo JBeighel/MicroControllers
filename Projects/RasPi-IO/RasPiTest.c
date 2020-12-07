@@ -180,12 +180,21 @@ int32_t I2CWork(void) {
 
 int32_t SPIWork(void) {
 	eSPIReturn_t eResult;
+	uint8_t nReadByte;
 	
-	eResult = SPI_1_PORTINIT(&gSPI, SPI_1_HWINFO, 500000, SPI_MSBFirst, SPI_Mode0);
+	eResult = SPI_1_PORTINIT(&gSPI, SPI_1_HWINFO, 5000000, SPI_MSBFirst, SPI_Mode0);
 	if (eResult != SPI_Success) {
 		printf("SPI Failed to Initialize: %d\r\n", eResult);
 		return 0;
 	}
+	
+	eResult = gSPI.pfTransferByte(&gSPI, 0x00, &nReadByte);
+	if (eResult != SPI_Success) {
+		printf("SPI Transfer Failed: %d / %d\r\n", eResult, ((sRasPiSPIHWInfo_t *)gSPI.pHWInfo)->nLastErr);
+		return 0;
+	}
+	
+	printf("Read value: %x\r\n", nReadByte);
 	
 	return 1;
 }

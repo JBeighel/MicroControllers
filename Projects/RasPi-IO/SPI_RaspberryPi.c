@@ -67,6 +67,7 @@ eSPIReturn_t RasPiSPIPortInitialize(sSPIIface_t *pIface, void *pHWInfo, uint32_t
 	
 	//Set up the hardware
 	pSPI->SPIFile = open(pSPI->pcFilePath, O_RDWR);
+	printf("File opened as %d\r\n", pSPI->SPIFile);
 	
 	if (pSPI->SPIFile < 0) {
 		pSPI->nLastErr = errno;
@@ -75,8 +76,8 @@ eSPIReturn_t RasPiSPIPortInitialize(sSPIIface_t *pIface, void *pHWInfo, uint32_t
 	
 	//Determine the SPI mode settigns
 	//Unused flags: SPI_LOOP, SPI_CS_HIGH, SPI_TX_OCTAL, SPI_TX_QUAD, SPI_TX_DUAL
-	//              SPI_RX_OCTAL, SPI_RX_QUAD, SPI_RX_DUAL
-	nSpiMode = SPI_3WIRE | SPI_NO_CS;
+	//              SPI_RX_OCTAL, SPI_RX_QUAD, SPI_RX_DUAL, SPI_3WIRE
+	nSpiMode = SPI_NO_CS;
 	
 	switch (eMode) {
 		case SPI_Mode0:
@@ -143,6 +144,7 @@ eSPIReturn_t RasPiSPIPortInitialize(sSPIIface_t *pIface, void *pHWInfo, uint32_t
 		pSPI->SPIFile = -1;
 	}
 	
+	printf("At init complete File is %d\r\n", pSPI->SPIFile);
 	return eRetVal;
 }
 
@@ -161,15 +163,22 @@ eSPIReturn_t RasPiSPITransferByte(sSPIIface_t *pIface, uint8_t nSendByte, uint8_
 	struct spi_ioc_transfer TranInfo;
 	int32_t nResult;
 	
-	TranInfo.tx_buf = (unsigned long)(&nSendByte);
-	TranInfo.rx_buf = (unsigned long)pnReadByte;
+	memset(&TranInfo, 0, sizeof(struct spi_ioc_transfer));
+	
+	TranInfo.tx_buf = (uint32_t)(&nSendByte);
+	TranInfo.rx_buf = (uint32_t)pnReadByte;
 	TranInfo.len = 1; //This function sends 1 byte
-	TranInfo.delay_usecs = 0; //Not sure why we'd want a delay
-	TranInfo.speed_hz = pIface->nBusClockFreq;
+	TranInfo.delay_usecs = 0; //Delay between CS and data transfer
+	//TranInfo.speed_hz = pIface->nBusClockFreq;
 	TranInfo.bits_per_word = RASPISPI_BITSPERWORD;
+
 	TranInfo.tx_nbits = 1; //1 data out line
 	TranInfo.rx_nbits = 1; //1 data in line
 	
+	//This is really only valid if multiple transfers are queued
+	//TranInfo.cs_change = true; //true deselcts the device before next transfer
+	
+	printf("At transfer File is %d\r\n", pSPI->SPIFile);
 	//This call performs the data transfer using the provided buffers
 	nResult = ioctl(pSPI->SPIFile, SPI_IOC_MESSAGE(1), &TranInfo);
 	if (nResult <= 0) {
