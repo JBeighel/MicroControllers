@@ -17,7 +17,7 @@
 	#include <fcntl.h>
 	#include <errno.h>
 	#include <sys/ioctl.h>
-	#include <linux/i2c-dev.h>
+	#include <linux/spi/spidev.h>
 	
 	#include "CommonUtils.h"
 	#include "SPIGeneralInterface.h"
@@ -32,6 +32,8 @@
 		@ingroup	spiraspberrypi
 	*/
 	#define SPI_1_HWINFO		((void *)&(gSPIHWInfo[0]))
+	
+	#define RASPISPI_BITSPERWORD	8
 
 /*****	Definitions	*****/
 	/**	@brief		Structure holding information on the SPI Hardware

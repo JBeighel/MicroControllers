@@ -13,16 +13,23 @@
 
 
 /*****	Constants	*****/
-	/**	@brief		Path and file name of the filesystem object for the SPI bus
+	/**	@brief		Path and file name of the filesystem object for the SPI 1 bus
 		@ingroup	spiraspberrypi
 	*/
-	const char cgSPI1File[] = "/dev/spi-1";
+	const char cgSPI1File[] = "/dev/spidev0.0";
+	
+	/**	@brief		Path and file name of the filesystem object for the SPI 2 bus
+		@details	This SPI bus is only available on the 40 pin header
+		@ingroup	spiraspberrypi
+	*/
+	const char cgSPI2File[] = "/dev/spidev0.1";
 
 	/**	@brief		Array of all SPI buses for the Raspberry Pi
 		@ingroup	spiraspberrypi
 	*/
-	sRasPiI2CHWInfo_t gSPIHWInfo [] = {
+	sRasPiSPIHWInfo_t gSPIHWInfo [] = {
 		{ .pcFilePath = cgSPI1File, .SPIFile = -1, },
+		{ .pcFilePath = cgSPI2File, .SPIFile = -1, },
 	};
 
 /*****	Globals		*****/
@@ -40,8 +47,9 @@
 eSPIReturn_t RasPiSPIPortInitialize(sSPIIface_t *pIface, void *pHWInfo, uint32_t nBusClockFreq, eSPIDataOrder_t eDataOrder, eSPIMode_t eMode) {
 	sRasPiSPIHWInfo_t *pSPI = (sRasPiSPIHWInfo_t *)pHWInfo;
 	int32_t nResult;
-	uint32_t nSpiMode;
-	uint8_t nBits = 8;
+	uint32_t nSpiMode = 0;
+	uint8_t nBits = RASPISPI_BITSPERWORD;
+	eSPIReturn_t eRetVal = SPI_Success;
 	
 	//Setup the interface structure
 	SPIInterfaceInitialize(pIface);
@@ -53,6 +61,9 @@ eSPIReturn_t RasPiSPIPortInitialize(sSPIIface_t *pIface, void *pHWInfo, uint32_t
 	
 	//Se all the interface functions
 	pIface->pfInitialise = &RasPiSPIPortInitialize;
+	pIface->pfBeginTransfer = &RasPiSPIBeginTransfer;
+	pIface->pfEndTransfer = &RasPiSPIEndTransfer;
+	pIface->pfTransferByte = &RasPiSPITransferByte;
 	
 	//Set up the hardware
 	pSPI->SPIFile = open(pSPI->pcFilePath, O_RDWR);
@@ -62,38 +73,77 @@ eSPIReturn_t RasPiSPIPortInitialize(sSPIIface_t *pIface, void *pHWInfo, uint32_t
 		return SPIFail_Unknown;
 	}
 	
-	//Set mode, byte order, etc....
-	nResult = ioctl(pSPI->SPIFile, SPI_IOC_WR_MODE32, &mode); mode = (SPI_CPHA | SPI_CPOL | SPI_LSB_FIRST | SPI_CS_HIGH | SPI_3WIRE | SPI_NO_CS | SPI_LOOP)
-	if (nResult == -1) {
-		pSPI->nLastErr = errno;
-		return SPIFail_Unknown;
+	//Determine the SPI mode settigns
+	//Unused flags: SPI_LOOP, SPI_CS_HIGH, SPI_TX_OCTAL, SPI_TX_QUAD, SPI_TX_DUAL
+	//              SPI_RX_OCTAL, SPI_RX_QUAD, SPI_RX_DUAL
+	nSpiMode = SPI_3WIRE | SPI_NO_CS;
+	
+	switch (eMode) {
+		case SPI_Mode0:
+			break;
+		case SPI_Mode1:
+			nSpiMode |= SPI_CPHA;
+			break;
+		case SPI_Mode2:
+			nSpiMode |= SPI_CPOL;
+			break;
+		case SPI_Mode3:
+			nSpiMode |= SPI_CPHA | SPI_CPOL;
+			break;
+		default :
+			return SPIFail_Unsupported;
 	}
 	
-	nResult = ioctl(pSPI->SPIFile, SPI_IOC_WR_BITS_PER_WORD, &bits = 8);
+	if (eDataOrder == SPI_LSBFirst) {
+		nSpiMode |= SPI_LSB_FIRST;
+	}
+	
+	//Apply the settints to read and write
+	nResult = ioctl(pSPI->SPIFile, SPI_IOC_WR_MODE32, &nSpiMode);
 	if (nResult == -1) {
 		pSPI->nLastErr = errno;
-		return SPIFail_Unknown;
+		eRetVal = SPIFail_Unknown;
+	}
+	
+	nResult = ioctl(pSPI->SPIFile, SPI_IOC_RD_MODE32, &nSpiMode);
+	if (nResult == -1) {
+		pSPI->nLastErr = errno;
+		eRetVal = SPIFail_Unknown;
+	}
+	
+	//Read and write have the same word size
+	nResult = ioctl(pSPI->SPIFile, SPI_IOC_WR_BITS_PER_WORD, &nBits);
+	if (nResult == -1) {
+		pSPI->nLastErr = errno;
+		eRetVal = SPIFail_Unknown;
 	}
 
-	nResult = ioctl(pSPI->SPIFile, SPI_IOC_RD_BITS_PER_WORD, &bits = 8);
+	nResult = ioctl(pSPI->SPIFile, SPI_IOC_RD_BITS_PER_WORD, &nBits);
 	if (nResult == -1) {
 		pSPI->nLastErr = errno;
-		return SPIFail_Unknown;
+		eRetVal = SPIFail_Unknown;
 	}
 	
-	nResult = ioctl(pSPI->SPIFile, SPI_IOC_WR_MAX_SPEED_HZ, nBusClockFreq);
+	//Set the clock frequency
+	nResult = ioctl(pSPI->SPIFile, SPI_IOC_WR_MAX_SPEED_HZ, &nBusClockFreq);
 	if (nResult == -1) {
 		pSPI->nLastErr = errno;
-		return SPIFail_Unknown;
+		eRetVal = SPIFail_Unknown;
 	}
 
-	nResult = ioctl(pSPI->SPIFile, SPI_IOC_RD_MAX_SPEED_HZ, nBusClockFreq);
+	nResult = ioctl(pSPI->SPIFile, SPI_IOC_RD_MAX_SPEED_HZ, &nBusClockFreq);
 	if (nResult == -1) {
 		pSPI->nLastErr = errno;
-		return SPIFail_Unknown;
+		eRetVal = SPIFail_Unknown;
 	}
 	
-	return SPI_Success;
+	//If anything failed close the file
+	if (eRetVal != SPI_Success) {
+		close(pSPI->SPIFile);
+		pSPI->SPIFile = -1;
+	}
+	
+	return eRetVal;
 }
 
 eSPIReturn_t RasPiSPIBeginTransfer(sSPIIface_t *pIface) {
