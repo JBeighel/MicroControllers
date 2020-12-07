@@ -147,16 +147,35 @@ eSPIReturn_t RasPiSPIPortInitialize(sSPIIface_t *pIface, void *pHWInfo, uint32_t
 }
 
 eSPIReturn_t RasPiSPIBeginTransfer(sSPIIface_t *pIface) {
-	sRasPiSPIHWInfo_t *pSPI = (sRasPiSPIHWInfo_t *)(pIface->pHWInfo);
-	
+	// No work to do here, just need to include the function
+	return SPI_Success;
 }
 	
 eSPIReturn_t RasPiSPIEndTransfer(sSPIIface_t *pIface) {
-	sRasPiSPIHWInfo_t *pSPI = (sRasPiSPIHWInfo_t *)(pIface->pHWInfo);
-	
+	// No work to do here, just need to include the function
+	return SPI_Success;
 }
 
 eSPIReturn_t RasPiSPITransferByte(sSPIIface_t *pIface, uint8_t nSendByte, uint8_t *pnReadByte) {
 	sRasPiSPIHWInfo_t *pSPI = (sRasPiSPIHWInfo_t *)(pIface->pHWInfo);
+	struct spi_ioc_transfer TranInfo;
+	int32_t nResult;
 	
+	TranInfo.tx_buf = (unsigned long)(&nSendByte);
+	TranInfo.rx_buf = (unsigned long)pnReadByte;
+	TranInfo.len = 1; //This function sends 1 byte
+	TranInfo.delay_usecs = 0; //Not sure why we'd want a delay
+	TranInfo.speed_hz = pIface->nBusClockFreq;
+	TranInfo.bits_per_word = RASPISPI_BITSPERWORD;
+	TranInfo.tx_nbits = 1; //1 data out line
+	TranInfo.rx_nbits = 1; //1 data in line
+	
+	//This call performs the data transfer using the provided buffers
+	nResult = ioctl(pSPI->SPIFile, SPI_IOC_MESSAGE(1), &TranInfo);
+	if (nResult <= 0) {
+		pSPI->nLastErr = errno;
+		return SPIFail_Unknown;
+	}
+	
+	return SPI_Success;
 }
