@@ -67,7 +67,6 @@ eSPIReturn_t RasPiSPIPortInitialize(sSPIIface_t *pIface, void *pHWInfo, uint32_t
 	
 	//Set up the hardware
 	pSPI->SPIFile = open(pSPI->pcFilePath, O_RDWR);
-	printf("File opened as %d\r\n", pSPI->SPIFile);
 	
 	if (pSPI->SPIFile < 0) {
 		pSPI->nLastErr = errno;
@@ -144,7 +143,6 @@ eSPIReturn_t RasPiSPIPortInitialize(sSPIIface_t *pIface, void *pHWInfo, uint32_t
 		pSPI->SPIFile = -1;
 	}
 	
-	printf("At init complete File is %d\r\n", pSPI->SPIFile);
 	return eRetVal;
 }
 
@@ -177,8 +175,6 @@ eSPIReturn_t RasPiSPITransferByte(sSPIIface_t *pIface, uint8_t nSendByte, uint8_
 	
 	//This is really only valid if multiple transfers are queued
 	//TranInfo.cs_change = true; //true deselcts the device before next transfer
-	
-	printf("At transfer File is %d\r\n", pSPI->SPIFile);
 	//This call performs the data transfer using the provided buffers
 	nResult = ioctl(pSPI->SPIFile, SPI_IOC_MESSAGE(1), &TranInfo);
 	if (nResult <= 0) {
