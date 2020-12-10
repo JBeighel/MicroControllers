@@ -1,6 +1,6 @@
 /**	File:	Keypad.c
 	Author:	J. Beighel
-	Date:	12-02-2020
+	Date:	12-10-2020
 */
 
 /*****	Includes	*****/
@@ -13,6 +13,12 @@
 
 
 /*****	Constants	*****/
+	/**	@brief		Keypad map for the 12 button phone pad
+		@details	This keypad has 4 row pins and 3 column pins.  The rows are
+			the outputs and the columns are the inputs.  Index 0 is the top or 
+			left key with the index increase down or to the right.
+		@ingroup	keypaddrv
+	*/
 	const sKeypadMap_t gaKeyMap[] = {
 		{ .nOutIdx = 0, .nInIdx = 0, .Key = '1', },
 		{ .nOutIdx = 0, .nInIdx = 1, .Key = '2', },
@@ -35,6 +41,17 @@
 
 
 /*****	Prototypes 	*****/
+	/**	@brief		Checks the pins used to send and read the singal against a key map
+		@param		pMap		Pointer to the array of keymap structures matching
+			output and input pins to the ASCII character beign pressed
+		@param		nMapSize	Number of elements in the map array
+		@param		nOutIdx		Index of the output pin sending the signal
+		@param		nInIdx		Index of the input pin receiving the signal
+		@param		pKey		ASCII code of the key beign pressed
+		@return		True if the Out and In combination is a keypress, false if the 
+			combination can not be found in the map
+		@ingroup	keypaddrv
+	*/
 	bool KeypadFindButtonInMap(const sKeypadMap_t *pMap, uint32_t nMapSize, uint8_t nOutIdx, uint8_t nInIdx, char *pKey);
 
 /*****	Functions	*****/
