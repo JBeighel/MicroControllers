@@ -1,6 +1,6 @@
 /**	@defgroup	spiiface
 	@brief		General interface for using the SPI bus
-	@details	v0.2
+	@details	v0.3
 	# Intent #
 		This module is to create a common interface for interacting with a SPI bus.  Drivers 
 		for devices that operate over this bus should use this interface to operate the 
@@ -13,11 +13,39 @@
 		expected to implement and provide these functions.
 		
 	# Usage #
-	
-	# File Info #
-		File:	SPIGeneralInterface.h
+		Each processor or device bus that will support this interface must create define and
+		create its own copies of the interface functions.
+
+		The SPIPortInitialize() function in the driver must call the SPIInterfaceInitialize()
+		function to prepare the instance of the sSPIIface_t object.  This will ensure that all
+		function pointers will have a valid value, applications can not inadvertently branch to
+		an nonexistent function.  It will then overwrite the contents of the object with its
+		information.
+		
+		The driver must also define values for each hardware object that it covers.  This should
+		take the form of SPI_#_HWINFO
+
+		In addition the driver must define a value to reach the SPIPortInitialize() function.
+		This should take the form of SPI_#_PORTINIT
+
+		Having these defined gives a very consistent and generic means of establishing the
+		interface object in the application that looks like this:
+
+		sSPIIface_t SpiObj;
+
+		SPI_1_PORTINIT(&SpiObj, SPI_1_HWINFO, 5000000, SPI_MSBFirst, SPI_Mode0);
+
+		The last thing the driver must do is create a define of the capabilities that it allows.
+		This define should be options from the eSPICapabilities_t enumeration ORed together.  The
+		peripheral drivers will similarly provide a define a value listing the capabilities that
+		it requires.  Using these defines the application should be able to determine at
+		compilation whether or not a peripheral will work on a particular bus.  This define
+		should take the form of SPI_#_CAPS
+
+	# File Information #
+		File:	SPIGeneralInterface.c
 		Author:	J. Beighel
-		Date:	08-27-2020
+		Created:09-04-2020
 */
 
 #ifndef __SPIGENIFACE
@@ -26,10 +54,21 @@
 /***** Includes		*****/
 	#include <stddef.h>
 	#include <stdint.h>
-	#include <stdbool.h>
 
 /***** Definitions	*****/
 	typedef struct sSPIIface_t sSPIIface_t;  //Declaring this early, will define it later
+
+	/**	@brief		Enumeration of all SPI bus capabilities
+		@ingroup	spiiface
+	*/
+	typedef enum eSPICapabilities_t {
+		SPI_NoCapabilities	= 0x00000000,	/**< Default, SPI bus driver has no capabilities */
+		SPI_Configure		= 0x00000001,	/**< SPI bus driver allows configuration of the port */
+		SPI_BeginTransfer	= 0x00000002,	/**< SPI bus driver allows user to begin a data transfer */
+		SPI_EndTransfer		= 0x00000004,	/**< SPI bus driver allows user to end a data transfer */
+		SPI_BiDir1Byte		= 0x00000008,	/**< SPI bus driver allows user to bi-directionally transfer 1 byte */
+		SPI_BiDir2Bytes		= 0x00000010,	/**< SPI bus driver allows user to bi-directionally transfer 2 bytes */
+	} eSPICapabilities_t;
 
 	/**	@brief		Enumeration of markers to indicate the order the bus sends data out 
 		@ingroup	spiiface
@@ -57,6 +96,7 @@
 		SPI_Success			= 0,	/**< The operation completed successfully */
 		SPIFail_Unknown		= -1,	/**< An unknown and unrecoverable error happened during the operation */
 		SPIFail_Unsupported	= -2,	/**< The requested operation is not supported by this device */
+		SPIFail_Timeout		= -3,	/**< The requested operation timed out before completion */
 	} eSPIReturn_t;
 	
 	typedef eSPIReturn_t (*pfInitializeSPIBus_t)(sSPIIface_t *pIface, void *pHWInfo, uint32_t nBusClockFreq, eSPIDataOrder_t eDataOrder, eSPIMode_t eMode);
@@ -67,17 +107,18 @@
 		eSPIReturn_t (*pfEndTransfer)(sSPIIface_t *pIface);
 		
 		eSPIReturn_t (*pfTransferByte)(sSPIIface_t *pIface, uint8_t nSendByte, uint8_t *pnReadByte);
+		eSPIReturn_t (*pfTransfer2Bytes)(sSPIIface_t *pIface, const uint8_t *anSendBytes, uint8_t *anReadBytes);
 		
-		uint32_t nBusClockFreq;
-		eSPIDataOrder_t eDataOrder;
-		eSPIMode_t eMode;
-		void		*pHWInfo;
+		eSPICapabilities_t (*pfGetCapabilities)(sSPIIface_t *pIface);
+
+		uint32_t		nBusClockFreq;
+		eSPIDataOrder_t	eDataOrder;
+		eSPIMode_t		eMode;
+		void			*pHWInfo;
 	} sSPIIface_t;
-	
 	
 
 /***** Constants	*****/
-
 
 
 /***** Globals		*****/
@@ -94,7 +135,11 @@
 		
 	eSPIReturn_t SPITransferByte(sSPIIface_t *pIface, uint8_t nSendByte, uint8_t *pnReadByte);
 
+	eSPIReturn_t SPITransfer2Bytes(sSPIIface_t *pIface, const uint8_t *anSendBytes, uint8_t *anReadBytes);
+
+	eSPICapabilities_t SPIGetCapabilities(sSPIIface_t *pIface);
+
 /***** Functions	*****/
-	
+
 #endif
 

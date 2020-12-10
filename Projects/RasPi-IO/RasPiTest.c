@@ -5,9 +5,11 @@
 	#include "CommonUtils.h"
 	#include "GPIOGeneralInterface.h"
 	#include "I2CGeneralInterface.h"
+	#include "SPIGeneralInterface.h"
 	
 	#include "GPIO_RaspberryPi.h"
 	#include "I2C_RaspberryPi.h"
+	#include "SPI_RaspberryPi.h"
 	
 	//Board support (peripherals)
 	#include "MCP23017Driver.h"
@@ -21,20 +23,28 @@
 /*****	Globals		*****/
 sGPIOIface_t gGPIO;
 sI2CIface_t gI2C;
+sSPIIface_t gSPI;
 
 sMCP23017Info_t gExp;
 
 /*****	Prototypes 	*****/
-
+	int32_t GPIOWork(void);
+	int32_t I2CWork(void);
+	int32_t SPIWork(void);
 
 /*****	Functions	*****/
 int32_t main(int32_t nArgCnt, char *aArgVals) {
+	SPIWork();
+	
+	
+	return 0;
+}
+
+int32_t GPIOWork(void) {
 	eGPIOReturn_t eResult;
-	eI2CReturns_t eI2CResult;
-	eMCP23017Returns_t eExpResult;
 	eGPIOModes_t ePinMode;
-	bool bPinState, bLevel;
 	uint16_t nCtr;
+	bool bPinState;
 	
 	eResult = GPIO_INIT(&gGPIO, GPIO_HWINFO);
 	
@@ -81,6 +91,15 @@ int32_t main(int32_t nArgCnt, char *aArgVals) {
 				break;
 		}
 	}
+	
+	return 1;
+}
+
+int32_t I2CWork(void) {
+	eI2CReturns_t eI2CResult;
+	eMCP23017Returns_t eExpResult;
+	bool bLevel;
+	uint16_t nCtr;
 	
 	eI2CResult = I2C_1_PORTINIT(&gI2C, true, 100000, I2C_1_HWINFO);
 	if (eI2CResult != I2C_Success) {
@@ -156,5 +175,26 @@ int32_t main(int32_t nArgCnt, char *aArgVals) {
 	
 	gI2C.pfShutdown(&gI2C);
 	
-	return 0;
+	return 1;
+}
+
+int32_t SPIWork(void) {
+	eSPIReturn_t eResult;
+	uint8_t nReadByte;
+	
+	eResult = SPI_1_PORTINIT(&gSPI, SPI_1_HWINFO, 5000000, SPI_MSBFirst, SPI_Mode0);
+	if (eResult != SPI_Success) {
+		printf("SPI Failed to Initialize: %d\r\n", eResult);
+		return 0;
+	}
+	
+	eResult = gSPI.pfTransferByte(&gSPI, 0x00, &nReadByte);
+	if (eResult != SPI_Success) {
+		printf("SPI Transfer Failed: %d / %d\r\n", eResult, ((sRasPiSPIHWInfo_t *)gSPI.pHWInfo)->nLastErr);
+		return 0;
+	}
+	
+	printf("Read value: %x\r\n", nReadByte);
+	
+	return 1;
 }
