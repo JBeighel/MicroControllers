@@ -52,7 +52,7 @@ debug:
 	$(eval CCARGS = $(CCDBG) $(CCARGS))
 	$(eval CPPARGS = $(CPPDBG) $(CPPARGS))
 
-dispenv: 
+dispenv: $(DEPS) $(TARGET)
 	@ echo "----------------------------------------------------------"
 	@ echo "Using Environment: $(ENV)"
 	@ echo ""
