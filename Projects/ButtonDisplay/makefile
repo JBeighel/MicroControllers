@@ -1,6 +1,6 @@
-TARGET = 
-COMMONDEPS = CommonUtils.o GPIOGeneralInterface.o I2CGeneralInterface.o
-LINUXDEPS = GPIO_RaspberryPi.o I2C_RaspberryPi.o
+TARGET = BtnDisp.exe
+COMMONDEPS = CommonUtils.o GPIOGeneralInterface.o Keypad.o US2066Driver.o
+LINUXDEPS = GPIO_RaspberryPi.o
 
 #determine operating system to set environment
 ifndef OS
@@ -44,7 +44,7 @@ main: dispenv $(DEPS) $(TARGET)
 #Workspace handling targets
 all: clean main
 
-debug:
+debug: 
 	@ echo "----------------------------------------------------------"
 	@ echo "Building with debug symbols: $(CCDBG) / $(CPPDBG)"
 	@ echo ""
