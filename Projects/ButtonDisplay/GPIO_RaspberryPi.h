@@ -1,6 +1,6 @@
 /**	@defgroup	gpioraspi
 	@brief		GPIO General Interface implementation for Raspberry Pi
-	@details	v0.1
+	@details	v0.2
 	# Description #
 	
 	# Usage #

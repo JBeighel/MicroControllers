@@ -15,6 +15,8 @@
 /*****	Includes	*****/
 	#include <stdint.h>
 	#include <stdbool.h>
+	
+	#include "CommonUtils.h"
 
 /*****	Defines		*****/
 
@@ -45,9 +47,9 @@
 		@param		nDelayTime		Number of milliseconds to delay for
 		@ingroup	gpioiface
 	*/
-	typedef bool (*pfTimeDelay_t)(uint32_t nDelayAmount);
+	typedef eReturn_t (*pfTimeDelay_t)(uint32_t nDelayAmount);
 	
-	typedef bool (*pfTimeIfaceInitialize_t)(sTimeIface_t *pTime);
+	typedef eReturn_t (*pfTimeIfaceInitialize_t)(sTimeIface_t *pTime);
 	
 	/**	@brief		Interface object for time methods
 		@ingroup	timeiface
@@ -67,7 +69,7 @@
 
 
 /*****	Prototypes 	*****/
-	bool TimeInterfaceInitialize(sTimeIface_t *pIface);
+	eReturn_t TimeInterfaceInitialize(sTimeIface_t *pIface);
 
 /*****	Functions	*****/
 
