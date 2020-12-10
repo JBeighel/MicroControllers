@@ -1,5 +1,11 @@
+/*	File:	GPIOGeneralInterface.c
+	Author:	J. Beighel
+	Date:	12-10-2020
+*/
+
 /***** Includes		*****/
 	#include "GPIOGeneralInterface.h"
+	
 /***** Definitions	*****/
 
 
@@ -10,7 +16,15 @@
 
 
 /***** Prototypes 	*****/
-
+	/**	@brief		Get current ticks not implemented
+		@ingroup	timeiface
+	*/
+	uint32_t TimeCurrentTicksNotImplemented(void);
+	
+	/**	@brief		Delay not implemented
+		@ingroup	timeiface
+	*/
+	bool TimeDelayNotImplemented(uint32_t nDelayAmount);
 
 /***** Functions	*****/
 
@@ -40,45 +54,47 @@ eGPIOReturn_t GPIOPortInitialize(sGPIOIface_t *pIface, void *pHWInfo) {
 	return GPIOFail_Unsupported;
 }
 
-eGPIOReturn_t GPIOSetModeByPin(sGPIOIface_t *pIface, uint16_t nGPIOPin, eGPIOModes_t eMode) {
+eGPIOReturn_t GPIOSetModeByPin(sGPIOIface_t *pIface, GPIOID_t nGPIOPin, eGPIOModes_t eMode) {
 	return GPIOFail_Unsupported;
 }
 
-eGPIOReturn_t GPIOReadModeByPin(sGPIOIface_t *pIface, uint16_t nGPIOPin, eGPIOModes_t *eMode) {
+eGPIOReturn_t GPIOReadModeByPin(sGPIOIface_t *pIface, GPIOID_t nGPIOPin, eGPIOModes_t *eMode) {
 	return GPIOFail_Unsupported;
 }
 
-eGPIOReturn_t GPIODigitalWriteByPin(sGPIOIface_t *pIface, uint16_t nGPIOPin, bool bState) {
+eGPIOReturn_t GPIODigitalWriteByPin(sGPIOIface_t *pIface, GPIOID_t nGPIOPin, bool bState) {
 	return GPIOFail_Unsupported;
 }
 
-eGPIOReturn_t GPIODigitalReadByPin(sGPIOIface_t *pIface, uint16_t nGPIOPin, bool *bState) {
+eGPIOReturn_t GPIODigitalReadByPin(sGPIOIface_t *pIface, GPIOID_t nGPIOPin, bool *bState) {
 	return GPIOFail_Unsupported;
 }
 
-eGPIOReturn_t GPIOPWMWriteByPin(sGPIOIface_t *pIface, uint16_t nGPIOPin, uint32_t nPWMValue) {
+eGPIOReturn_t GPIOPWMWriteByPin(sGPIOIface_t *pIface, GPIOID_t nGPIOPin, uint32_t nPWMValue) {
 	return GPIOFail_Unsupported;
 }
 
-eGPIOReturn_t GPIOAnalogWriteByPin(sGPIOIface_t *pIface, uint16_t nGPIOPin, uint32_t nAnaValue) {
+eGPIOReturn_t GPIOAnalogWriteByPin(sGPIOIface_t *pIface, GPIOID_t nGPIOPin, uint32_t nAnaValue) {
 	return GPIOFail_Unsupported;
 }
 
-eGPIOReturn_t GPIOAnalogReadByPin(sGPIOIface_t *pIface, uint16_t nGPIOPin, uint32_t *nAnaValue) {
+eGPIOReturn_t GPIOAnalogReadByPin(sGPIOIface_t *pIface, GPIOID_t nGPIOPin, uint32_t *nAnaValue) {
 	return GPIOFail_Unsupported;
 }
 
 bool TimeInterfaceInitialize(sTimeIface_t *pIface) {
-	pIface->pfGetTicks = &TimeCurrentTicks;
-	pIface->pfDelaySeconds = &TimeDelay;
-	pIface->pfDelayMilliSeconds = &TimeDelay;
-	pIface->pfDelayMicroSeconds = &TimeDelay;
+	pIface->pfGetTicks = &TimeCurrentTicksNotImplemented;
+	pIface->pfDelaySeconds = &TimeDelayNotImplemented;
+	pIface->pfDelayMilliSeconds = &TimeDelayNotImplemented;
+	pIface->pfDelayMicroSeconds = &TimeDelayNotImplemented;
+	
+	return true;
 }
 	
-uint32_t TimeCurrentTicks(void) {
+uint32_t TimeCurrentTicksNotImplemented(void) {
 	return 0;
 }
 
-bool TimeDelay(uint32_t nDelayAmount) {
+bool TimeDelayNotImplemented(uint32_t nDelayAmount) {
 	return false;
 }
