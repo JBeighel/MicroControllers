@@ -1,12 +1,12 @@
 /**	@defgroup	tc1602adriver
 	@brief		
-	@details	v0.1
+	@details	v0.2
 	#Description
 	
 	#File Information
 		File:	TC1602ADriver.h
 		Author:	J. Beighel
-		Date:	11-05-2020
+		Date:	12-10-2020
 */
 
 #ifndef __TC1602ADRIVER
@@ -14,6 +14,7 @@
 
 /*****	Includes	*****/
 	#include "CommonUtils.h"
+	#incldue "TimeGeneralInterface.h"
 	#include "GPIOGeneralInterface.h"
 
 /*****	Constants	*****/

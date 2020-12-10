@@ -1,5 +1,5 @@
 TARGET = 
-COMMONDEPS = CommonUtils.o GPIOGeneralInterface.o I2CGeneralInterface.o
+COMMONDEPS = CommonUtils.o TimeGeneralInterface.o GPIOGeneralInterface.o I2CGeneralInterface.o
 LINUXDEPS = GPIO_RaspberryPi.o I2C_RaspberryPi.o
 
 #determine operating system to set environment
