@@ -44,7 +44,7 @@ main: dispenv $(DEPS) $(TARGET)
 #Workspace handling targets
 all: clean main
 
-debug:
+debug: $(DEPS) $(TARGET)
 	@ echo "----------------------------------------------------------"
 	@ echo "Building with debug symbols: $(CCDBG) / $(CPPDBG)"
 	@ echo ""
