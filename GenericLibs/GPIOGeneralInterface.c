@@ -16,15 +16,22 @@
 
 
 /***** Prototypes 	*****/
-	/**	@brief		Get current ticks not implemented
-		@ingroup	timeiface
-	*/
-	uint32_t TimeCurrentTicksNotImplemented(void);
+	eGPIOReturn_t GPIOPortInitialize(sGPIOIface_t *pIface, void *pHWInfo);
 	
-	/**	@brief		Delay not implemented
-		@ingroup	timeiface
-	*/
-	bool TimeDelayNotImplemented(uint32_t nDelayAmount);
+	eGPIOReturn_t GPIOSetModeByPin(sGPIOIface_t *pIface, GPIOID_t nGPIOPin, eGPIOModes_t eMode);
+	
+	eGPIOReturn_t GPIOReadModeByPin(sGPIOIface_t *pIface, GPIOID_t nGPIOPin, eGPIOModes_t *eMode);
+	
+	eGPIOReturn_t GPIODigitalWriteByPin(sGPIOIface_t *pIface, GPIOID_t nGPIOPin, bool bState);
+	
+	eGPIOReturn_t GPIODigitalReadByPin(sGPIOIface_t *pIface, GPIOID_t nGPIOPin, bool *bState);
+	
+	eGPIOReturn_t GPIOPWMWriteByPin(sGPIOIface_t *pIface, GPIOID_t nGPIOPin, uint32_t nPWMValue);
+	
+	eGPIOReturn_t GPIOAnalogWriteByPin(sGPIOIface_t *pIface, GPIOID_t nGPIOPin, uint32_t nAnaValue);
+	
+	eGPIOReturn_t GPIOAnalogReadByPin(sGPIOIface_t *pIface, uint16_t nGPIOPin, uint32_t *nAnaValue);
+
 
 /***** Functions	*****/
 
@@ -80,21 +87,4 @@ eGPIOReturn_t GPIOAnalogWriteByPin(sGPIOIface_t *pIface, GPIOID_t nGPIOPin, uint
 
 eGPIOReturn_t GPIOAnalogReadByPin(sGPIOIface_t *pIface, GPIOID_t nGPIOPin, uint32_t *nAnaValue) {
 	return GPIOFail_Unsupported;
-}
-
-bool TimeInterfaceInitialize(sTimeIface_t *pIface) {
-	pIface->pfGetTicks = &TimeCurrentTicksNotImplemented;
-	pIface->pfDelaySeconds = &TimeDelayNotImplemented;
-	pIface->pfDelayMilliSeconds = &TimeDelayNotImplemented;
-	pIface->pfDelayMicroSeconds = &TimeDelayNotImplemented;
-	
-	return true;
-}
-	
-uint32_t TimeCurrentTicksNotImplemented(void) {
-	return 0;
-}
-
-bool TimeDelayNotImplemented(uint32_t nDelayAmount) {
-	return false;
 }
