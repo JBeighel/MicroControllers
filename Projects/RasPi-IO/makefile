@@ -1,7 +1,7 @@
 TARGET = RasPiTest.exe
-COMMONDEPS = CommonUtils.o GPIOGeneralInterface.o I2CGeneralInterface.o MCP23017Driver.o
+COMMONDEPS = CommonUtils.o GPIOGeneralInterface.o I2CGeneralInterface.o SPIGeneralInterface.o MCP23017Driver.o
 WINDOWSDEPS = 
-LINUXDEPS = GPIO_RaspberryPi.o I2C_RaspberryPi.o
+LINUXDEPS = GPIO_RaspberryPi.o I2C_RaspberryPi.o SPI_RaspberryPi.o
 
 #determine operating system to set environment
 ifndef OS
@@ -52,7 +52,7 @@ debug:
 	$(eval CCARGS = $(CCDBG) $(CCARGS))
 	$(eval CPPARGS = $(CPPDBG) $(CPPARGS))
 
-dispenv: 
+dispenv: $(DEPS) $(TARGET)
 	@ echo "----------------------------------------------------------"
 	@ echo "Using Environment: $(ENV)"
 	@ echo ""
