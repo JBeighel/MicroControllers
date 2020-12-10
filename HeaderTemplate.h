@@ -1,12 +1,14 @@
 /**	@defgroup	GROUPNAME
 	@brief		
-	@details	v
-	#Description
+	@details	v0.0
+	# Description #
 	
-	#File Information
-		File:	???.c
+	# Usage #
+	
+	# File Information #
+		File:	???.h
 		Author:	J. Beighel
-		Date:	MM-DD-YYYY
+		Created:MM-DD-YYYY
 */
 
 #ifndef __NAME_H
