@@ -1,6 +1,6 @@
 /**	@defgroup	gpioarduino
 	@brief		Implementation of the GPIO General Interface for Arduino
-	@details	v0.3
+	@details	v0.4
 		
 */
 
@@ -254,15 +254,15 @@
 	
 	eGPIOReturn_t ArduinoGPIOAnalogReadByPin(sGPIOIface_t *pIface, uint16_t nGPIOPin, uint32_t *nAnaValue);
 	
-	bool ArduinoTimeIfaceInitialize(sTimeIface_t *pTime);
+	eReturn_t ArduinoTimeIfaceInitialize(sTimeIface_t *pTime);
 	
 	uint32_t ArduinoGetTicks(void);
 	
-	bool ArduinoDelaySeconds(uint32_t nDelayAmount);
+	eReturn_t ArduinoDelaySeconds(uint32_t nDelayAmount);
 	
-	bool ArduinoDelayMilliSeconds(uint32_t nDelayAmount);
+	eReturn_t ArduinoDelayMilliSeconds(uint32_t nDelayAmount);
 	
-	bool ArduinoDelayMicroSeconds(uint32_t nDelayAmount);
+	eReturn_t ArduinoDelayMicroSeconds(uint32_t nDelayAmount);
 
 /***** Functions	*****/
 
@@ -450,7 +450,7 @@ eGPIOReturn_t ArduinoGPIOAnalogReadByPin(sGPIOIface_t *pIface, uint16_t nGPIOPin
 	return GPIO_Success;
 }
 
-bool ArduinoTimeIfaceInitialize(sTimeIface_t *pTime) {
+eReturn_t ArduinoTimeIfaceInitialize(sTimeIface_t *pTime) {
 	TimeInterfaceInitialize(pTime);
 	
 	pTime->pfGetTicks = &ArduinoGetTicks;
@@ -458,29 +458,29 @@ bool ArduinoTimeIfaceInitialize(sTimeIface_t *pTime) {
 	pTime->pfDelayMilliSeconds = &ArduinoDelayMilliSeconds;
 	pTime->pfDelayMicroSeconds = &ArduinoDelayMicroSeconds;
 	
-	return true;
+	return Success;
 }
 
 uint32_t ArduinoGetTicks(void) {
 	return millis();
 }
 
-bool ArduinoDelaySeconds(uint32_t nDelayAmount) {
+eReturn_t ArduinoDelaySeconds(uint32_t nDelayAmount) {
 	delay(1000 * nDelayAmount);
 	
-	return true;
+	return Success;
 }
 
-bool ArduinoDelayMilliSeconds(uint32_t nDelayAmount) {
+eReturn_t ArduinoDelayMilliSeconds(uint32_t nDelayAmount) {
 	delay(nDelayAmount);
 	
-	return true;
+	return Success;
 }
 
-bool ArduinoDelayMicroSeconds(uint32_t nDelayAmount) {
+eReturn_t ArduinoDelayMicroSeconds(uint32_t nDelayAmount) {
 	delayMicroseconds(nDelayAmount);
 	
-	return true;
+	return Success;
 }
 
 #endif
