@@ -13,11 +13,13 @@
 	#define __UARTRASPI
 
 /*****	Includes	*****/
-	#include <stdio>
+	#include <stdio.h>
 	
 	#include <unistd.h>
 	#include <fcntl.h>
+	#include <sys/ioctl.h>
 	#include <termios.h>
+	#include <errno.h>
 	
 	#include "UARTGeneralInterface.h"
 
@@ -30,7 +32,7 @@
 
 	#define UART_1_HWINFO			((void *)&(gUARTHWInfo[0]))
 	
-	#define UART_1_CAPS				(UART_Configure | UART_Shutdown | UART_ReadData | UART_WriteData)
+	#define UART_1_CAPS				(UART_Configure | UART_Shutdown | UART_ReadData | UART_WriteData | UART_DataAvailable)
 
 /*****	Definitions	*****/
 	/**	@brief		Structure holding information on the UART Hardware
