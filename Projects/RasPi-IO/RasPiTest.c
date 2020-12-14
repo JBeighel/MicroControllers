@@ -188,7 +188,7 @@ int32_t SPIWork(void) {
 		return 0;
 	}
 	
-	eResult = gSPI.pfTransferByte(&gSPI, 0x00, &nReadByte);
+	eResult = gSPI.pfTransferByte(&gSPI, 0xA5, &nReadByte);
 	if (eResult != SPI_Success) {
 		printf("SPI Transfer Failed: %d / %d\r\n", eResult, ((sRasPiSPIHWInfo_t *)gSPI.pHWInfo)->nLastErr);
 		return 0;
