@@ -286,6 +286,8 @@ eUARTReturns_t	RasPiUARTUARTWriteData(sUARTIface_t *pUARTIface, uint16_t nBuffSi
 	if (nCount < 0) {
 		pUART->nLastErr = errno;
 		return UART_Fail_Unknown;
+	} else if (nCount != nBuffSize) { //Partial write?
+		return UART_Warn_Unknown;
 	}
 	
 	return UART_Success;
@@ -295,7 +297,7 @@ eUARTReturns_t RasPiUARTDataAvailable (sUARTIface_t *pUARTIface, uint16_t *pnByt
 	sRasPiUARTHWInfo_t *pUART = (sRasPiUARTHWInfo_t *)(pUARTIface->pHWInfo);
 	int nBytes, nResult;
 	
-	pnBytesAvailable = 0;
+	*pnBytesAvailable = 0;
 	
 	nResult = ioctl(pUART->UARTFile, FIONREAD, &nBytes);
 	if (nResult < 0) {
@@ -303,7 +305,7 @@ eUARTReturns_t RasPiUARTDataAvailable (sUARTIface_t *pUARTIface, uint16_t *pnByt
 		return UART_Fail_Unknown;
 	}
 	
-	*pnBytesAvailable = (uint16_t) nBytes;
+	*pnBytesAvailable = (uint16_t)nBytes;
 	
 	return UART_Success;
 }

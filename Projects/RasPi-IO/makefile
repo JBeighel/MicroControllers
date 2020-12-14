@@ -1,5 +1,5 @@
 TARGET = RasPiTest.exe
-COMMONDEPS = CommonUtils.o GPIOGeneralInterface.o I2CGeneralInterface.o SPIGeneralInterface.o UARTGeneralInterface.o MCP23017Driver.o
+COMMONDEPS = CommonUtils.o TimeGeneralInterface.o GPIOGeneralInterface.o I2CGeneralInterface.o SPIGeneralInterface.o UARTGeneralInterface.o MCP23017Driver.o
 WINDOWSDEPS = 
 LINUXDEPS = GPIO_RaspberryPi.o I2C_RaspberryPi.o SPI_RaspberryPi.o UART_RaspberryPi.o
 

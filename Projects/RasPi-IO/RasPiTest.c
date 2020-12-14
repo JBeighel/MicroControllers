@@ -3,13 +3,16 @@
 
 	//Pin supported (micro hardware and buses)
 	#include "CommonUtils.h"
+	#include "TimeGeneralInterface.h"
 	#include "GPIOGeneralInterface.h"
 	#include "I2CGeneralInterface.h"
 	#include "SPIGeneralInterface.h"
+	#include "UARTGeneralInterface.h"
 	
 	#include "GPIO_RaspberryPi.h"
 	#include "I2C_RaspberryPi.h"
 	#include "SPI_RaspberryPi.h"
+	#include "UART_RaspberryPi.h"
 	
 	//Board support (peripherals)
 	#include "MCP23017Driver.h"
@@ -21,9 +24,11 @@
 
 
 /*****	Globals		*****/
+sTimeIface_t gTime;
 sGPIOIface_t gGPIO;
 sI2CIface_t gI2C;
 sSPIIface_t gSPI;
+sUARTIface_t gUART;
 
 sMCP23017Info_t gExp;
 
@@ -31,13 +36,71 @@ sMCP23017Info_t gExp;
 	int32_t GPIOWork(void);
 	int32_t I2CWork(void);
 	int32_t SPIWork(void);
+	int32_t UARTWork(void);
 
 /*****	Functions	*****/
 int32_t main(int32_t nArgCnt, char *aArgVals) {
-	SPIWork();
+	TIME_INIT(&gTime);
+	
+	UARTWork();
 	
 	
 	return 0;
+}
+
+int32_t UARTWork() {
+	eUARTReturns_t eResult;
+	uint16_t nBytes, nCtr;
+	uint8_t aBuffIn[256], aBuffOut[256];
+	
+	memset(aBuffIn, 0, 256);
+	memset(aBuffOut, 0, 256);
+	
+	eResult = UART_PORTINITIALIZE(&gUART, 38400, UART_8None1, UART_1_HWINFO);
+	if (eResult != UART_Success) {
+		printf("UART Init failed %d / %d\r\n", eResult, ((sRasPiUARTHWInfo_t *)gUART.pHWInfo)->nLastErr);
+		return 0;
+	} else {
+		printf("Init Success\r\n");
+	}
+	
+	for (nCtr = 0; nCtr < 256; nCtr++) {
+		aBuffOut[nCtr] = nCtr * 2;
+	}
+	
+	eResult = gUART.pfUARTWriteData(&gUART, 32, aBuffOut);
+	if (eResult != UART_Success) {
+		printf("UART Write failed %d / %d\r\n", eResult, ((sRasPiUARTHWInfo_t *)gUART.pHWInfo)->nLastErr);
+		return 0;
+	} else {
+		printf("Write Success\r\n");
+	}
+	
+	gTime.pfDelayMilliSeconds(100);
+	
+	eResult = gUART.pfUARTDataAvailable(&gUART, &nBytes);
+	if (eResult != UART_Success) {
+		printf("UART Avail failed %d / %d\r\n", eResult, ((sRasPiUARTHWInfo_t *)gUART.pHWInfo)->nLastErr);
+		return 0;
+	} else {
+		printf("UART Avail = %d\r\n", nBytes);
+	}
+	
+	eResult = gUART.pfUARTReadData(&gUART, 32, aBuffIn, &nBytes);
+	if (eResult != UART_Success) {
+		printf("UART Read failed %d / %d\r\n", eResult, ((sRasPiUARTHWInfo_t *)gUART.pHWInfo)->nLastErr);
+		return 0;
+	} else {
+		printf("Read Success %d\r\n", nBytes);
+		
+		for (nCtr = 0; nCtr < 10; nCtr++) {
+			printf("Out %d In %d\r\n", aBuffOut[nCtr], aBuffIn[nCtr]);
+		}
+	}
+	
+	gUART.pfShutdown(&gUART);
+	
+	return 1;
 }
 
 int32_t GPIOWork(void) {
