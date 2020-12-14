@@ -1,6 +1,6 @@
 /**	@defgroup	commonutils
 	@brief		Common utilities and objects
-	@details	v 0.6
+	@details	v 0.7
 	# Description #
 		This is a collection of commonly used utilities.
 		This includes variable types, macros, and constants.
@@ -19,7 +19,7 @@
 /***** Includes		*****/
 	#include <stdint.h>
 	#include <stdbool.h>
-
+	
 /***** Constants	*****/
 	/**	The maximum integer value that will fit in a uint8_t data type
 		@ingroup	commonutils
@@ -37,7 +37,12 @@
 	#define UINT32_MAXVALUE	0xFFFFFFFF
 
 /***** Definitions	*****/
-
+	typedef enum eReturn_t {
+		Warn_Unknown	= 1,	/**< An unknown but recoverable error happened during the operation */
+		Success			= 0,	/**< The operation completed successfully */
+		Fail_Unknown	= -1,	/**< An unknown and unrecoverable error happened during the operation */
+		Fail_NotImplem	= -2,	/**< Function not implemented */
+	} eReturn_t;
 
 /***** Globals		*****/
 
