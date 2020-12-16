@@ -1,6 +1,7 @@
 TARGET = RasPiBase.exe
 COMMONDEPS = CommonUtils.o TimeGeneralInterface.o GPIOGeneralInterface.o I2CGeneralInterface.o SPIGeneralInterface.o UARTGeneralInterface.o
 LINUXDEPS = GPIO_RaspberryPi.o I2C_RaspberryPi.o SPI_RaspberryPi.o UART_RaspberryPi.o
+DRIVERS = SSD1675Driver.o
 
 #determine operating system to set environment
 ifndef OS
@@ -16,7 +17,7 @@ ifeq ($(OS),Windows_NT)
 	CCDBG = -ggdb
 	CPPARGS += -std=c++11 -lwsock32
 	CPPDBG = -ggdb
-	DEPS = $(COMMONDEPS) $(WINDOWSDEPS) 
+	DEPS = $(COMMONDEPS) $(WINDOWSDEPS) $(DRIVERS)
 endif
 
 ifeq ($(OS),Linux)
@@ -28,7 +29,7 @@ ifeq ($(OS),Linux)
 	CCDBG = -ggdb
 	CPPARGS += -std=c++11
 	CPPDBG = -ggdb
-	DEPS = $(COMMONDEPS) $(LINUXDEPS) 
+	DEPS = $(COMMONDEPS) $(LINUXDEPS) $(DRIVERS)
 endif
 
 #Targets that are not file dependents
@@ -61,7 +62,12 @@ clean:
 	@ echo "Cleaning Build Space"
 	$(DEL) $(TARGET)
 	$(DEL) $(DEPS)
+	$(DEL) $(DRIVERS)
 	@ echo ""
+	
+drivers: 
+	$(DEL) $(DRIVERS)
+	make main
 
 #Dependency targets
 %.o: %.c

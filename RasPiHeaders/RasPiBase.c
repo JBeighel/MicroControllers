@@ -36,7 +36,7 @@
 
 
 /*****	Functions	*****/
-int main(int nArgCnd, char **aArgVals) {
+int main(int nArgCnt, char **aArgVals) {
 	
 	TIME_INIT(&gTime);
 	GPIO_INIT(&gGPIO, GPIO_HWINFO);
