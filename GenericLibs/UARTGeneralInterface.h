@@ -50,12 +50,12 @@
 
 	typedef struct sUARTIface_t sUARTIface_t;
 
-	typedef enum eUARTReturns_t {
-		UART_Warn_Timeout		= -2,	/**< An operation timed out, data transfer was ncomplete */
-		UART_Warn_Unknown		= -1,	/**< An unknown warning occured communicating with the UART port */
+	typedef enum eUARTReturn_t {
+		UART_Warn_Timeout		= 2,	/**< An operation timed out, data transfer was ncomplete */
+		UART_Warn_Unknown		= 1,	/**< An unknown warning occured communicating with the UART port */
 		UART_Success			= 0,	/**< UART communication completed successfully */
-		UART_Fail_Unknown		= 1,
-		UART_Fail_Unsupported	= 2,	/**< The requested UART operation is not supported by this specified port */
+		UART_Fail_Unknown		= -1,
+		UART_Fail_Unsupported	= -2,	/**< The requested UART operation is not supported by this specified port */
 	} eUARTReturns_t;
 	
 	typedef enum eUARTCapabilities_t {

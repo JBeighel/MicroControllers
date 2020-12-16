@@ -81,15 +81,15 @@
 			hardware.  +/-26 through +/-100 are available for specific hardware imlementations.
 		@ingroup	i2ciface
 	*/		
-	typedef enum eI2CReturns_t {
-		I2C_Warn_PartialRead	= -2,
-		I2C_Warn_Unknown		= -1,	/**< An unknown warning occured communicating with the I2C port */
+	typedef enum eI2CReturn_t {
+		I2C_Warn_PartialRead	= 2,
+		I2C_Warn_Unknown		= 1,	/**< An unknown warning occured communicating with the I2C port */
 		I2C_Success				= 0,	/**< I2C communication completed successfully */
-		I2C_Fail_Unknown		= 1,	/**< An unknown failure occured communicating with the I2C port */
-		I2C_Fail_Unsupported	= 2,	/**< The requested I2C operation is not supported by this specified port */
-		I2C_Fail_WriteBuffOver	= 3,
-		I2C_Fail_NackAddr		= 4,
-		I2C_Fail_NackData		= 5,
+		I2C_Fail_Unknown		= -1,	/**< An unknown failure occured communicating with the I2C port */
+		I2C_Fail_Unsupported	= -2,	/**< The requested I2C operation is not supported by this specified port */
+		I2C_Fail_WriteBuffOver	= -3,
+		I2C_Fail_NackAddr		= -4,
+		I2C_Fail_NackData		= -5,
 	} eI2CReturns_t;
 	
 	/**	@brief		Enumeration of all capabilities this interface provides

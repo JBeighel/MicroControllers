@@ -29,14 +29,14 @@
 	/**	@brief		Enumeration of all error codes for the TF02 driver
 		@ingroup	tf02driver
 	*/
-	typedef enum eTF02Returns_t {
-		TF02Warn_Unreliable		= -2,	/**< A readign was read that was reported unreliable */
-		TFO2Warn_Unknown		= -1,	/**< An unknown but recoverable error occurred */
+	typedef enum eTF02Return_t {
+		TF02Warn_Unreliable		= 2,	/**< A readign was read that was reported unreliable */
+		TFO2Warn_Unknown		= 1,	/**< An unknown but recoverable error occurred */
 		TF02_Success			= 0,	/**< Operation completed successfully */
-		TF02Fail_Unknown		= 1,	/**< An unknown and unrecoverable error occurred */
-		TF02Fail_UART			= 2,	/**< The UART port reported a failure */
-		TF02Fail_NoData			= 3,	/**< Incomplete or no data received from device */
-		TF02Fail_Checksum		= 4,	/**< Data received had an invalidated checksum */
+		TF02Fail_Unknown		= -1,	/**< An unknown and unrecoverable error occurred */
+		TF02Fail_UART			= -2,	/**< The UART port reported a failure */
+		TF02Fail_NoData			= -3,	/**< Incomplete or no data received from device */
+		TF02Fail_Checksum		= -4,	/**< Data received had an invalidated checksum */
 	} eTF02Returns_t;
 	
 	/**	@brief		Structure for storage and parsing of data from TF02
