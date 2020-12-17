@@ -1,6 +1,6 @@
 /**	@defgroup	uartraspi
 	@brief		Raspberry Pi implementation of the UART General Interface
-	@details	v0.1
+	@details	v0.2
 	#Description
 	
 	#File Information
@@ -52,7 +52,7 @@
 
 
 /*****	Prototypes 	*****/
-	eUARTReturns_t RasPiUARTPortInit(sUARTIface_t *pUARTIface, uint32_t nBaudRate, eUARTModes_t eMode, void *pHWInfo);
+	eUARTReturn_t RasPiUARTPortInit(sUARTIface_t *pUARTIface, uint32_t nBaudRate, eUARTModes_t eMode, void *pHWInfo);
 
 /*****	Functions	*****/
 

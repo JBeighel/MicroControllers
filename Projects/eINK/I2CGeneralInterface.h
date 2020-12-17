@@ -1,6 +1,6 @@
 /**	@defgroup	i2ciface
 	@brief		Abstracted interface for general purpose I2C port communications
-	@details
+	@details	v0.1
 	# Intent #
 		The intent of this module is to ensure that device drivers are not coupled with I2C hardware
 		implementations.  By using this interface to operate the hardware it should allow the device
@@ -90,7 +90,7 @@
 		I2C_Fail_WriteBuffOver	= -3,
 		I2C_Fail_NackAddr		= -4,
 		I2C_Fail_NackData		= -5,
-	} eI2CReturns_t;
+	} eI2CReturn_t;
 	
 	/**	@brief		Enumeration of all capabilities this interface provides
 		@ingroup	i2ciface
@@ -108,22 +108,22 @@
 	/**	@brief		Prototype for function that will initizlize the hardware for an I2C interface
 		@ingroup	i2ciface
 	*/
-	typedef eI2CReturns_t (*pfInitializeI2CBus_t)(sI2CIface_t *pI2CIface, bool bActAsMaster, uint32_t nClockFreq, void *pHWInfo);
+	typedef eI2CReturn_t (*pfInitializeI2CBus_t)(sI2CIface_t *pI2CIface, bool bActAsMaster, uint32_t nClockFreq, void *pHWInfo);
 	
 	/**	@brief		Structure defining all functions an I2C bus driver must provide
 		@ingroup	i2ciface
 	*/
 	typedef struct sI2CIface_t {
 		pfInitializeI2CBus_t pfInitialize;
-		eI2CReturns_t	(*pfShutdown)			(sI2CIface_t *pI2CIface);
+		eI2CReturn_t	(*pfShutdown)			(sI2CIface_t *pI2CIface);
 		
-		eI2CReturns_t	(*pfI2CReadUint8Reg)	(sI2CIface_t *pI2CIface, uint8_t nDevAddr, uint8_t nRegAddr, uint8_t *pnValue);
-		eI2CReturns_t	(*pfI2CReadData)		(sI2CIface_t *pI2CIface, uint8_t nDevAddr, uint8_t nNumBytes, void *pDataBuff, uint8_t *pnBytesRead);
+		eI2CReturn_t	(*pfI2CReadUint8Reg)	(sI2CIface_t *pI2CIface, uint8_t nDevAddr, uint8_t nRegAddr, uint8_t *pnValue);
+		eI2CReturn_t	(*pfI2CReadData)		(sI2CIface_t *pI2CIface, uint8_t nDevAddr, uint8_t nNumBytes, void *pDataBuff, uint8_t *pnBytesRead);
 		
-		eI2CReturns_t	(*pfI2CWriteUint8Reg)	(sI2CIface_t *pI2CIface, uint8_t nDevAddr, uint8_t nRegAddr, uint8_t nValue);
-		eI2CReturns_t	(*pfI2CWriteData)		(sI2CIface_t *pI2CIface, uint8_t nDevAddr, uint8_t nNumBytes, void *pDataBuff);
+		eI2CReturn_t	(*pfI2CWriteUint8Reg)	(sI2CIface_t *pI2CIface, uint8_t nDevAddr, uint8_t nRegAddr, uint8_t nValue);
+		eI2CReturn_t	(*pfI2CWriteData)		(sI2CIface_t *pI2CIface, uint8_t nDevAddr, uint8_t nNumBytes, void *pDataBuff);
 		
-		eI2CReturns_t	(*pfI2CGeneralCall)		(sI2CIface_t *pI2CIface, uint8_t nValue);
+		eI2CReturn_t	(*pfI2CGeneralCall)		(sI2CIface_t *pI2CIface, uint8_t nValue);
 		
 		bool			bMaster;
 		uint32_t		nClockFreq;
@@ -137,5 +137,5 @@
 	/**	@brief		Initializes an I2C Interface object and prepare it for use
 		@ingroup	i2ciface
 	*/
-	eI2CReturns_t I2CInterfaceInitialize(sI2CIface_t *pI2CIface);
+	eI2CReturn_t I2CInterfaceInitialize(sI2CIface_t *pI2CIface);
 #endif

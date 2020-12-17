@@ -1,6 +1,6 @@
 /**	@defgroup	i2craspberrypi
 	@brief		I2C General Interface implementation for Raspberry Pi
-	@details	v0.1
+	@details	v0.2
 	#Description
 		At boot pins 2 and 3 will be configured for I2C.  However, once they 
 		are assigned to be GPIO pins that will disable the I2C bus causing
@@ -59,7 +59,7 @@
 
 
 /*****	Prototypes 	*****/
-	eI2CReturns_t RasPiInitializeI2CBus(sI2CIface_t *pI2CIface, bool bActAsMaster, uint32_t nClockFreq, void *pHWInfo);
+	eI2CReturn_t RasPiInitializeI2CBus(sI2CIface_t *pI2CIface, bool bActAsMaster, uint32_t nClockFreq, void *pHWInfo);
 
 /*****	Functions	*****/
 

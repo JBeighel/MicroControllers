@@ -29,15 +29,15 @@
 
 
 /*****	Prototypes 	*****/
-	eI2CReturns_t RasPiI2CShutdown(sI2CIface_t *pI2CIface);
+	eI2CReturn_t RasPiI2CShutdown(sI2CIface_t *pI2CIface);
 	
-	eI2CReturns_t RasPiI2CReadUint8Reg(sI2CIface_t *pI2CIface, uint8_t nDevAddr, uint8_t nRegAddr, uint8_t *pnValue);
+	eI2CReturn_t RasPiI2CReadUint8Reg(sI2CIface_t *pI2CIface, uint8_t nDevAddr, uint8_t nRegAddr, uint8_t *pnValue);
 	
-	eI2CReturns_t RasPiI2CWriteUint8Reg(sI2CIface_t *pI2CIface, uint8_t nDevAddr, uint8_t nRegAddr, uint8_t nValue);
+	eI2CReturn_t RasPiI2CWriteUint8Reg(sI2CIface_t *pI2CIface, uint8_t nDevAddr, uint8_t nRegAddr, uint8_t nValue);
 
 /*****	Functions	*****/
 
-eI2CReturns_t RasPiInitializeI2CBus(sI2CIface_t *pI2CIface, bool bActAsMaster, uint32_t nClockFreq, void *pHWInfo) {
+eI2CReturn_t RasPiInitializeI2CBus(sI2CIface_t *pI2CIface, bool bActAsMaster, uint32_t nClockFreq, void *pHWInfo) {
 	sRasPiI2CHWInfo_t *pI2C = (sRasPiI2CHWInfo_t *)pHWInfo;
 	
 	//Setup the interface structure
@@ -64,7 +64,7 @@ eI2CReturns_t RasPiInitializeI2CBus(sI2CIface_t *pI2CIface, bool bActAsMaster, u
 	return I2C_Success;
 }
 
-eI2CReturns_t RasPiI2CShutdown(sI2CIface_t *pI2CIface) {
+eI2CReturn_t RasPiI2CShutdown(sI2CIface_t *pI2CIface) {
 	sRasPiI2CHWInfo_t *pI2C = (sRasPiI2CHWInfo_t *)(pI2CIface->pHWInfo);
 	
 	if (pI2C->I2CFile >= 0) {
@@ -76,7 +76,7 @@ eI2CReturns_t RasPiI2CShutdown(sI2CIface_t *pI2CIface) {
 	return I2C_Success;
 }
 
-eI2CReturns_t RasPiI2CReadUint8Reg(sI2CIface_t *pI2CIface, uint8_t nDevAddr, uint8_t nRegAddr, uint8_t *pnValue) {
+eI2CReturn_t RasPiI2CReadUint8Reg(sI2CIface_t *pI2CIface, uint8_t nDevAddr, uint8_t nRegAddr, uint8_t *pnValue) {
 	sRasPiI2CHWInfo_t *pI2C = (sRasPiI2CHWInfo_t *)(pI2CIface->pHWInfo);
 	int32_t nReturn;
 	
@@ -108,7 +108,7 @@ eI2CReturns_t RasPiI2CReadUint8Reg(sI2CIface_t *pI2CIface, uint8_t nDevAddr, uin
 	return I2C_Success;
 }
 
-eI2CReturns_t RasPiI2CWriteUint8Reg(sI2CIface_t *pI2CIface, uint8_t nDevAddr, uint8_t nRegAddr, uint8_t nValue) {
+eI2CReturn_t RasPiI2CWriteUint8Reg(sI2CIface_t *pI2CIface, uint8_t nDevAddr, uint8_t nRegAddr, uint8_t nValue) {
 	sRasPiI2CHWInfo_t *pI2C = (sRasPiI2CHWInfo_t *)(pI2CIface->pHWInfo);
 	int32_t nReturn;
 	uint8_t aData[2];
@@ -134,7 +134,7 @@ eI2CReturns_t RasPiI2CWriteUint8Reg(sI2CIface_t *pI2CIface, uint8_t nDevAddr, ui
 	return I2C_Success;
 }
 
-eI2CReturns_t RasPiI2CReadData(sI2CIface_t *pI2CIface, uint8_t nDevAddr, uint8_t nNumBytes, void *pDataBuff, uint8_t *pnBytesRead) {
+eI2CReturn_t RasPiI2CReadData(sI2CIface_t *pI2CIface, uint8_t nDevAddr, uint8_t nNumBytes, void *pDataBuff, uint8_t *pnBytesRead) {
 	sRasPiI2CHWInfo_t *pI2C = (sRasPiI2CHWInfo_t *)(pI2CIface->pHWInfo);
 	int32_t nReturn;
 	
@@ -157,7 +157,7 @@ eI2CReturns_t RasPiI2CReadData(sI2CIface_t *pI2CIface, uint8_t nDevAddr, uint8_t
 	return I2C_Success;
 }
 
-eI2CReturns_t RasPiI2CWriteData(sI2CIface_t *pI2CIface, uint8_t nDevAddr, uint8_t nNumBytes, void *pDataBuff) {
+eI2CReturn_t RasPiI2CWriteData(sI2CIface_t *pI2CIface, uint8_t nDevAddr, uint8_t nNumBytes, void *pDataBuff) {
 	sRasPiI2CHWInfo_t *pI2C = (sRasPiI2CHWInfo_t *)(pI2CIface->pHWInfo);
 	int32_t nReturn;
 	

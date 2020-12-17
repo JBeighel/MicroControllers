@@ -24,16 +24,16 @@
 	};
 
 /*****	Prototypes 	*****/
-	eUARTReturns_t RasPiUARTShutdown(sUARTIface_t *pUARTIface);
+	eUARTReturn_t RasPiUARTShutdown(sUARTIface_t *pUARTIface);
 		
-	eUARTReturns_t RasPiUARTUARTReadData(sUARTIface_t *pUARTIface, uint16_t nBuffSize, void *pDataBuff, uint16_t *pnBytesRead);
+	eUARTReturn_t RasPiUARTUARTReadData(sUARTIface_t *pUARTIface, uint16_t nBuffSize, void *pDataBuff, uint16_t *pnBytesRead);
 	
-	eUARTReturns_t RasPiUARTUARTWriteData(sUARTIface_t *pUARTIface, uint16_t nBuffSize, const void *pDataBuff);
+	eUARTReturn_t RasPiUARTUARTWriteData(sUARTIface_t *pUARTIface, uint16_t nBuffSize, const void *pDataBuff);
 	
-	eUARTReturns_t RasPiUARTDataAvailable (sUARTIface_t *pUARTIface, uint16_t *pnBytesAvailable);
+	eUARTReturn_t RasPiUARTDataAvailable (sUARTIface_t *pUARTIface, uint16_t *pnBytesAvailable);
 
 /*****	Functions	*****/
-eUARTReturns_t RasPiUARTPortInit(sUARTIface_t *pUARTIface, uint32_t nBaudRate, eUARTModes_t eMode, void *pHWInfo) {
+eUARTReturn_t RasPiUARTPortInit(sUARTIface_t *pUARTIface, uint32_t nBaudRate, eUARTModes_t eMode, void *pHWInfo) {
 	sRasPiUARTHWInfo_t *pUART = (sRasPiUARTHWInfo_t *)pHWInfo;
 	struct termios UARTOpts;
 	int nResult;
@@ -246,7 +246,7 @@ eUARTReturns_t RasPiUARTPortInit(sUARTIface_t *pUARTIface, uint32_t nBaudRate, e
 	return UART_Success;
 }
 
-eUARTReturns_t	RasPiUARTShutdown(sUARTIface_t *pUARTIface) {
+eUARTReturn_t	RasPiUARTShutdown(sUARTIface_t *pUARTIface) {
 	sRasPiUARTHWInfo_t *pUART = (sRasPiUARTHWInfo_t *)(pUARTIface->pHWInfo);
 	
 	//Flush any waiting data
@@ -260,7 +260,7 @@ eUARTReturns_t	RasPiUARTShutdown(sUARTIface_t *pUARTIface) {
 	return UART_Success;
 }
 		
-eUARTReturns_t	RasPiUARTUARTReadData(sUARTIface_t *pUARTIface, uint16_t nBuffSize, void *pDataBuff, uint16_t *pnBytesRead) {
+eUARTReturn_t	RasPiUARTUARTReadData(sUARTIface_t *pUARTIface, uint16_t nBuffSize, void *pDataBuff, uint16_t *pnBytesRead) {
 	sRasPiUARTHWInfo_t *pUART = (sRasPiUARTHWInfo_t *)(pUARTIface->pHWInfo);
 	int32_t nCount;
 	
@@ -278,7 +278,7 @@ eUARTReturns_t	RasPiUARTUARTReadData(sUARTIface_t *pUARTIface, uint16_t nBuffSiz
 	return UART_Success;
 }
 	
-eUARTReturns_t	RasPiUARTUARTWriteData(sUARTIface_t *pUARTIface, uint16_t nBuffSize, const void *pDataBuff) {
+eUARTReturn_t	RasPiUARTUARTWriteData(sUARTIface_t *pUARTIface, uint16_t nBuffSize, const void *pDataBuff) {
 	sRasPiUARTHWInfo_t *pUART = (sRasPiUARTHWInfo_t *)(pUARTIface->pHWInfo);
 	int32_t nCount;
 	
@@ -293,7 +293,7 @@ eUARTReturns_t	RasPiUARTUARTWriteData(sUARTIface_t *pUARTIface, uint16_t nBuffSi
 	return UART_Success;
 }
 
-eUARTReturns_t RasPiUARTDataAvailable (sUARTIface_t *pUARTIface, uint16_t *pnBytesAvailable) {
+eUARTReturn_t RasPiUARTDataAvailable (sUARTIface_t *pUARTIface, uint16_t *pnBytesAvailable) {
 	sRasPiUARTHWInfo_t *pUART = (sRasPiUARTHWInfo_t *)(pUARTIface->pHWInfo);
 	int nBytes, nResult;
 	
