@@ -25,7 +25,25 @@
 
 
 /*****	Definitions	*****/
+	typedef enum eSQLDataType_t {
+		SQLInteger,
+		SQLDecimal,
+		SQLString,
+	} eSQLDataType_t;
+	
+	typedef struct sSQLRecord_t {
+		uint32_t nRowNumber;
+		uint32_t nNumValues;
+		sSQLValue_t *aValues;
+	} sSQLRecord_t;
 
+	typedef struct sSQLValue_t {
+		char *FieldName;
+		eSQLDataType_t eType;
+		int32_t nInteger;
+		float fDecimal;
+		char *String;
+	} sSQLValue_t;
 
 /*****	Constants	*****/
 
@@ -96,7 +114,7 @@ int main(int nArgCnt, char **aArgVals) {
 		return 1;
 	}
 	
-	//No port, pipe, or flags (should go wit hdefaults?)
+	//No port, pipe, or flags (should go with defaults?)
 	dbResult = mysql_real_connect(&gDB, "localhost", "jason", "ecvx5858", "Test", 0, NULL, 0);
 	if (dbResult == NULL) {
 		printf("MySQL/MariaDB Connect failed\r\n");
@@ -131,8 +149,10 @@ int main(int nArgCnt, char **aArgVals) {
 		return 1;
 	}
 	
+	//This field count is accurate and can indicate a working query
 	printf("DB Query returned %d fields\r\n", mysql_field_count(&gDB));
 	nFieldMax = mysql_field_count(&gDB);
+	//Row and field counts are just wrong, doesn't seem usable at all
 	printf("RS Query returned %d rows with %d fields\r\n", mysql_num_rows(QueryVals), mysql_num_fields(QueryVals));
 	
 	nRowCtr = 0;
