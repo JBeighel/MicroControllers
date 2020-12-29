@@ -23,10 +23,12 @@ eNetReturn_t IfaceTCPServInitialize(sTCPServ_t *pTCPServ);
 eNetReturn_t IfaceTCPServBind(sTCPServ_t *pTCPServ, sConnInfo_t *pConn);
 eNetReturn_t IfaceNetTCPCloseHost(sTCPServ_t *pTCPServ);
 eNetReturn_t IfaceNetTCPCloseSocket(sTCPServ_t *pTCPServ, Socket_t nSck);
+eNetReturn_t IfaceNetTCPAcceptClient(sTCPServ_t *pTCPServ, Socket_t *pClientSck);
 
 eNetReturn_t RasPiTCPServBind(sTCPServ_t *pTCPServ, sConnInfo_t *pConn);
 eNetReturn_t RasPiNetTCPCloseHost(sTCPServ_t *pTCPServ);
 eNetReturn_t RasPiNetTCPCloseSocket(sTCPServ_t *pTCPServ, Socket_t nSck);
+eNetReturn_t RasPiNetTCPAcceptClient(sTCPServ_t *pTCPServ, Socket_t *pClientSck);
 
 /*****	Functions	*****/
 eNetReturn_t IfaceTCPServObjInitialize(sTCPServ_t *pTCPServ) {
@@ -36,6 +38,7 @@ eNetReturn_t IfaceTCPServObjInitialize(sTCPServ_t *pTCPServ) {
 	pTCPServ->pfBind = &IfaceTCPServBind;
 	pTCPServ->pfCloseHost = &IfaceNetTCPCloseHost;
 	pTCPServ->pfCloseSocket = &IfaceNetTCPCloseSocket;
+	pTCPServ->pfAcceptClient = &IfaceNetTCPAcceptClient;
 	
 	return Net_Success;
 }
@@ -56,6 +59,10 @@ eNetReturn_t IfaceNetTCPCloseSocket(sTCPServ_t *pTCPServ, Socket_t nSck) {
 	return NetFail_NotImplem;
 }
 
+eNetReturn_t IfaceNetTCPAcceptClient(sTCPServ_t *pTCPServ, Socket_t *pClientSck) {
+	return NetFail_NotImplem;
+}
+
 eNetReturn_t RasPiTCPServInitialize(sTCPServ_t *pTCPServ) {
 	//Always begin with default settigns
 	IfaceTCPServObjInitialize(pTCPServ);
@@ -65,6 +72,7 @@ eNetReturn_t RasPiTCPServInitialize(sTCPServ_t *pTCPServ) {
 	pTCPServ->pfBind = &RasPiTCPServBind;
 	pTCPServ->pfCloseHost = &RasPiNetTCPCloseHost;
 	pTCPServ->pfCloseSocket = &RasPiNetTCPCloseSocket;
+	pTCPServ->pfAcceptClient = &RasPiNetTCPAcceptClient;
 	
 	return Net_Success;
 }
@@ -109,6 +117,7 @@ eNetReturn_t RasPiNetTCPCloseHost(sTCPServ_t *pTCPServ) {
 	}
 	
 	close(pTCPServ->HostSck);
+	pTCPServ->HostSck = SOCKET_INVALID;
 	
 	return Net_Success;
 }
@@ -119,6 +128,23 @@ eNetReturn_t RasPiNetTCPCloseSocket(sTCPServ_t *pTCPServ, Socket_t nSck) {
 	}
 	
 	close(nSck);
+	nSck = SOCKET_INVALID;
+	
+	return Net_Success;
+}
+
+eNetReturn_t RasPiNetTCPAcceptClient(sTCPServ_t *pTCPServ, Socket_t *pClientSck) {
+	struct sockaddr_in sAddr;
+	socklen_t nAddrSize = sizeof(struct sockaddr_in);
+	
+	*pClientSck = SOCKET_INVALID;
+	while (*pClientSck == SOCKET_INVALID) {
+		*pClientSck = accept(pTCPServ->HostSck, (struct sockaddr *)&sAddr, &nAddrSize);
+		//printf("Accept fail %d / %d\r\n", *pClientSck, errno);
+		if (errno == 9) { //Error 9: "Bad file number" means socket is not listening
+			return NetFail_SocketState;
+		}
+	}
 	
 	return Net_Success;
 }

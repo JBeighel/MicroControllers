@@ -16,6 +16,9 @@
 	#include <unistd.h>
     #include <sys/socket.h>
     #include <netinet/in.h>
+	#include <errno.h>
+	
+	#include <stdio.h>
 
 /*****	Defines		*****/
 	#define SOCKET_INVALID	-1
@@ -31,6 +34,7 @@
 		NetFail_NotImplem	= -2,	/**< Function not implemented */
 		NetFail_InvSocket	= -3,	/**< The socket provided was invalid */
 		NetFail_BindErr		= -4,	/**< Unable to bind to the requested port */
+		NetFail_SocketState	= -5,	/**< Socket was in the wrong state for the request */
 	} eNetReturn_t;
 	
 	typedef int32_t Socket_t;
@@ -41,6 +45,7 @@
 	typedef eNetReturn_t (*pfNetTCPServBind_t)(sTCPServ_t *pTCPServ, sConnInfo_t *pConn);
 	typedef eNetReturn_t (*pfNetTCPCloseHost_t)(sTCPServ_t *pTCPServ);
 	typedef eNetReturn_t (*pfNetTCPCloseSocket_t)(sTCPServ_t *pTCPServ, Socket_t nSck);
+	typedef eNetReturn_t (*pfNetTCPAcceptClient_t)(sTCPServ_t *pTCPServ, Socket_t *pClientSck);
 	
 	typedef union uNetIP_t {
 		struct {
@@ -67,6 +72,7 @@
 		pfNetTCPServBind_t pfBind;
 		pfNetTCPCloseHost_t pfCloseHost;
 		pfNetTCPCloseSocket_t pfCloseSocket;
+		pfNetTCPAcceptClient_t pfAcceptClient;
 	} sTCPServ_t;
 
 /*****	Constants	*****/

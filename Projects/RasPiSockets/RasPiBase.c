@@ -81,6 +81,7 @@ eReturn_t BoardInit(void) {
 int main(int nArgCnt, char **aArgVals) {
 	eNetReturn_t eResult;
 	sConnInfo_t sConn;
+	Socket_t ClientSck;
 	
 	if (BoardInit() != Success) {
 		printf("Board initialization failed.\r\n");
@@ -101,7 +102,11 @@ int main(int nArgCnt, char **aArgVals) {
 		return 1;
 	}
 	
-	
+	eResult = gTCPServ.pfAcceptClient(&gTCPServ, &ClientSck);
+	if (eResult != Net_Success) {
+		printf("Failed to accept %d\r\n", eResult);
+		return 1;
+	}
 	
 	return 0;
 }
