@@ -1,31 +1,20 @@
-/**	@defgroup	raspinetwork
+/**	@defgroup	networkgeniface
 	@brief		
 	@details	v0.1
 	#Description
 	
 	#File Information
-		File:	RasPi-Network.h
+		File:	NetworkGeneralInterface.h
 		Author:	J. Beighel
-		Date:	12-29-2020
+		Date:	12-30-2020
 */
 
-/**	@defgroup	networkgeniface
-	@brief		
-	@details	v0.1
-	#Description
-
-*/
-
-#ifndef __RASPINETWORK_H
-	#define __RASPINETWORK_H
+#ifndef __NETWORKGENIFACE_H
+	#define __NETWORKGENIFACE_H
 
 /*****	Includes	*****/
-	#include <unistd.h>
-    #include <sys/socket.h>
-    #include <netinet/in.h>
-	#include <errno.h>
-	
-	#include <stdio.h>
+	#include <stddef.h>
+	#include <stdint.h>
 
 /*****	Defines		*****/
 	/**	@brief		Indication of unused socket variables
@@ -33,26 +22,6 @@
 	*/
 	#define SOCKET_INVALID	-1
 	
-	/**	@brief		Capabilities of the Raspberry Pi implementation of the TCP Server
-		@ingroup	raspinetwork
-	*/
-	#define TCPSERV_CAPS	(TCPServ_Bind | TCPServ_CloseHost | TCPServ_AcceptConn | TCPServ_CloseClient | TCPServ_Receive | TCPServ_Send)
-	
-	/**	@brief		Capabilities of the Raspberry Pi implementation of the TCP Client
-		@ingroup	raspinetwork
-	*/
-	#define TCPCLIENT_CAPS	(TPClient_Connect | TPClient_Close | TPClient_Receive | TPClient_Send)
-	
-	/**	@brief		Initialization definition of the Raspberry Pi implementation of the TCP Server
-		@ingroup	raspinetwork
-	*/
-	#define TCPSERV_INIT	RasPiTCPServInitialize
-	
-	/**	@brief		Initialization definition of the Raspberry Pi implementation of the TCP client
-		@ingroup	raspinetwork
-	*/
-	#define TCPCLIENT_INIT	RasPiTCPClientInitialize
-
 /*****	Definitions	*****/
 	typedef struct sTCPServ_t sTCPServ_t;
 	typedef struct sTCPClient_t sTCPClient_t;
@@ -277,12 +246,8 @@
 /*****	Prototypes 	*****/
 	eNetReturn_t IfaceTCPServObjInitialize(sTCPServ_t *pTCPServ);
 	
-	eNetReturn_t RasPiTCPServInitialize(sTCPServ_t *pTCPServ);
-	
 	eNetReturn_t IfaceTCPClientObjInitialize(sTCPClient_t *pTCPClient);
 	
-	eNetReturn_t RasPiTCPClientInitialize(sTCPClient_t *pTCPClient);
-
 /*****	Functions	*****/
 
 

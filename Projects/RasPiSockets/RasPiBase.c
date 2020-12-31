@@ -11,15 +11,17 @@
 	#include "I2CGeneralInterface.h"
 	#include "SPIGeneralInterface.h"
 	#include "UARTGeneralInterface.h"
+	#include "NetworkGeneralInterface.h"
 	
 	//Pin Support, implementation libraries
 	#include "GPIO_RaspberryPi.h"
 	#include "I2C_RaspberryPi.h"
 	#include "SPI_RaspberryPi.h"
 	#include "UART_RaspberryPi.h"
+	#include "Network_RaspberryPi.h"
 	
 	//Driver libraries
-	#include "RasPi-Network.h"
+	
 
 /*****	Defines		*****/
 
