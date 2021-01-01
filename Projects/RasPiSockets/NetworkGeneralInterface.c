@@ -37,12 +37,11 @@ eNetReturn_t IfaceTCPClientSend(sTCPClient_t *pTCPClient, uint32_t nDataBytes, v
 eNetReturn_t IfaceUDPServInitialize(sUDPServ_t *pUDPServ);
 eNetReturn_t IfaceUDPServBind(sUDPServ_t *pUDPServ, sConnInfo_t *pConn);
 eNetReturn_t IfaceUDPServCloseHost(sUDPServ_t *pUDPServ);
-eNetReturn_t IfaceUDPServReceive(sUDPServ_t *pUDPServ, sSocket_t *pClientSck, uint32_t nDataBytes, void *pData, uint32_t *pnBytesRecv);
+eNetReturn_t IfaceUDPServReceive(sUDPServ_t *pUDPServ, sConnInfo_t *pConn, uint32_t nDataBytes, void *pData, uint32_t *pnBytesRecv);
 eNetReturn_t IfaceUDPServSend(sUDPServ_t *pUDPServ, sConnInfo_t *pConn, uint32_t nDataBytes, void *pData);
 
 eNetReturn_t IfaceUDPClientInitialize(sUDPClient_t *pUDPClient);
 eNetReturn_t IfaceUDPClientSetServer(sUDPClient_t *pUDPClient, sConnInfo_t *pConn);
-eNetReturn_t IfaceUDPClientClose(sUDPClient_t *pUDPClient);
 eNetReturn_t IfaceUDPClientSend(sUDPClient_t *pUDPClient, uint32_t nDataBytes, void *pData);
 eNetReturn_t IfaceUDPClientReceive(sUDPClient_t *pUDPClient, uint32_t nDataBytes, void *pData, uint32_t *pnBytesRecv);
 
@@ -115,15 +114,15 @@ eNetReturn_t IfaceTCPClientConnect(sTCPClient_t *pTCPClient, sConnInfo_t *pConn)
 	return NetFail_NotImplem;
 }
 
-eNetReturn_t IfaceTCPClientClose(sTCPClient_t *pTCPClient) {
-	return NetFail_NotImplem;
-}
-
 eNetReturn_t IfaceTCPClientReceive(sTCPClient_t *pTCPClient, uint32_t nNumBytes, void *pData, uint32_t *pnBytesRecv) {
 	return NetFail_NotImplem;
 }
 
 eNetReturn_t IfaceTCPClientSend(sTCPClient_t *pTCPClient, uint32_t nDataBytes, void *pData) {
+	return NetFail_NotImplem;
+}
+
+eNetReturn_t IfaceTCPClientClose(sTCPClient_t *pTCPClient) {
 	return NetFail_NotImplem;
 }
 
@@ -155,7 +154,7 @@ eNetReturn_t IfaceUDPServCloseHost(sUDPServ_t *pUDPServ) {
 	return NetFail_NotImplem;
 }
 
-eNetReturn_t IfaceUDPServReceive(sUDPServ_t *pUDPServ, sSocket_t *pClientSck, uint32_t nDataBytes, void *pData, uint32_t *pnBytesRecv) {
+eNetReturn_t IfaceUDPServReceive(sUDPServ_t *pUDPServ, sConnInfo_t *pConn, uint32_t nDataBytes, void *pData, uint32_t *pnBytesRecv) {
 	return NetFail_NotImplem;
 }
 
@@ -172,7 +171,6 @@ eNetReturn_t IfaceUDPClientObjInitialize(sUDPClient_t *pUDPClient) {
 	
 	pUDPClient->pfInitialize = &IfaceUDPClientInitialize;
 	pUDPClient->pfSetServer = &IfaceUDPClientSetServer;
-	pUDPClient->pfClose = &IfaceUDPClientClose;
 	pUDPClient->pfReceive = &IfaceUDPClientReceive;
 	pUDPClient->pfSend = &IfaceUDPClientSend;
 	
@@ -184,10 +182,6 @@ eNetReturn_t IfaceUDPClientInitialize(sUDPClient_t *pUDPClient) {
 }
 
 eNetReturn_t IfaceUDPClientSetServer(sUDPClient_t *pUDPClient, sConnInfo_t *pConn) {
-	return NetFail_NotImplem;
-}
-
-eNetReturn_t IfaceUDPClientClose(sUDPClient_t *pUDPClient) {
 	return NetFail_NotImplem;
 }
 

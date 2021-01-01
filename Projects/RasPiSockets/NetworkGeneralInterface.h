@@ -34,6 +34,8 @@
 		@ingroup	networkgeniface
 	*/
 	typedef enum eNetReturn_t {
+		NetWarn_WrongPort	= 3,	/**< Data was received from an nexpected port */
+		NetWarn_WrongIP		= 2,	/**< Data was received from an unexpected IP Address */
 		NetWarn_Unknown		= 1,	/**< An unknown but recoverable error happened during the operation */
 		Net_Success			= 0,	/**< The operation completed successfully */
 		NetFail_Unknown		= -1,	/**< An unknown and unrecoverable error happened during the operation */
@@ -85,9 +87,8 @@
 	typedef enum eUDPClientCapabilities_t {
 		UDPClient_None		= 0x00,
 		UDPClient_SetServ	= 0x01,
-		UDPClient_Close		= 0x02,
-		UDPClient_Receive	= 0x04,
-		UDPClient_Send		= 0x08,
+		UDPClient_Receive	= 0x02,
+		UDPClient_Send		= 0x04,
 	} eUDPClientCapabilities_t;
 	
 	/**	@brief		Definition for variables containing ethernet port information
@@ -201,7 +202,7 @@
 	typedef eNetReturn_t (*pfNetUDPServInitialize_t)(sUDPServ_t *pUDPServ);
 	typedef eNetReturn_t (*pfNetUDPServBind_t)(sUDPServ_t *pUDPServ, sConnInfo_t *pConn);
 	typedef eNetReturn_t (*pfNetUDPServCloseHost_t)(sUDPServ_t *pUDPServ);
-	typedef eNetReturn_t (*pfNetUDPServReceive_t)(sUDPServ_t *pUDPServ, sSocket_t *pClientSck, uint32_t nDataBytes, void *pData, uint32_t *pnBytesRecv);
+	typedef eNetReturn_t (*pfNetUDPServReceive_t)(sUDPServ_t *pUDPServ, sConnInfo_t *pConn, uint32_t nDataBytes, void *pData, uint32_t *pnBytesRecv);
 	typedef eNetReturn_t (*pfNetUDPServSend_t)(sUDPServ_t *pUDPServ, sConnInfo_t *pConn, uint32_t nDataBytes, void *pData);
 	
 	typedef eNetReturn_t (*pfNetUDPClientInitialize_t)(sUDPClient_t *pUDPClient);
@@ -296,7 +297,6 @@
 		
 		pfNetUDPClientInitialize_t pfInitialize;
 		pgNetUDPClientSetServer_t pfSetServer;
-		pfNetUDPClientClose_t pfClose;
 		pfNetUDPClientReceive_t pfReceive;
 		pfNetUDPClientSend_t pfSend;
 		

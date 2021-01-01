@@ -33,7 +33,7 @@ eNetReturn_t RasPiTCPClientSend(sTCPClient_t *pTCPClient, uint32_t nDataBytes, v
 
 eNetReturn_t RasPiUDPServBind(sUDPServ_t *pUDPServ, sConnInfo_t *pConn);
 eNetReturn_t RasPiUDPServCloseHost(sUDPServ_t *pUDPServ);
-eNetReturn_t RasPiUDPServReceive(sUDPServ_t *pUDPServ, sSocket_t *pClientSck, uint32_t nDataBytes, void *pData, uint32_t *pnBytesRecv);
+eNetReturn_t RasPiUDPServReceive(sUDPServ_t *pUDPServ, sConnInfo_t *pConn, uint32_t nDataBytes, void *pData, uint32_t *pnBytesRecv);
 eNetReturn_t RasPiUDPServSend(sUDPServ_t *pUDPServ, sConnInfo_t *pConn, uint32_t nDataBytes, void *pData);
 
 eNetReturn_t RasPiUDPClientSetServer(sUDPClient_t *pUDPClient, sConnInfo_t *pConn);
@@ -305,11 +305,6 @@ eNetReturn_t RasPiUDPServBind(sUDPServ_t *pUDPServ, sConnInfo_t *pConn) {
 		return NetFail_BindErr;
 	}
 	
-	if (listen(pUDPServ->HostSck.nSocket, 1) != 0) {
-		//Returns -1 on error, errno holds code
-		return NetFail_Unknown;
-	}
-	
 	return Net_Success;
 }
 
@@ -326,7 +321,7 @@ eNetReturn_t RasPiUDPServCloseHost(sUDPServ_t *pUDPServ) {
 	return Net_Success;
 }
 
-eNetReturn_t RasPiUDPServReceive(sUDPServ_t *pUDPServ, sSocket_t *pClientSck, uint32_t nDataBytes, void *pData, uint32_t *pnBytesRecv) {
+eNetReturn_t RasPiUDPServReceive(sUDPServ_t *pUDPServ, sConnInfo_t *pConn, uint32_t nDataBytes, void *pData, uint32_t *pnBytesRecv) {
 	struct sockaddr_in sAddr;
 	int nSize, nAddrLen;
 	
@@ -340,8 +335,8 @@ eNetReturn_t RasPiUDPServReceive(sUDPServ_t *pUDPServ, sSocket_t *pClientSck, ui
 	//Set all the returned values
 	*pnBytesRecv = nSize;
 	
-	pClientSck->Conn.Addr.nNetLong = sAddr.sin_addr.s_addr;
-	pClientSck->Conn.Port = ntohs(sAddr.sin_port);
+	pConn->Addr.nNetLong = sAddr.sin_addr.s_addr;
+	pConn->Port = ntohs(sAddr.sin_port);
 	
 	return Net_Success;
 }
@@ -371,14 +366,66 @@ eNetReturn_t RasPiUDPClientInitialize(sUDPClient_t *pUDPClient) {
 	
 	pUDPClient->pfInitialize = &RasPiUDPClientInitialize;
 	pUDPClient->pfSetServer = &RasPiUDPClientSetServer;
-	pUDPClient->pfClose = &RasPiUDPClientClose;
 	pUDPClient->pfReceive = &RasPiUDPClientReceive;
 	pUDPClient->pfSend = &RasPiUDPClientSend;
 	
 	return Net_Success;
 }
 
-eNetReturn_t RasPiUDPClientSetServer(sUDPClient_t *pUDPClient, sConnInfo_t *pConn);
-eNetReturn_t RasPiUDPClientClose(sUDPClient_t *pUDPClient);
-eNetReturn_t RasPiUDPClientSend(sUDPClient_t *pUDPClient, uint32_t nDataBytes, void *pData);
-eNetReturn_t RasPiUDPClientReceive(sUDPClient_t *pUDPClient, uint32_t nDataBytes, void *pData, uint32_t *pnBytesRecv);
+eNetReturn_t RasPiUDPClientSetServer(sUDPClient_t *pUDPClient, sConnInfo_t *pConn) {
+	//Save off the IP/Port to use when sending data
+	pUDPClient->Sck.Conn.Port = pConn->Port;
+	pUDPClient->Sck.Conn.Addr.nNetLong = pConn->Addr.nNetLong;
+	
+	pUDPClient->Sck.nSocket = socket(AF_INET, SOCK_DGRAM, 0);
+	
+	if (pUDPClient->Sck.nSocket == SOCKET_INVALID) {
+		return NetFail_Unknown; //See errno for code
+	}
+	
+	return Net_Success;
+}
+	
+eNetReturn_t RasPiUDPClientSend(sUDPClient_t *pUDPClient, uint32_t nDataBytes, void *pData) {
+	struct sockaddr_in sAddr;
+	int nSize;
+	
+	sAddr.sin_port = htons(pUDPClient->Sck.Conn.Port);
+	sAddr.sin_family = AF_INET;
+	sAddr.sin_addr.s_addr = pUDPClient->Sck.Conn.Addr.nNetLong;
+	
+	nSize = sendto(pUDPClient->Sck.nSocket, pData, nDataBytes, 0, (struct sockaddr *)&sAddr, sizeof(struct sockaddr_in));
+	if (nSize == SOCKET_INVALID) {
+		printf("Send Fail: %d / %d\r\n", nSize, errno);
+		return NetFail_Unknown; //errno has code
+	}
+	
+	return Net_Success;
+}
+
+eNetReturn_t RasPiUDPClientReceive(sUDPClient_t *pUDPClient, uint32_t nDataBytes, void *pData, uint32_t *pnBytesRecv) {
+	struct sockaddr_in sAddr;
+	int nSize, nAddrLen;
+	Port_t nPort;
+	
+	//Listen for incoming data
+	nSize = recvfrom(pUDPClient->Sck.nSocket, pData, nDataBytes, 0, (struct sockaddr *)&sAddr, &nAddrLen);
+	if (nSize == SOCKET_INVALID) {
+		*pnBytesRecv = 0;
+		return NetFail_Unknown; //errno has code
+	}
+	
+	//Set all the returned values
+	*pnBytesRecv = nSize;
+	
+	if (pUDPClient->Sck.Conn.Addr.nNetLong != sAddr.sin_addr.s_addr) {
+		return NetWarn_WrongIP;
+	}
+	
+	nPort = ntohs(sAddr.sin_port);
+	if (nPort != pUDPClient->Sck.Conn.Port) {
+		return NetWarn_WrongPort;
+	}
+	
+	return Net_Success;
+}

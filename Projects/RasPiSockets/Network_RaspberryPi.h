@@ -35,7 +35,7 @@
 	
 	#define UDPSERV_CAPS	(UDPServ_Bind | UDPServ_CloseHost | UDPServ_Receive | UDPServ_Send)
 	
-	#define UDPCLIENT_CAPS	(UDPClient_SetServ | UDPClient_Send | UDPClient_Receive | UDPClient_Close)
+	#define UDPCLIENT_CAPS	(UDPClient_SetServ | UDPClient_Send | UDPClient_Receive)
 	
 	/**	@brief		Initialization definition of the Raspberry Pi implementation of the TCP Server
 		@ingroup	raspinetwork
@@ -46,6 +46,10 @@
 		@ingroup	raspinetwork
 	*/
 	#define TCPCLIENT_INIT	RasPiTCPClientInitialize
+	
+	#define UDPSERV_INIT	RasPiUDPServInitialize
+	
+	#define UDPCLIENT_INIT	RasPiUDPClientInitialize
 
 /*****	Definitions	*****/
 

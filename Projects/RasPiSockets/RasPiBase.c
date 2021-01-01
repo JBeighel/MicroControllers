@@ -41,6 +41,8 @@
 	
 	sTCPServ_t gTCPServ;
 	sTCPClient_t gTCPClient;
+	sUDPServ_t gUDPServ;
+	sUDPClient_t gUDPClient;
 	
 /*****	Prototypes 	*****/
 
@@ -85,7 +87,7 @@ int main(int nArgCnt, char **aArgVals) {
 	eNetReturn_t eResult;
 	sConnInfo_t sConn;
 	sSocket_t ClientSck;
-	bool bServer;
+	bool bServer, bTCP;
 	char aData[255];
 	uint32_t nBytes;
 	
@@ -103,6 +105,8 @@ int main(int nArgCnt, char **aArgVals) {
 	
 	TCPSERV_INIT(&gTCPServ);
 	TCPCLIENT_INIT(&gTCPClient);
+	UDPSERV_INIT(&gUDPServ);
+	UDPCLIENT_INIT(&gUDPClient);
 	
 	sConn.Port = 20000;
 	sConn.Addr.Octets.b0 = 127;
@@ -110,60 +114,111 @@ int main(int nArgCnt, char **aArgVals) {
 	sConn.Addr.Octets.b2 = 0;
 	sConn.Addr.Octets.b3 = 1;
 	
-	if (bServer == true) {
-		printf("Server\r\n");
-		
-		eResult = gTCPServ.pfBind(&gTCPServ, &sConn);
-		if (eResult != Net_Success) {
-			printf("Failed to bind %d\r\n", eResult);
-			return 1;
+	bTCP = false;
+	if (bTCP == true) {
+		if (bServer == true) {
+			printf("TCP Server\r\n");
+			
+			eResult = gTCPServ.pfBind(&gTCPServ, &sConn);
+			if (eResult != Net_Success) {
+				printf("Failed to bind %d\r\n", eResult);
+				return 1;
+			}
+			
+			eResult = gTCPServ.pfAcceptClient(&gTCPServ, &ClientSck);
+			if (eResult != Net_Success) {
+				printf("Failed to accept %d\r\n", eResult);
+				return 1;
+			}
+			
+			eResult = gTCPServ.pfSend(&gTCPServ, &ClientSck, 12, "server send");
+			if (eResult != Net_Success) {
+				printf("Failed to send %d\r\n", eResult);
+				return 1;
+			}
+			
+			eResult = gTCPServ.pfReceive(&gTCPServ, &ClientSck, 255, aData, &nBytes);
+			if (eResult != Net_Success) {
+				printf("Failed to receive%d\r\n", eResult);
+				return 1;
+			}
+			
+			printf("Received %d bytes: %s\r\n", nBytes, aData);
+			
+			gTCPServ.pfCloseHost(&gTCPServ);
+		} else {
+			printf("TCP Client\r\n");
+			
+			eResult = gTCPClient.pfConnect(&gTCPClient, &sConn);
+			if (eResult != Net_Success) {
+				printf("Failed to connect %d\r\n", eResult);
+				return 1;
+			}
+			
+			eResult = gTCPClient.pfReceive(&gTCPClient, 255, aData, &nBytes);
+			if (eResult != Net_Success) {
+				printf("Failed to receive%d\r\n", eResult);
+				return 1;
+			}
+			
+			printf("Received %d bytes: %s\r\n", nBytes, aData);
+			
+			eResult = gTCPClient.pfSend(&gTCPClient, 12, "client send");
+			if (eResult != Net_Success) {
+				printf("Failed to send %d\r\n", eResult);
+				return 1;
+			}
+			
+			gTCPClient.pfClose(&gTCPClient);
 		}
-		
-		eResult = gTCPServ.pfAcceptClient(&gTCPServ, &ClientSck);
-		if (eResult != Net_Success) {
-			printf("Failed to accept %d\r\n", eResult);
-			return 1;
-		}
-		
-		eResult = gTCPServ.pfSend(&gTCPServ, &ClientSck, 12, "server send");
-		if (eResult != Net_Success) {
-			printf("Failed to send %d\r\n", eResult);
-			return 1;
-		}
-		
-		eResult = gTCPServ.pfReceive(&gTCPServ, &ClientSck, 255, aData, &nBytes);
-		if (eResult != Net_Success) {
-			printf("Failed to receive%d\r\n", eResult);
-			return 1;
-		}
-		
-		printf("Received %d bytes: %s\r\n", nBytes, aData);
-		
-		gTCPServ.pfCloseHost(&gTCPServ);
 	} else {
-		printf("Client\r\n");
-		
-		eResult = gTCPClient.pfConnect(&gTCPClient, &sConn);
-		if (eResult != Net_Success) {
-			printf("Failed to connect %d\r\n", eResult);
-			return 1;
+		if (bServer == true) {
+			printf("UDP Server\r\n");
+			
+			eResult = gUDPServ.pfBind(&gUDPServ, &sConn);
+			if (eResult != Net_Success) {
+				printf("Failed to bind %d\r\n", eResult);
+				return 1;
+			}
+			
+			eResult = gUDPServ.pfReceive(&gUDPServ, &(ClientSck.Conn), 255, aData, &nBytes);
+			if (eResult != Net_Success) {
+				printf("Failed to receive%d\r\n", eResult);
+				return 1;
+			}
+			
+			printf("Received %d bytes: %s\r\n", nBytes, aData);
+			
+			eResult = gUDPServ.pfSend(&gUDPServ, &(ClientSck.Conn), 12, "server send");
+			if (eResult != Net_Success) {
+				printf("Failed to send %d\r\n", eResult);
+				return 1;
+			}
+			
+			gUDPServ.pfCloseHost(&gUDPServ);
+		} else {
+			printf("UDP Client\r\n");
+			
+			eResult = gUDPClient.pfSetServer(&gUDPClient, &sConn);
+			if (eResult != Net_Success) {
+				printf("Failed to connect %d\r\n", eResult);
+				return 1;
+			}
+			
+			eResult = gUDPClient.pfSend(&gUDPClient, 12, "client send");
+			if (eResult != Net_Success) {
+				printf("Failed to send %d\r\n", eResult);
+				return 1;
+			}
+			
+			eResult = gUDPClient.pfReceive(&gUDPClient, 255, aData, &nBytes);
+			if (eResult != Net_Success) {
+				printf("Failed to receive%d\r\n", eResult);
+				return 1;
+			}
+			
+			printf("Received %d bytes: %s\r\n", nBytes, aData);
 		}
-		
-		eResult = gTCPClient.pfReceive(&gTCPClient, 255, aData, &nBytes);
-		if (eResult != Net_Success) {
-			printf("Failed to receive%d\r\n", eResult);
-			return 1;
-		}
-		
-		printf("Received %d bytes: %s\r\n", nBytes, aData);
-		
-		eResult = gTCPClient.pfSend(&gTCPClient, 12, "client send");
-		if (eResult != Net_Success) {
-			printf("Failed to send %d\r\n", eResult);
-			return 1;
-		}
-		
-		gTCPClient.pfClose(&gTCPClient);
 	}
 	
 	return 0;
