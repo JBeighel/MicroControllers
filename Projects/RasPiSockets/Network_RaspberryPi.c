@@ -34,7 +34,7 @@ eNetReturn_t RasPiTCPClientSend(sTCPClient_t *pTCPClient, uint32_t nDataBytes, v
 eNetReturn_t RasPiUDPServBind(sUDPServ_t *pUDPServ, sConnInfo_t *pConn);
 eNetReturn_t RasPiUDPServCloseHost(sUDPServ_t *pUDPServ);
 eNetReturn_t RasPiUDPServReceive(sUDPServ_t *pUDPServ, sSocket_t *pClientSck, uint32_t nDataBytes, void *pData, uint32_t *pnBytesRecv);
-eNetReturn_t RasPiUDPServSend(sUDPServ_t *pUDPServ, sSocket_t *pClientSck, uint32_t nDataBytes, void *pData);
+eNetReturn_t RasPiUDPServSend(sUDPServ_t *pUDPServ, sConnInfo_t *pConn, uint32_t nDataBytes, void *pData);
 
 eNetReturn_t RasPiUDPClientSetServer(sUDPClient_t *pUDPClient, sConnInfo_t *pConn);
 eNetReturn_t RasPiUDPClientClose(sUDPClient_t *pUDPClient);
@@ -264,3 +264,121 @@ eNetReturn_t RasPiTCPClientSend(sTCPClient_t *pTCPClient, uint32_t nDataBytes, v
 	return Net_Success;
 }
 
+eNetReturn_t RasPiUDPServInitialize(sUDPServ_t *pUDPServ) {
+	pUDPServ->HostSck.nSocket = SOCKET_INVALID;
+	pUDPServ->HostSck.Conn.Addr.nNetLong = 0;
+	pUDPServ->HostSck.Conn.Port = 0;
+	pUDPServ->eCapabilities = UDPSERV_CAPS;
+	pUDPServ->pHWInfo = NULL;
+	
+	pUDPServ->pfInitialize = &RasPiUDPServInitialize;
+	pUDPServ->pfBind = &RasPiUDPServBind;
+	pUDPServ->pfCloseHost = &RasPiUDPServCloseHost;
+	pUDPServ->pfReceive = &RasPiUDPServReceive;
+	pUDPServ->pfSend = &RasPiUDPServSend;
+	
+	return Net_Success;
+}
+
+eNetReturn_t RasPiUDPServBind(sUDPServ_t *pUDPServ, sConnInfo_t *pConn) {
+	struct sockaddr_in sAddr;
+	
+	RasPiUDPServCloseHost(pUDPServ); //In case its open
+	
+	//Setup and create the socket
+	pUDPServ->HostSck.nSocket = socket(AF_INET, SOCK_DGRAM, 0);
+	pUDPServ->HostSck.Conn.Addr.nNetLong = pConn->Addr.nNetLong;
+	pUDPServ->HostSck.Conn.Port = pConn->Port;
+	
+	if (pUDPServ->HostSck.nSocket == SOCKET_INVALID) {
+		return NetFail_Unknown; //See errno for code
+	}
+	
+	//Bind and listen on the port
+	sAddr.sin_port = htons(pConn->Port);
+	sAddr.sin_family = AF_INET;
+	
+	sAddr.sin_addr.s_addr = pConn->Addr.nNetLong;
+	
+	if (bind(pUDPServ->HostSck.nSocket, (struct sockaddr *)&sAddr, sizeof(struct sockaddr_in)) != 0) {
+		//Returns -1 on error, errno holds code
+		return NetFail_BindErr;
+	}
+	
+	if (listen(pUDPServ->HostSck.nSocket, 1) != 0) {
+		//Returns -1 on error, errno holds code
+		return NetFail_Unknown;
+	}
+	
+	return Net_Success;
+}
+
+eNetReturn_t RasPiUDPServCloseHost(sUDPServ_t *pUDPServ) {
+	if (pUDPServ->HostSck.nSocket == SOCKET_INVALID) {
+		return NetFail_InvSocket;
+	}
+	
+	close(pUDPServ->HostSck.nSocket);
+	pUDPServ->HostSck.nSocket = SOCKET_INVALID;
+	pUDPServ->HostSck.Conn.Addr.nNetLong = 0;
+	pUDPServ->HostSck.Conn.Port = 0;
+	
+	return Net_Success;
+}
+
+eNetReturn_t RasPiUDPServReceive(sUDPServ_t *pUDPServ, sSocket_t *pClientSck, uint32_t nDataBytes, void *pData, uint32_t *pnBytesRecv) {
+	struct sockaddr_in sAddr;
+	int nSize, nAddrLen;
+	
+	//Listen for incoming data
+	nSize = recvfrom(pUDPServ->HostSck.nSocket, pData, nDataBytes, 0, (struct sockaddr *)&sAddr, &nAddrLen);
+	if (nSize == SOCKET_INVALID) {
+		*pnBytesRecv = 0;
+		return NetFail_Unknown; //errno has code
+	}
+	
+	//Set all the returned values
+	*pnBytesRecv = nSize;
+	
+	pClientSck->Conn.Addr.nNetLong = sAddr.sin_addr.s_addr;
+	pClientSck->Conn.Port = ntohs(sAddr.sin_port);
+	
+	return Net_Success;
+}
+
+eNetReturn_t RasPiUDPServSend(sUDPServ_t *pUDPServ, sConnInfo_t *pConn, uint32_t nDataBytes, void *pData) {
+	struct sockaddr_in sAddr;
+	int nSize;
+	
+	sAddr.sin_port = htons(pConn->Port);
+	sAddr.sin_family = AF_INET;
+	sAddr.sin_addr.s_addr = pConn->Addr.nNetLong;
+	
+	nSize = sendto(pUDPServ->HostSck.nSocket, pData, nDataBytes, 0, (struct sockaddr *)&sAddr, sizeof(struct sockaddr_in));
+	if (nSize == SOCKET_INVALID) {
+		return NetFail_Unknown; //errno has code
+	}
+	
+	return Net_Success;
+}
+
+eNetReturn_t RasPiUDPClientInitialize(sUDPClient_t *pUDPClient) {
+	pUDPClient->Sck.nSocket = SOCKET_INVALID;
+	pUDPClient->Sck.Conn.Addr.nNetLong = 0;
+	pUDPClient->Sck.Conn.Port = 0;
+	pUDPClient->eCapabilities = UDPCLIENT_CAPS;
+	pUDPClient->pHWInfo = NULL;
+	
+	pUDPClient->pfInitialize = &RasPiUDPClientInitialize;
+	pUDPClient->pfSetServer = &RasPiUDPClientSetServer;
+	pUDPClient->pfClose = &RasPiUDPClientClose;
+	pUDPClient->pfReceive = &RasPiUDPClientReceive;
+	pUDPClient->pfSend = &RasPiUDPClientSend;
+	
+	return Net_Success;
+}
+
+eNetReturn_t RasPiUDPClientSetServer(sUDPClient_t *pUDPClient, sConnInfo_t *pConn);
+eNetReturn_t RasPiUDPClientClose(sUDPClient_t *pUDPClient);
+eNetReturn_t RasPiUDPClientSend(sUDPClient_t *pUDPClient, uint32_t nDataBytes, void *pData);
+eNetReturn_t RasPiUDPClientReceive(sUDPClient_t *pUDPClient, uint32_t nDataBytes, void *pData, uint32_t *pnBytesRecv);

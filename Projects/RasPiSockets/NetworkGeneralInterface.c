@@ -38,7 +38,7 @@ eNetReturn_t IfaceUDPServInitialize(sUDPServ_t *pUDPServ);
 eNetReturn_t IfaceUDPServBind(sUDPServ_t *pUDPServ, sConnInfo_t *pConn);
 eNetReturn_t IfaceUDPServCloseHost(sUDPServ_t *pUDPServ);
 eNetReturn_t IfaceUDPServReceive(sUDPServ_t *pUDPServ, sSocket_t *pClientSck, uint32_t nDataBytes, void *pData, uint32_t *pnBytesRecv);
-eNetReturn_t IfaceUDPServSend(sUDPServ_t *pUDPServ, sSocket_t *pClientSck, uint32_t nDataBytes, void *pData);
+eNetReturn_t IfaceUDPServSend(sUDPServ_t *pUDPServ, sConnInfo_t *pConn, uint32_t nDataBytes, void *pData);
 
 eNetReturn_t IfaceUDPClientInitialize(sUDPClient_t *pUDPClient);
 eNetReturn_t IfaceUDPClientSetServer(sUDPClient_t *pUDPClient, sConnInfo_t *pConn);
@@ -128,6 +128,7 @@ eNetReturn_t IfaceTCPClientSend(sTCPClient_t *pTCPClient, uint32_t nDataBytes, v
 }
 
 eNetReturn_t IfaceUDPServObjInitialize(sUDPServ_t *pUDPServ) {
+	pUDPServ->HostSck.nSocket = SOCKET_INVALID;
 	pUDPServ->HostSck.Conn.Addr.nNetLong = 0;
 	pUDPServ->HostSck.Conn.Port = 0;
 	pUDPServ->eCapabilities = UDPServ_None;
@@ -158,11 +159,12 @@ eNetReturn_t IfaceUDPServReceive(sUDPServ_t *pUDPServ, sSocket_t *pClientSck, ui
 	return NetFail_NotImplem;
 }
 
-eNetReturn_t IfaceUDPServSend(sUDPServ_t *pUDPServ, sSocket_t *pClientSck, uint32_t nDataBytes, void *pData) {
+eNetReturn_t IfaceUDPServSend(sUDPServ_t *pUDPServ, sConnInfo_t *pConn, uint32_t nDataBytes, void *pData) {
 	return NetFail_NotImplem;
 }
 
 eNetReturn_t IfaceUDPClientObjInitialize(sUDPClient_t *pUDPClient) {
+	pUDPClient->Sck.nSocket = SOCKET_INVALID;
 	pUDPClient->Sck.Conn.Addr.nNetLong = 0;
 	pUDPClient->Sck.Conn.Port = 0;
 	pUDPClient->eCapabilities = UDPClient_None;

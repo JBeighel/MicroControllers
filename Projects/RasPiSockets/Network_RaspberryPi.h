@@ -33,6 +33,10 @@
 	*/
 	#define TCPCLIENT_CAPS	(TCPClient_Connect | TCPClient_Close | TCPClient_Receive | TCPClient_Send)
 	
+	#define UDPSERV_CAPS	(UDPServ_Bind | UDPServ_CloseHost | UDPServ_Receive | UDPServ_Send)
+	
+	#define UDPCLIENT_CAPS	(UDPClient_SetServ | UDPClient_Send | UDPClient_Receive | UDPClient_Close)
+	
 	/**	@brief		Initialization definition of the Raspberry Pi implementation of the TCP Server
 		@ingroup	raspinetwork
 	*/

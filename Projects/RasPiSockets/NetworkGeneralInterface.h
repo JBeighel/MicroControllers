@@ -77,7 +77,6 @@
 		UDPServ_CloseHost	= 0x02,
 		UDPServ_Receive		= 0x04,
 		UDPServ_Send		= 0x08,
-		UDPServ_CloseClient	= 0x10,
 	} eUDPServerCapabilities_t;
 	
 	/**	@brief		Enumeration of all capabilities the UDP Client General Interface defines
@@ -88,7 +87,7 @@
 		UDPClient_SetServ	= 0x01,
 		UDPClient_Close		= 0x02,
 		UDPClient_Receive	= 0x04,
-		UDsPClient_Send		= 0x08,
+		UDPClient_Send		= 0x08,
 	} eUDPClientCapabilities_t;
 	
 	/**	@brief		Definition for variables containing ethernet port information
@@ -203,7 +202,7 @@
 	typedef eNetReturn_t (*pfNetUDPServBind_t)(sUDPServ_t *pUDPServ, sConnInfo_t *pConn);
 	typedef eNetReturn_t (*pfNetUDPServCloseHost_t)(sUDPServ_t *pUDPServ);
 	typedef eNetReturn_t (*pfNetUDPServReceive_t)(sUDPServ_t *pUDPServ, sSocket_t *pClientSck, uint32_t nDataBytes, void *pData, uint32_t *pnBytesRecv);
-	typedef eNetReturn_t (*pfNetUDPServSend_t)(sUDPServ_t *pUDPServ, sSocket_t *pClientSck, uint32_t nDataBytes, void *pData);
+	typedef eNetReturn_t (*pfNetUDPServSend_t)(sUDPServ_t *pUDPServ, sConnInfo_t *pConn, uint32_t nDataBytes, void *pData);
 	
 	typedef eNetReturn_t (*pfNetUDPClientInitialize_t)(sUDPClient_t *pUDPClient);
 	typedef eNetReturn_t (*pgNetUDPClientSetServer_t)(sUDPClient_t *pUDPClient, sConnInfo_t *pConn);
