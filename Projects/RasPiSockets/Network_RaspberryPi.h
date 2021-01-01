@@ -31,7 +31,7 @@
 	/**	@brief		Capabilities of the Raspberry Pi implementation of the TCP Client
 		@ingroup	raspinetwork
 	*/
-	#define TCPCLIENT_CAPS	(TPClient_Connect | TPClient_Close | TPClient_Receive | TPClient_Send)
+	#define TCPCLIENT_CAPS	(TCPClient_Connect | TCPClient_Close | TCPClient_Receive | TCPClient_Send)
 	
 	/**	@brief		Initialization definition of the Raspberry Pi implementation of the TCP Server
 		@ingroup	raspinetwork
@@ -56,6 +56,10 @@
 	eNetReturn_t RasPiTCPServInitialize(sTCPServ_t *pTCPServ);
 	
 	eNetReturn_t RasPiTCPClientInitialize(sTCPClient_t *pTCPClient);
+	
+	eNetReturn_t RasPiUDPServInitialize(sUDPServ_t *pUDPServ);
+	
+	eNetReturn_t RasPiUDPClientInitialize(sUDPClient_t *pUDPClient);
 
 /*****	Functions	*****/
 

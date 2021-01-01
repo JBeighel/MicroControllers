@@ -25,7 +25,10 @@
 /*****	Definitions	*****/
 	typedef struct sTCPServ_t sTCPServ_t;
 	typedef struct sTCPClient_t sTCPClient_t;
+	typedef struct sUDPServ_t sUDPServ_t;
+	typedef struct sUDPClient_t sUDPClient_t;
 	typedef struct sConnInfo_t sConnInfo_t;
+	typedef struct sSocket_t sSocket_t;
 
 	/**	@brief		Enumeration of all return codes for ethernet functions
 		@ingroup	networkgeniface
@@ -58,17 +61,35 @@
 		@ingroup	networkgeniface
 	*/
 	typedef enum eTCPClientCapabilities_t {
-		TPClient_None		= 0x00,
-		TPClient_Connect	= 0x01,
-		TPClient_Close		= 0x02,
-		TPClient_Receive	= 0x04,
-		TPClient_Send		= 0x08,
+		TCPClient_None		= 0x00,
+		TCPClient_Connect	= 0x01,
+		TCPClient_Close		= 0x02,
+		TCPClient_Receive	= 0x04,
+		TCPClient_Send		= 0x08,
 	} eTCPClientCapabilities_t;
 	
-	/**	@brief		Definition for variables containing ethernet socket information
+	/**	@brief		Enumeration of all capabilities the UDP Server General Interface defines
 		@ingroup	networkgeniface
 	*/
-	typedef int32_t Socket_t;
+	typedef enum eUDPServerCapabilities_t {
+		UDPServ_None		= 0x00,
+		UDPServ_Bind		= 0x01,
+		UDPServ_CloseHost	= 0x02,
+		UDPServ_Receive		= 0x04,
+		UDPServ_Send		= 0x08,
+		UDPServ_CloseClient	= 0x10,
+	} eUDPServerCapabilities_t;
+	
+	/**	@brief		Enumeration of all capabilities the UDP Client General Interface defines
+		@ingroup	networkgeniface
+	*/
+	typedef enum eUDPClientCapabilities_t {
+		UDPClient_None		= 0x00,
+		UDPClient_SetServ	= 0x01,
+		UDPClient_Close		= 0x02,
+		UDPClient_Receive	= 0x04,
+		UDsPClient_Send		= 0x08,
+	} eUDPClientCapabilities_t;
 	
 	/**	@brief		Definition for variables containing ethernet port information
 		@ingroup	networkgeniface
@@ -103,7 +124,7 @@
 		@return		Net_Success on succeess, or a code indicating the type of error encountered
 		@ingroup	networkgeniface
 	*/
-	typedef eNetReturn_t (*pfNetTCPServCloseSocket_t)(sTCPServ_t *pTCPServ, Socket_t nSck);
+	typedef eNetReturn_t (*pfNetTCPServClosesSocket_t)(sTCPServ_t *pTCPServ, sSocket_t *pSck);
 	
 	/**	@brief		Waits for and accepts an incoming client connection request
 		@param		pTCPServ		Pointer to the TCP Server object to use
@@ -112,7 +133,7 @@
 		@return		Net_Success on succeess, or a code indicating the type of error encountered
 		@ingroup	networkgeniface
 	*/
-	typedef eNetReturn_t (*pfNetTCPServAcceptClient_t)(sTCPServ_t *pTCPServ, Socket_t *pClientSck, sConnInfo_t *pClientInfo);
+	typedef eNetReturn_t (*pfNetTCPServAcceptClient_t)(sTCPServ_t *pTCPServ, sSocket_t *pClientSck);
 	
 	/**	@brief		Wait for and receive data from a client connection
 		@details	Blocks until some data is received.  All data received that will fit in the 
@@ -125,7 +146,7 @@
 		@return		Net_Success on succeess, or a code indicating the type of error encountered
 		@ingroup	networkgeniface
 	*/
-	typedef eNetReturn_t (*pfNetTCPServReceive_t)(sTCPServ_t *pTCPServ, Socket_t *pClientSck, uint32_t nDataBytes, void *pData, uint32_t *pnBytesRecv);
+	typedef eNetReturn_t (*pfNetTCPServReceive_t)(sTCPServ_t *pTCPServ, sSocket_t *pClientSck, uint32_t nDataBytes, void *pData, uint32_t *pnBytesRecv);
 	
 	/**	@brief		Send data to a client connection
 		@param		pTCPServ		Pointer to the TCP Server object to use
@@ -135,7 +156,7 @@
 		@return		Net_Success on succeess, or a code indicating the type of error encountered
 		@ingroup	networkgeniface
 	*/
-	typedef eNetReturn_t (*pfNetTCPServSend_t)(sTCPServ_t *pTCPServ, Socket_t *pClientSck, uint32_t nDataBytes, void *pData);
+	typedef eNetReturn_t (*pfNetTCPServSend_t)(sTCPServ_t *pTCPServ, sSocket_t *pClientSck, uint32_t nDataBytes, void *pData);
 	
 	/**	@brief		Initialize a TCP client object and prepare it for use
 		@param		pTCPClient		Pointer to hte TCP Client object to use
@@ -178,6 +199,18 @@
 	*/
 	typedef eNetReturn_t (*pfNetTCPClientSend_t)(sTCPClient_t *pTCPClient, uint32_t nDataBytes, void *pData);
 	
+	typedef eNetReturn_t (*pfNetUDPServInitialize_t)(sUDPServ_t *pUDPServ);
+	typedef eNetReturn_t (*pfNetUDPServBind_t)(sUDPServ_t *pUDPServ, sConnInfo_t *pConn);
+	typedef eNetReturn_t (*pfNetUDPServCloseHost_t)(sUDPServ_t *pUDPServ);
+	typedef eNetReturn_t (*pfNetUDPServReceive_t)(sUDPServ_t *pUDPServ, sSocket_t *pClientSck, uint32_t nDataBytes, void *pData, uint32_t *pnBytesRecv);
+	typedef eNetReturn_t (*pfNetUDPServSend_t)(sUDPServ_t *pUDPServ, sSocket_t *pClientSck, uint32_t nDataBytes, void *pData);
+	
+	typedef eNetReturn_t (*pfNetUDPClientInitialize_t)(sUDPClient_t *pUDPClient);
+	typedef eNetReturn_t (*pgNetUDPClientSetServer_t)(sUDPClient_t *pUDPClient, sConnInfo_t *pConn);
+	typedef eNetReturn_t (*pfNetUDPClientClose_t)(sUDPClient_t *pUDPClient);
+	typedef eNetReturn_t (*pfNetUDPClientSend_t)(sUDPClient_t *pUDPClient, uint32_t nDataBytes, void *pData);
+	typedef eNetReturn_t (*pfNetUDPClientReceive_t)(sUDPClient_t *pUDPClient, uint32_t nDataBytes, void *pData, uint32_t *pnBytesRecv);
+	
 	/**	@brief		Union holding an IPv4 address
 		@ingroup	networkgeniface
 	*/
@@ -203,17 +236,25 @@
 		Port_t Port;	/**< Port number */
 	} sConnInfo_t;
 	
+	/**	@brief		Definition for variables containing ethernet socket information
+		@ingroup	networkgeniface
+	*/
+	typedef struct sSocket_t {
+		int32_t nSocket;	/**< Socket the connection is through */
+		sConnInfo_t Conn;	/**< Information for the remote system */
+	} sSocket_t;
+	
 	/**	@brief		TCP Server object
 		@ingroup	networkgeniface
 	*/
 	typedef struct sTCPServ_t {
-		Socket_t HostSck;							/**< Socket server is listening on */
+		sSocket_t HostSck;							/**< Socket server is listening on */
 		eTCPServerCapabilities_t eCapabilities;		/**< Capabilities this implementation provides */
 		
 		pfNetTCPServInitialize_t pfInitialize;		/**< Function to initialize the implementation */
 		pfNetTCPServBind_t pfBind;					/**< Function to bind a port on an address to listen for connections */
 		pfNetTCPServCloseHost_t pfCloseHost;		/**< Function to close the host socket */
-		pfNetTCPServCloseSocket_t pfCloseSocket;	/**< Function to close a client socket */
+		pfNetTCPServClosesSocket_t pfCloseSocket;	/**< Function to close a client socket */
 		pfNetTCPServAcceptClient_t pfAcceptClient;	/**< Function to wait for an accept an client connection */
 		pfNetTCPServReceive_t pfReceive;			/**< Function to receive data from a client connection */
 		pfNetTCPServSend_t pfSend;					/**< Function to send data to a client connection */
@@ -225,7 +266,7 @@
 		@ingroup	networkgeniface
 	*/
 	typedef struct sTCPClient_t {
-		Socket_t Sck;								/**< Socket client communicates through */
+		sSocket_t Sck;								/**< Socket client communicates through */
 		eTCPClientCapabilities_t eCapabilities;		/**< Capabilities this implementation provides */
 		
 		pfNetTCPClientInitialize_t pfInitialize;	/**< Function to initialize the implementation */
@@ -236,6 +277,32 @@
 		
 		void *pHWInfo;								/**< Information for use by the implementation */
 	} sTCPClient_t;
+	
+	typedef struct sUDPServ_t {
+		sSocket_t HostSck;
+		eUDPServerCapabilities_t eCapabilities;
+		
+		pfNetUDPServInitialize_t pfInitialize;
+		pfNetUDPServBind_t pfBind;
+		pfNetUDPServCloseHost_t pfCloseHost;
+		pfNetUDPServReceive_t pfReceive;
+		pfNetUDPServSend_t pfSend;
+		
+		void *pHWInfo;
+	} sUDPServ_t;
+	
+	typedef struct sUDPClient_t {
+		sSocket_t Sck;
+		eUDPClientCapabilities_t eCapabilities;
+		
+		pfNetUDPClientInitialize_t pfInitialize;
+		pgNetUDPClientSetServer_t pfSetServer;
+		pfNetUDPClientClose_t pfClose;
+		pfNetUDPClientReceive_t pfReceive;
+		pfNetUDPClientSend_t pfSend;
+		
+		void *pHWInfo;
+	} sUDPClient_t;
 
 /*****	Constants	*****/
 
@@ -247,6 +314,10 @@
 	eNetReturn_t IfaceTCPServObjInitialize(sTCPServ_t *pTCPServ);
 	
 	eNetReturn_t IfaceTCPClientObjInitialize(sTCPClient_t *pTCPClient);
+	
+	eNetReturn_t IfaceUDPServObjInitialize(sUDPServ_t *pUDPServ);
+	
+	eNetReturn_t IfaceUDPClientObjInitialize(sUDPClient_t *pUDPClient);
 	
 /*****	Functions	*****/
 
