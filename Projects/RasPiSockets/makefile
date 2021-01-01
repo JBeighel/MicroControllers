@@ -1,4 +1,4 @@
-TARGET = 
+TARGET = RasPiBase.exe
 COMMONDEPS = CommonUtils.o TimeGeneralInterface.o GPIOGeneralInterface.o I2CGeneralInterface.o SPIGeneralInterface.o UARTGeneralInterface.o NetworkGeneralInterface.o
 LINUXDEPS = GPIO_RaspberryPi.o I2C_RaspberryPi.o SPI_RaspberryPi.o UART_RaspberryPi.o Network_RaspberryPi.o
 
