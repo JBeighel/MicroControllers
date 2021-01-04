@@ -18,6 +18,8 @@
 	#include <stdlib.h>
 
 	#include <mariadb/mysql.h>
+	
+	#include "CommonUtils.h"
 
 /*****	Defines		*****/
 	

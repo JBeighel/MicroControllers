@@ -171,7 +171,23 @@ eSQLReturn_t SQLQuerySelect(sSQLConn_t *pSQLConn, const char *Query, hRecSethand
 }
 
 eSQLReturn_t SQLQueryModify(sSQLConn_t *pSQLConn, const char *Query, uint32_t *pnRecsAffected) {
+	uint64_t nRecCnt;
 	
+	//Submit the query
+	//The query, and record count functions are linked
+	//inserting  another query will screw up the count
+	nResult = mysql_query(&(pSQLConn->dbConn), Query);
+	if (nResult != 0) { //nResult holds an error code
+		return SQLFail_Unknown;
+	}
+	
+	nRecCnt = mysql_affected_rows(&(pSQLConn->dbConn));
+	
+	if (nRecCnt < UINT32_MAXVALUE) {
+		*pnRecsAffected = (uint32_t)nRecCnt;
+	} else {
+		*pnRecsAffected = UINT32_MAXVALUE;
+	}
 }
 
 eSQLReturn_t SQLRecordSetNext(sSQLConn_t *pSQLConn, hRecSethandle_t hRecSet, sSQLRecord_t *pRecord) {
