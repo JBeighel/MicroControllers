@@ -20,30 +20,14 @@
 	
 	//Driver libraries
 	#include <mariadb/mysql.h>
+	
+	#include "MariaDB.h"
 
 /*****	Defines		*****/
 
 
 /*****	Definitions	*****/
-	typedef enum eSQLDataType_t {
-		SQLInteger,
-		SQLDecimal,
-		SQLString,
-	} eSQLDataType_t;
-	
-	typedef struct sSQLRecord_t {
-		uint32_t nRowNumber;
-		uint32_t nNumValues;
-		sSQLValue_t *aValues;
-	} sSQLRecord_t;
 
-	typedef struct sSQLValue_t {
-		char *FieldName;
-		eSQLDataType_t eType;
-		int32_t nInteger;
-		float fDecimal;
-		char *String;
-	} sSQLValue_t;
 
 /*****	Constants	*****/
 
@@ -58,7 +42,8 @@
 	MYSQL gDB;
 
 /*****	Prototypes 	*****/
-
+	int MySQLDirect();
+	int MySQLLibrary();
 
 /*****	Functions	*****/
 eReturn_t BoardInit(void) {
@@ -97,16 +82,69 @@ eReturn_t BoardInit(void) {
 }
 
 int main(int nArgCnt, char **aArgVals) {
+	if (BoardInit() != Success) {
+		printf("Board initialization failed.\r\n");
+		return 1;
+	}
+	
+	MySQLLibrary();
+	
+	return MySQLDirect();
+}
+
+int MySQLLibrary() {
+	sSQLConn_t dbConn;
+	eSQLReturn_t eResult;
+	sSQLRecord_t dbRec;
+	hRecSethandle_t hRecSet;
+	int nCtr;
+	
+	eResult = SQLInitialize(&dbConn, "localhost", "jason", "ecvx5858");
+	if (eResult != SQL_Success) {
+		printf("SQL Lib init failed: %d\r\n", eResult);
+		return 1;
+	}
+	
+	eResult = SQLQuerySelect(&dbConn, "SELECT * FROM Test.User", &hRecSet);
+	if (eResult != SQL_Success) {
+		printf("SQL Lib select failed: %d\r\n", eResult);
+		return 1;
+	}
+	
+	printf("Select returned %d fields\r\n", hRecSet->Record.nNumValues);
+	
+	for (nCtr = 0; nCtr < hRecSet->Record.nNumValues; nCtr++) {
+		printf("Field %d: %s\r\n", nCtr, hRecSet->Record.aValues[nCtr].FieldName);
+	}
+	
+	eResult = SQLRecordSetNext(&dbConn, hRecSet, &dbRec);
+	while (eResult != SQLWarn_NoRecord) {
+		printf("Record %d: ", dbRec.nRowNumber);
+		
+		for (nCtr = 0; nCtr < dbRec.nNumValues; nCtr++) {
+			printf("Val %d-%s, ", nCtr, dbRec.aValues[nCtr].String);
+		}
+		
+		printf("\r\n");
+		
+		//Get the next record
+		eResult = SQLRecordSetNext(&dbConn, hRecSet, &dbRec);
+	}
+	
+	printf("End of results\r\n");
+	
+	SQLShutdown(&dbConn);
+	printf("SQL Lib work complete\r\n");
+	return 0;
+}
+
+int MySQLDirect() {
 	MYSQL *dbResult;
 	MYSQL_RES *QueryVals;
 	MYSQL_FIELD *Field;
 	MYSQL_ROW RSRow;
 	int nResult, nRowCtr, nFieldCtr, nFieldMax;
 	
-	if (BoardInit() != Success) {
-		printf("Board initialization failed.\r\n");
-		return 1;
-	}
 	
 	dbResult = mysql_init(&gDB);
 	if (dbResult == NULL) {
