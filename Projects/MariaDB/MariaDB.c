@@ -171,6 +171,7 @@ eSQLReturn_t SQLQuerySelect(sSQLConn_t *pSQLConn, const char *Query, hRecSethand
 }
 
 eSQLReturn_t SQLQueryModify(sSQLConn_t *pSQLConn, const char *Query, uint32_t *pnRecsAffected) {
+	int32_t nResult;
 	uint64_t nRecCnt;
 	
 	//Submit the query
@@ -188,6 +189,8 @@ eSQLReturn_t SQLQueryModify(sSQLConn_t *pSQLConn, const char *Query, uint32_t *p
 	} else {
 		*pnRecsAffected = UINT32_MAXVALUE;
 	}
+	
+	return SQL_Success;
 }
 
 eSQLReturn_t SQLRecordSetNext(sSQLConn_t *pSQLConn, hRecSethandle_t hRecSet, sSQLRecord_t *pRecord) {
