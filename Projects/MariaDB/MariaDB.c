@@ -1,6 +1,6 @@
 /**	File:	MariaDB.c
 	Author:	J. Beighel
-	Date:	12-23-2020
+	Date:	2020-01-04
 */
 
 /*****	Includes	*****/
