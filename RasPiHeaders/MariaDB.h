@@ -1,6 +1,6 @@
 /**	@defgroup	mariadb
 	@brief		
-	@details	v0.1
+	@details	v
 	#Description
 	
 	#File Information

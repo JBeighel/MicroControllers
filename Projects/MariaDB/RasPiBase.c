@@ -27,7 +27,7 @@
 
 
 /*****	Definitions	*****/
-
+	
 
 /*****	Constants	*****/
 
@@ -87,7 +87,12 @@ int main(int nArgCnt, char **aArgVals) {
 		return 1;
 	}
 	
-	MySQLLibrary();
+	for (int nCtr = 0; nCtr < 10000; nCtr++) {
+		if (MySQLLibrary() != 0) {
+			printf("Library fail\r\n");
+			return 1;
+		}
+	}
 	
 	return MySQLDirect();
 }
@@ -111,12 +116,6 @@ int MySQLLibrary() {
 		return 1;
 	}
 	
-	printf("Select returned %d fields\r\n", hRecSet->Record.nNumValues);
-	
-	for (nCtr = 0; nCtr < hRecSet->Record.nNumValues; nCtr++) {
-		printf("Field %d: %s\r\n", nCtr, hRecSet->Record.aValues[nCtr].FieldName);
-	}
-	
 	eResult = SQLRecordSetNext(&dbConn, hRecSet, &dbRec);
 	while (eResult != SQLWarn_NoRecord) {
 		printf("Record %d: ", dbRec.nRowNumber);
@@ -132,6 +131,7 @@ int MySQLLibrary() {
 	}
 	
 	printf("End of results\r\n");
+	SQLReleaseRecordSet(&dbConn, hRecSet);
 	
 	SQLShutdown(&dbConn);
 	printf("SQL Lib work complete\r\n");
