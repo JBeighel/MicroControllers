@@ -19,6 +19,7 @@
 	#include "CommonUtils.h"
 	#include "TimeGeneralInterface.h"
 	#include "GPIOGeneralInterface.h"
+	#include "SPIGeneralInterface.h"
 
 /*****	Constants	*****/
 	/**	@brief		GPIO Interface Capabilities needed by the US2066 Driver
@@ -156,7 +157,7 @@
 	
 	eUS2066Return_t US2066Init8Data(sUS2066Info_t *pDev, sTimeIface_t *pTime, sGPIOIface_t *pGpio, bool bFlipCursorDir, uint8_t nColCnt, uint8_t nRowCnt, GPIOID_t nEnPin, GPIOID_t nReadWritePin, GPIOID_t nRegSelPin, GPIOID_t nData0, GPIOID_t nData1, GPIOID_t nData2, GPIOID_t nData3, GPIOID_t nData4, GPIOID_t nData5, GPIOID_t nData6, GPIOID_t nData7);
 	
-	eUS2066Return_t US2066InitSPI(sUS2066Info_t *pDev, sTimeIface_t *pTime, sGPIOIface_t *pGpio, uint8_t nColCnt, uint8_t nRowCnt, GPIOID_t nChipSelPin);
+	eUS2066Return_t US2066InitSPI(sUS2066Info_t *pDev, sTimeIface_t *pTime, sGPIOIface_t *pGpio, sSPIIface_t *pSpi, uint8_t nColCnt, uint8_t nRowCnt, GPIOID_t nChipSelPin);
 	
 	/**	@brief		Clears all text displayed on the screen
 		@param		pDev	Pointer to the peripheral object

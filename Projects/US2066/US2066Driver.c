@@ -90,7 +90,7 @@ eUS2066Return_t US2066Init8Data(sUS2066Info_t *pDev, sTimeIface_t *pTime, sGPIOI
 		//Delay to let peripheral do its thing
 		pDev->pTime->pfDelayMilliSeconds(US2066_PULSEINITMSEC);
 		
-		//Pulse the LCD to read the data
+		//Pulse the LCD to have it read data
 		pDev->pTime->pfDelayMicroSeconds(US2066_ENPULSEPREUSEC);
 		pDev->pGPIO->pfDigitalWriteByPin(pDev->pGPIO, pDev->nEnablePin, true);
 		pDev->pTime->pfDelayMicroSeconds(US2066_ENPULSEONUSEC);
@@ -134,17 +134,17 @@ eUS2066Return_t US2066Init8Data(sUS2066Info_t *pDev, sTimeIface_t *pTime, sGPIOI
 	return US2066_Success;
 }
 
-eUS2066Return_t US2066InitSPI(sUS2066Info_t *pDev, sTimeIface_t *pTime, sGPIOIface_t *pGpio, uint8_t nColCnt, uint8_t nRowCnt, GPIOID_t nChipSelPin) {
+eUS2066Return_t US2066InitSPI(sUS2066Info_t *pDev, sTimeIface_t *pTime, sGPIOIface_t *pGpio, sSPIIface_t *pSpi, uint8_t nColCnt, uint8_t nRowCnt, GPIOID_t nChipSelPin) {
 	//Set all module properties
 	pDev->pTime = pTime;
 	pDev->pGPIO = pGpio;
-	pDev->pSPI = NULL;
+	pDev->pSPI = pSpi;
 	pDev->nRegSelPin = GPIO_NOPIN;
 	pDev->nRdWrPin = GPIO_NOPIN;
-	pDev->nColCnt = GPIO_NOPIN;
-	pDev->nRowCnt = GPIO_NOPIN;
 	pDev->bUse8DataPins = false;
 	
+	pDev->nColCnt = nColCnt;
+	pDev->nRowCnt = nRowCnt;
 	pDev->nEnablePin = nChipSelPin; //Using this to hold chip select
 	
 	pDev->anDataPins[0] = GPIO_NOPIN;
@@ -160,6 +160,21 @@ eUS2066Return_t US2066InitSPI(sUS2066Info_t *pDev, sTimeIface_t *pTime, sGPIOIfa
 	pDev->anRowBases[1] = 0x20;
 	pDev->anRowBases[2] = 0x40;
 	pDev->anRowBases[3] = 0x60;
+	
+	pDev->pGPIO->pfSetModeByPin(pDev->pGPIO, pDev->nEnablePin, GPIO_DigitalOutput);
+	
+	//Set the device configuration
+	US2066WriteByte(pDev, false, US2066_DISPLAYOFF);
+	US2066ClearDisplay(pDev);
+	
+	
+	US2066WriteByte(pDev, false, US2066_ENTRYMODESETBASE | US2066_EMS_FLIPCURSORADV);
+	//US2066WriteByte(pDev, false, US2066_ENTRYMODESETBASE);
+	
+	pDev->pTime->pfDelayMilliSeconds(US2066_PULSEINITMSEC);
+	US2066WriteByte(pDev, false, US2066_DISPLAYON);
+	
+	return US2066_Success;
 }
 
 eUS2066Return_t US2066ClearDisplay(sUS2066Info_t *pDev) {
@@ -279,11 +294,26 @@ eUS2066Return_t US2066WriteByte(sUS2066Info_t *pDev, bool bSendToRam, uint8_t nB
 		}
 	} else { //SPI interface is set, use that (no send to RAM handling needed)
 		pDev->pGPIO->pfDigitalWriteByPin(pDev->pGPIO, pDev->nEnablePin, false); //Chip select
-		pDev->pSPI->SPIBeginTransfer(pDev->pSPI);
-
-		pDev->pSPI->SPITransferByte(pDev->pSPI, nByte, &nCtr); //Writing only, discard read 
+		pDev->pSPI->pfBeginTransfer(pDev->pSPI);
+	
+		nCurrBit = 0xF8; //Start of transfer
+		nCurrBit |= 0x00; //Write bit (0x04 for read)
 		
-		pDev->pSPI->SPIEndTransfer(pDev->pSPI);
+		if (bSendToRam == true) {
+			nCurrBit |= 0x02; //Data/Command bit = Data
+		} else {
+			nCurrBit |= 0x00; //Data/Command bit = Command
+		}
+
+		pDev->pSPI->pfTransferByte(pDev->pSPI, nCurrBit, &nCtr); //Send transfer start byte
+		
+		nCurrBit = 0xF0 & nCtr; //Write high nibble first
+		pDev->pSPI->pfTransferByte(pDev->pSPI, nByte, &nCurrBit); //Writing only, discard read 
+		
+		nCurrBit = (0x0F & nCtr) << 4; //Write low nibble second
+		pDev->pSPI->pfTransferByte(pDev->pSPI, nByte, &nCurrBit); //Writing only, discard read 
+		
+		pDev->pSPI->pfEndTransfer(pDev->pSPI);
 		pDev->pGPIO->pfDigitalWriteByPin(pDev->pGPIO, pDev->nEnablePin, true); //Chip select
 	}
 	

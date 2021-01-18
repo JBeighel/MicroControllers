@@ -17,7 +17,7 @@ ifeq ($(OS),Windows_NT)
 	CCDBG = -ggdb
 	CPPARGS += -std=c++11 -lwsock32
 	CPPDBG = -ggdb
-	DEPS = $(COMMONDEPS) $(WINDOWSDEPS) 
+	DEPS = $(COMMONDEPS) $(WINDOWSDEPS) $(DRIVERS)
 endif
 
 ifeq ($(OS),Linux)
@@ -29,7 +29,7 @@ ifeq ($(OS),Linux)
 	CCDBG = -ggdb
 	CPPARGS += -std=c++11
 	CPPDBG = -ggdb
-	DEPS = $(COMMONDEPS) $(LINUXDEPS) 
+	DEPS = $(COMMONDEPS) $(LINUXDEPS) $(DRIVERS)
 endif
 
 #Targets that are not file dependents
