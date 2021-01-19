@@ -9,7 +9,7 @@
 	#File Information
 		File:	US2066Driver.h
 		Author:	J. Beighel
-		Date:	2021-01-18
+		Date:	2021-01-19
 */
 
 #ifndef __US2066DRIVER
@@ -118,6 +118,7 @@
 		GPIOID_t nRegSelPin;
 		GPIOID_t nRdWrPin;
 		GPIOID_t nEnablePin;	/**< Enable pin in parallel mode and chip select in SPI mode */
+		GPIOID_t nResetPin;	
 		GPIOID_t anDataPins[8];
 		uint8_t anRowBases[4];
 		uint8_t nColCnt;
@@ -157,7 +158,7 @@
 	
 	eUS2066Return_t US2066Init8Data(sUS2066Info_t *pDev, sTimeIface_t *pTime, sGPIOIface_t *pGpio, bool bFlipCursorDir, uint8_t nColCnt, uint8_t nRowCnt, GPIOID_t nEnPin, GPIOID_t nReadWritePin, GPIOID_t nRegSelPin, GPIOID_t nData0, GPIOID_t nData1, GPIOID_t nData2, GPIOID_t nData3, GPIOID_t nData4, GPIOID_t nData5, GPIOID_t nData6, GPIOID_t nData7);
 	
-	eUS2066Return_t US2066InitSPI(sUS2066Info_t *pDev, sTimeIface_t *pTime, sGPIOIface_t *pGpio, sSPIIface_t *pSpi, uint8_t nColCnt, uint8_t nRowCnt, GPIOID_t nChipSelPin);
+	eUS2066Return_t US2066InitSPI(sUS2066Info_t *pDev, sTimeIface_t *pTime, sGPIOIface_t *pGpio, sSPIIface_t *pSpi, uint8_t nColCnt, uint8_t nRowCnt, GPIOID_t nChipSelPin, GPIOID_t nResetPin);
 	
 	/**	@brief		Clears all text displayed on the screen
 		@param		pDev	Pointer to the peripheral object

@@ -25,6 +25,7 @@
 
 /*****	Defines		*****/
 	#define PIN_DISPCS	17
+	#define PIN_DISPRST	27
 
 /*****	Definitions	*****/
 
@@ -68,7 +69,7 @@ eReturn_t BoardInit(void) {
 		return Fail_Unknown;
 	}
 	
-	eResult = SPI_1_PORTINIT(&gSPI, SPI_1_HWINFO, 1000000, SPI_MSBFirst, SPI_Mode0);
+	eResult = SPI_1_PORTINIT(&gSPI, SPI_1_HWINFO, 10000, SPI_MSBFirst, SPI_Mode3);
 	if (eResult != SPI_Success) {
 		return Fail_Unknown;
 	}
@@ -84,7 +85,7 @@ eReturn_t BoardInit(void) {
 	UDPCLIENT_INIT(&gUDPClient);
 	
 	//Init peripherals (board support work)
-	US2066InitSPI(&gDisp, &gTime, &gGPIO, &gSPI, 20, 4, PIN_DISPCS);
+	US2066InitSPI(&gDisp, &gTime, &gGPIO, &gSPI, 20, 4, PIN_DISPCS, PIN_DISPRST);
 	
 	return Success;
 }
