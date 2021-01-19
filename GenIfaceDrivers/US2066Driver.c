@@ -106,8 +106,6 @@ eUS2066Return_t US2066Init8Data(sUS2066Info_t *pDev, sTimeIface_t *pTime, sGPIOI
 		pDev->pTime->pfDelayMicroSeconds(US2066_ENPULSEONUSEC);
 		pDev->pGPIO->pfDigitalWriteByPin(pDev->pGPIO, pDev->nEnablePin, false);
 		pDev->pTime->pfDelayMicroSeconds(US2066_ENPULSEPOSTUSEC);
-		
-		US2066WriteByte(pDev, false, US2066_FS_8DB_2LINE_5X8);
 	} else { //Send byte 0x04
 		pDev->pGPIO->pfDigitalWriteByPin(pDev->pGPIO, pDev->anDataPins[4], false);
 		
@@ -116,12 +114,26 @@ eUS2066Return_t US2066Init8Data(sUS2066Info_t *pDev, sTimeIface_t *pTime, sGPIOI
 		pDev->pTime->pfDelayMicroSeconds(US2066_ENPULSEONUSEC);
 		pDev->pGPIO->pfDigitalWriteByPin(pDev->pGPIO, pDev->nEnablePin, false);
 		pDev->pTime->pfDelayMicroSeconds(US2066_ENPULSEPOSTUSEC);
-		
-		US2066WriteByte(pDev, false, US2066_FS_4DB_2LINE_5X8);
 	}
 	
 	US2066WriteByte(pDev, false, US2066_DISPLAYOFF);
 	US2066ClearDisplay(pDev);
+	
+	if (pDev->nRowCnt > 2) {
+		US2066WriteByte(pDev, false, US2066_FS_CmdBase | US2066_FS_3or4LineDisp | US2066_FS_SetRE | US2066_FS_NormalDisplay | US2066_FS_ClearIS);  //RE on
+		
+		//The segments determine if letters are drawn right to left or left to right
+		//If this setting is wrong the letters will be mirrored in some direction
+		US2066WriteByte(pDev, false, US2066_ENTRYMODESETBASE | US2066_EMS_BDCOFF | US2066_EMS_BDSON); //Set draw direction
+		
+		US2066WriteByte(pDev, false, US2066_FS_CmdBase | US2066_FS_3or4LineDisp); //RE Off for normal commands
+	} else {
+		US2066WriteByte(pDev, false, US2066_FS_CmdBase | US2066_FS_1or2LineDisp | US2066_FS_SetRE | US2066_FS_NormalDisplay | US2066_FS_ClearIS);
+		
+		US2066WriteByte(pDev, false, US2066_ENTRYMODESETBASE | US2066_EMS_BDCOFF | US2066_EMS_BDSON); //Set draw direction
+		
+		US2066WriteByte(pDev, false, US2066_FS_CmdBase | US2066_FS_3or4LineDisp); //RE Off for normal commands
+	}
 	
 	if (bFlipCursorDir == true) {
 		US2066WriteByte(pDev, false, US2066_ENTRYMODESETBASE | US2066_EMS_FLIPCURSORADV);
@@ -179,17 +191,31 @@ eUS2066Return_t US2066InitSPI(sUS2066Info_t *pDev, sTimeIface_t *pTime, sGPIOIfa
 	pDev->pGPIO->pfDigitalWriteByPin(pDev->pGPIO, pDev->nResetPin, true); //100 uSec
 	pDev->pTime->pfDelayMicroSeconds(US2066_RESTARTUSEC);
 	
-	//Set the device configuration
 	for (nCtr = 0; nCtr < 3; nCtr++) {
 		pDev->pTime->pfDelayMilliSeconds(US2066_PULSEINITMSEC);
 		US2066WriteByte(pDev, false, US2066_DISPLAYON);
 	}
 	
+	//Set the device configuration
 	US2066WriteByte(pDev, false, US2066_DISPLAYOFF);
 	US2066ClearDisplay(pDev);
+	
+	if (pDev->nRowCnt > 2) {
+		US2066WriteByte(pDev, false, US2066_FS_CmdBase | US2066_FS_3or4LineDisp | US2066_FS_SetRE | US2066_FS_NormalDisplay | US2066_FS_ClearIS);  //RE on
 		
-	//US2066WriteByte(pDev, false, US2066_ENTRYMODESETBASE | US2066_EMS_FLIPCURSORADV);
-	US2066WriteByte(pDev, false, US2066_ENTRYMODESETBASE);
+		US2066WriteByte(pDev, false, US2066_ENTRYMODESETBASE | US2066_EMS_BDCOFF | US2066_EMS_BDSON); //Set draw order of segments
+		
+		US2066WriteByte(pDev, false, US2066_FS_CmdBase | US2066_FS_3or4LineDisp); //RE Off for normal commands
+	} else {
+		US2066WriteByte(pDev, false, US2066_FS_CmdBase | US2066_FS_1or2LineDisp | US2066_FS_SetRE | US2066_FS_NormalDisplay | US2066_FS_ClearIS);
+		
+		US2066WriteByte(pDev, false, US2066_ENTRYMODESETBASE | US2066_EMS_BDCOFF | US2066_EMS_BDSON); //Set draw order of segments
+		
+		US2066WriteByte(pDev, false, US2066_FS_CmdBase | US2066_FS_3or4LineDisp); //RE Off for normal commands
+	}
+		
+	US2066WriteByte(pDev, false, US2066_ENTRYMODESETBASE | US2066_EMS_FLIPCURSORADV);
+	//US2066WriteByte(pDev, false, US2066_ENTRYMODESETBASE);
 	
 	pDev->pTime->pfDelayMilliSeconds(US2066_PULSEINITMSEC);
 	US2066WriteByte(pDev, false, US2066_DISPLAYON);
@@ -237,6 +263,29 @@ eUS2066Return_t US2066SetCursorPosition(sUS2066Info_t *pDev, uint8_t nCol, uint8
 eUS2066Return_t US2066PrintCharacter(sUS2066Info_t *pDev, char Letter) {
 	US2066WriteByte(pDev, true, Letter);
 
+	return US2066_Success;
+}
+
+eUS2066Return_t US2066PrintLine(sUS2066Info_t *pDev, uint8_t nRow, char *pcLine) {
+	uint8_t nCtr, nLen;
+	
+	if (nRow >= pDev->nRowCnt) {
+		return US2066Fail_InvalisPos;
+	}
+	
+	nLen = strlen(pcLine);
+	
+	
+	US2066SetCursorPosition(pDev, 0, nRow);
+	
+	for (nCtr = 0; nCtr < pDev->nColCnt; nCtr++) {
+		if (nCtr < nLen) {
+			US2066PrintCharacter(pDev, pcLine[nCtr]);
+		} else {
+			US2066PrintCharacter(pDev, ' ');
+		}
+	}
+	
 	return US2066_Success;
 }
 

@@ -92,19 +92,29 @@
 	} eUS2066Return_t;
 
 	typedef enum eUS2066Cmd_t {
-		US2066_FS_4DB_1LINE_5X8		= 0x20,
-		US2066_FS_4DB_1LINE_5X10	= 0x24,
-		US2066_FS_4DB_2LINE_5X8		= 0x28,
-		US2066_FS_4DB_2LINE_5X10	= 0x2C,
-		US2066_FS_8DB_1LINE_5X8		= 0x30,
-		US2066_FS_8DB_1LINE_5X10	= 0x34,
-		US2066_FS_8DB_2LINE_5X8		= 0x38,
-		US2066_FS_8DB_2LINE_5X10	= 0x3C,
+		US2066_FS_CmdBase			= 0x20, /**< Base cmmand to configure the Function Set */
+		US2066_FS_3or4LineDisp		= 0x08,
+		US2066_FS_1or2LineDisp		= 0x00,
+		US2066_FS_DblHeight			= 0x04,	/**< Sets the font to double height */
+		US2066_FS_SngleHeight		= 0x00,	/**< Sets the font to normal height */
+		US2066_FS_SetRE				= 0x02, /**< Sets the RE extension register */
+		US2066_FS_ClearRE			= 0x00,	/**< Clears the RE extension register */
+		US2066_FS_SetIS				= 0x01,	/**< Sets the IS register, invalid if RE is set */
+		US2066_FS_ClearIS			= 0x00,	/**< Clears the IS register, invalid if RE is set */
+		US2066_FS_ReverseDisp		= 0x01,	/**< Reverses the display B/W color, only valid if RE is set */
+		US2066_FS_NormalDisplay		= 0x00,	/**< Display B/W color not reversed, only valid if RE is set */
 		
 		US2066_CLEARDISPLAY			= 0x01,
+		
 		US2066_RETURNHOME			= 0x02,
+		
 		US2066_ENTRYMODESETBASE		= 0x04, //LCD and OLED flip curosr advance direction
 		US2066_EMS_FLIPCURSORADV	= 0x02,
+		US2066_EMS_BDCON			= 0x02, /**< Bidirectonal common 31 -> 0, only valid if RE set */
+		US2066_EMS_BDCOFF			= 0x00, /**< Bidirectonal common 0 -> 31, only valid if RE set */
+		US2066_EMS_BDSON			= 0x01,	/**< Bidirectonal segment 99 -> 0, only valid if RE set */
+		US2066_EMS_BDSOFF			= 0x00,	/**< Bidirectonal segment 0 -> 99, only valid if RE set */
+		
 		US2066_DISPLAYON			= 0x0C,
 		US2066_DISPLAYOFF			= 0x08,
 		
@@ -210,6 +220,8 @@
 	eUS2066Return_t US2066SetCursorPosition(sUS2066Info_t *pDev, uint8_t nCol, uint8_t nRow);
 	
 	eUS2066Return_t US2066PrintCharacter(sUS2066Info_t *pDev, char Letter);
+	
+	eUS2066Return_t US2066PrintLine(sUS2066Info_t *pDev, uint8_t nRow, char *pcLine);
 
 /*****	Functions	*****/
 
