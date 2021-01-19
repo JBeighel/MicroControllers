@@ -10,7 +10,7 @@
 	# File Info #
 		File:	CommonUtils.h
 		Author:	J. Beighel
-		Date:	11-25-2020
+		Date:	2021-01-19
 */
 
 #ifndef __COMMONUTILS
@@ -185,6 +185,15 @@
 		@ingroup	commonutils
 	*/
 	uint16_t CountSetBitsInInt16(uint32_t nVal);
+	
+	/**	@brief		Returns the parameter value with the bits reversed
+		@details	If the value 0xC5 (0b11000101) is passed in then the 
+			returned value will be 0xA3 (0b10100011)
+		@param		nVal		Value to reverse the bits in
+		@return		Bit reversed value
+		@ingroup	commonutils
+	*/
+	uint8_t ReverseBitsInUInt8(uint8_t nVal);
 
 /***** Functions	*****/
 

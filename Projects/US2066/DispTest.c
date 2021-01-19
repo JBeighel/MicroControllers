@@ -69,7 +69,7 @@ eReturn_t BoardInit(void) {
 		return Fail_Unknown;
 	}
 	
-	eResult = SPI_1_PORTINIT(&gSPI, SPI_1_HWINFO, 10000, SPI_MSBFirst, SPI_Mode3);
+	eResult = SPI_1_PORTINIT(&gSPI, SPI_1_HWINFO, 1000000, SPI_MSBFirst, SPI_Mode3);
 	if (eResult != SPI_Success) {
 		return Fail_Unknown;
 	}
