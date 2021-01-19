@@ -1,7 +1,7 @@
-TARGET = 
+TARGET = DispTest.exe
 COMMONDEPS = CommonUtils.o TimeGeneralInterface.o GPIOGeneralInterface.o I2CGeneralInterface.o SPIGeneralInterface.o UARTGeneralInterface.o NetworkGeneralInterface.o
 LINUXDEPS = GPIO_RaspberryPi.o I2C_RaspberryPi.o SPI_RaspberryPi.o UART_RaspberryPi.o Network_RaspberryPi.o
-DRIVERS = 
+DRIVERS = US2066Driver.o
 
 #determine operating system to set environment
 ifndef OS
