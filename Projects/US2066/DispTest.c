@@ -101,5 +101,9 @@ int main(int nArgCnt, char **aArgVals) {
 	US2066PrintCharacter(&gDisp, 'Y');
 	US2066PrintCharacter(&gDisp, 'J');
 	
+	US2066PrintLine(&gDisp, 1, "Hello");
+	US2066PrintLine(&gDisp, 2, "   World");
+	US2066PrintLine(&gDisp, 3, "Line 3 78901234567890");
+	
 	return 0;
 }
