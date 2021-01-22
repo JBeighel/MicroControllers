@@ -1,12 +1,12 @@
 /**	@defgroup	spiraspberrypi
 	@brief		SPI General Interface implementation for Raspberry Pi
-	@details	v0.1
+	@details	v0.2
 	#Description
 	
 	#File Information
 		File:	SPI_RaspberryPi.h
 		Author:	J. Beighel
-		Date:	12-01-2020
+		Date:	2021-01-22
 */
 
 #ifndef __SPIRASPBERRYPI_H
@@ -29,7 +29,7 @@
 	/**	@brief		Function to call to initialize the first SPI bus
 		@ingroup	spiraspberrypi
 	*/
-	#define SPI_1_PORTINIT		RasPiSPIPortInitialize
+	#define SPI_INIT			RasPiSPIPortInitialize
 	
 	/**	@brief		Hardware information for the first SPI bus
 		@ingroup	spiraspberrypi

@@ -1,7 +1,11 @@
 /**	@defgroup	gpioarduino
 	@brief		Implementation of the GPIO General Interface for Arduino
-	@details	v0.4
-		
+	@details	v0.5
+	
+	# File Info #
+		File:	GPIO_Arduino.h
+		Author:	J. Beighel
+		Date:	2021-01-22
 */
 
 #ifndef __GPIOARDUINO

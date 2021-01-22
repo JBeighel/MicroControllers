@@ -26,14 +26,14 @@
 		take the form of SPI_#_HWINFO
 
 		In addition the driver must define a value to reach the SPIPortInitialize() function.
-		This should take the form of SPI_#_PORTINIT
+		This should take the form of SPI_INIT
 
 		Having these defined gives a very consistent and generic means of establishing the
 		interface object in the application that looks like this:
 
 		sSPIIface_t SpiObj;
 
-		SPI_1_PORTINIT(&SpiObj, SPI_1_HWINFO, 5000000, SPI_MSBFirst, SPI_Mode0);
+		SPI_INIT(&SpiObj, SPI_1_HWINFO, 5000000, SPI_MSBFirst, SPI_Mode0);
 
 		The last thing the driver must do is create a define of the capabilities that it allows.
 		This define should be options from the eSPICapabilities_t enumeration ORed together.  The
@@ -45,7 +45,7 @@
 	# File Information #
 		File:	SPIGeneralInterface.c
 		Author:	J. Beighel
-		Created:09-04-2020
+		Date:	2021-01-22
 */
 
 #ifndef __SPIGENIFACE

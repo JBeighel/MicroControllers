@@ -1,6 +1,6 @@
 /**	@defgroup	uartifcae_arduino
-	@brief		
-	@details	v0.2
+	@brief		UART General Interface implementation for Arduino
+	@details	v0.3
 	# Description #
 	
 	# Usage #
@@ -8,7 +8,7 @@
 	# File Information #
 		File:	UART_Arduino.h
 		Author:	J. Beighel
-		Created:09-15-2020
+		Date:	2021-01-22
 */
 
 #ifndef __NAME_H
@@ -29,10 +29,10 @@
 		#define	DEBUG_PRINT	Serial.print
 	#endif
 	
-	#ifdef UART_PORTINITIALIZE
-		#undef UART_PORTINITIALIZE
+	#ifdef UART_INIT
+		#undef UART_INIT
 	#endif
-	#define UART_PORTINITIALIZE	ArduinoUARTPortInitialize
+	#define UART_INIT	ArduinoUARTPortInitialize
 	
 	#ifndef mSecDelay
 		#define mSecDelay	delay
@@ -49,18 +49,18 @@
 
 
 /***** Prototypes 	*****/
-	eUARTReturns_t ArduinoUARTPortInitialize(sUARTIface_t *pUARTIface, uint32_t nBaudRate, eUARTModes_t eReqMode, void *pHWInfo);
+	eUARTReturn_t ArduinoUARTPortInitialize(sUARTIface_t *pUARTIface, uint32_t nBaudRate, eUARTModes_t eReqMode, void *pHWInfo);
 	
-	eUARTReturns_t ArduinoUARTShutdown(sUARTIface_t *pUARTIface);
+	eUARTReturn_t ArduinoUARTShutdown(sUARTIface_t *pUARTIface);
 		
-	eUARTReturns_t ArduinoUARTReadData(sUARTIface_t *pUARTIface, uint16_t nDataSize, void *pDataBuff, uint16_t *pnBytesRead);
-	eUARTReturns_t ArduinoUARTWriteData(sUARTIface_t *pUARTIface, uint16_t nDataSize, const void *pDataBuff);
-	eUARTReturns_t ArduinoUARTDataAvailable(sUARTIface_t *pUARTIface, uint16_t *pnBytesAvailable);
-	eUARTReturns_t ArduinoUARTWaitDataSend(sUARTIface_t *pUARTIface);
+	eUARTReturn_t ArduinoUARTReadData(sUARTIface_t *pUARTIface, uint16_t nDataSize, void *pDataBuff, uint16_t *pnBytesRead);
+	eUARTReturn_t ArduinoUARTWriteData(sUARTIface_t *pUARTIface, uint16_t nDataSize, const void *pDataBuff);
+	eUARTReturn_t ArduinoUARTDataAvailable(sUARTIface_t *pUARTIface, uint16_t *pnBytesAvailable);
+	eUARTReturn_t ArduinoUARTWaitDataSend(sUARTIface_t *pUARTIface);
 
 /***** Functions	*****/
 
-eUARTReturns_t ArduinoUARTPortInitialize(sUARTIface_t *pUARTIface, uint32_t nBaudRate, eUARTModes_t eReqMode, void *pHWInfo) {
+eUARTReturn_t ArduinoUARTPortInitialize(sUARTIface_t *pUARTIface, uint32_t nBaudRate, eUARTModes_t eReqMode, void *pHWInfo) {
 	byte Mode;
 	
 	UARTInterfaceInitialize(pUARTIface); //Make sure all function pointers are valid
@@ -199,30 +199,30 @@ eUARTReturns_t ArduinoUARTPortInitialize(sUARTIface_t *pUARTIface, uint32_t nBau
 	return UART_Success;
 }
 	
-eUARTReturns_t ArduinoUARTShutdown(sUARTIface_t *pUARTIface) {
+eUARTReturn_t ArduinoUARTShutdown(sUARTIface_t *pUARTIface) {
 	//Ho means to shut down the hardware on Arduino
 	return UART_Fail_Unsupported;
 }
 	
-eUARTReturns_t ArduinoUARTReadData(sUARTIface_t *pUARTIface, uint16_t nDataSize, void *pDataBuff, uint16_t *pnBytesRead) {
+eUARTReturn_t ArduinoUARTReadData(sUARTIface_t *pUARTIface, uint16_t nDataSize, void *pDataBuff, uint16_t *pnBytesRead) {
 	(*pnBytesRead) = ((HardwareSerial *)pUARTIface->pHWInfo)->readBytes((char *)pDataBuff, nDataSize);
 	
 	return UART_Success;
 }
 
-eUARTReturns_t ArduinoUARTWriteData(sUARTIface_t *pUARTIface, uint16_t nDataSize, const void *pDataBuff) {
+eUARTReturn_t ArduinoUARTWriteData(sUARTIface_t *pUARTIface, uint16_t nDataSize, const void *pDataBuff) {
 	((HardwareSerial *)pUARTIface->pHWInfo)->write((char *)pDataBuff, nDataSize);
 	
 	return UART_Success;
 }
 
-eUARTReturns_t ArduinoUARTDataAvailable(sUARTIface_t *pUARTIface, uint16_t *pnBytesAvailable) {
+eUARTReturn_t ArduinoUARTDataAvailable(sUARTIface_t *pUARTIface, uint16_t *pnBytesAvailable) {
 	(*pnBytesAvailable) = ((HardwareSerial *)pUARTIface->pHWInfo)->available();
 	
 	return UART_Success;
 }
 
-eUARTReturns_t ArduinoUARTWaitDataSend(sUARTIface_t *pUARTIface) {
+eUARTReturn_t ArduinoUARTWaitDataSend(sUARTIface_t *pUARTIface) {
 	((HardwareSerial *)pUARTIface->pHWInfo)->flush();
 	return UART_Success;
 }

@@ -1,6 +1,6 @@
 /**	File:	US2066Driver.c
 	Author:	J. Beighel
-	Date:	2021-01-19
+	Date:	2021-01-22
 */
 
 /*****	Includes	*****/
@@ -125,12 +125,14 @@ eUS2066Return_t US2066Init8Data(sUS2066Info_t *pDev, sTimeIface_t *pTime, sGPIOI
 		//The segments determine if letters are drawn right to left or left to right
 		//If this setting is wrong the letters will be mirrored in some direction
 		US2066WriteByte(pDev, false, US2066_ENTRYMODESETBASE | US2066_EMS_BDCOFF | US2066_EMS_BDSON); //Set draw direction
+		US2066WriteByte(pDev, false, US2066_EFS_CmdBase | US2066_EFS_5DotFont | US2066_EFS_3or4Line);
 		
 		US2066WriteByte(pDev, false, US2066_FS_CmdBase | US2066_FS_3or4LineDisp); //RE Off for normal commands
 	} else {
 		US2066WriteByte(pDev, false, US2066_FS_CmdBase | US2066_FS_1or2LineDisp | US2066_FS_SetRE | US2066_FS_NormalDisplay | US2066_FS_ClearIS);
 		
 		US2066WriteByte(pDev, false, US2066_ENTRYMODESETBASE | US2066_EMS_BDCOFF | US2066_EMS_BDSON); //Set draw direction
+		US2066WriteByte(pDev, false, US2066_EFS_CmdBase | US2066_EFS_5DotFont | US2066_EFS_3or4Line);
 		
 		US2066WriteByte(pDev, false, US2066_FS_CmdBase | US2066_FS_3or4LineDisp); //RE Off for normal commands
 	}
@@ -204,12 +206,14 @@ eUS2066Return_t US2066InitSPI(sUS2066Info_t *pDev, sTimeIface_t *pTime, sGPIOIfa
 		US2066WriteByte(pDev, false, US2066_FS_CmdBase | US2066_FS_3or4LineDisp | US2066_FS_SetRE | US2066_FS_NormalDisplay | US2066_FS_ClearIS);  //RE on
 		
 		US2066WriteByte(pDev, false, US2066_ENTRYMODESETBASE | US2066_EMS_BDCOFF | US2066_EMS_BDSON); //Set draw order of segments
+		US2066WriteByte(pDev, false, US2066_EFS_CmdBase | US2066_EFS_5DotFont | US2066_EFS_3or4Line);
 		
 		US2066WriteByte(pDev, false, US2066_FS_CmdBase | US2066_FS_3or4LineDisp); //RE Off for normal commands
 	} else {
 		US2066WriteByte(pDev, false, US2066_FS_CmdBase | US2066_FS_1or2LineDisp | US2066_FS_SetRE | US2066_FS_NormalDisplay | US2066_FS_ClearIS);
 		
 		US2066WriteByte(pDev, false, US2066_ENTRYMODESETBASE | US2066_EMS_BDCOFF | US2066_EMS_BDSON); //Set draw order of segments
+		US2066WriteByte(pDev, false, US2066_EFS_CmdBase | US2066_EFS_5DotFont | US2066_EFS_3or4Line);
 		
 		US2066WriteByte(pDev, false, US2066_FS_CmdBase | US2066_FS_3or4LineDisp); //RE Off for normal commands
 	}
