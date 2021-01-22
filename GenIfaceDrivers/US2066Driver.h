@@ -103,10 +103,18 @@
 		US2066_FS_ClearIS			= 0x00,	/**< Clears the IS register, invalid if RE is set */
 		US2066_FS_ReverseDisp		= 0x01,	/**< Reverses the display B/W color, only valid if RE is set */
 		US2066_FS_NormalDisplay		= 0x00,	/**< Display B/W color not reversed, only valid if RE is set */
+
+		US2066_EFS_CmdBase			= 0x08, /**< Extnded function set, All of this requires RE on */
+		US2066_EFS_6DotFont			= 0x04,	/**< Use a font that is 6 pixels wide */
+		US2066_EFS_5DotFont			= 0x00,	/**< Use a font that is 5 pixels wide */
+		US2066_EFS_CursBWInv		= 0x02,	/**< Invert the black/white cursor colors */
+		US2066_EFS_CursBWNorm		= 0x00,	/**< Normal black/white cursor colors */
+		US2066_EFS_3or4Line			= 0x01,	/**< Set the display to 3 or 4 lines tall */
+		US2066_EFS_1or2Line			= 0x00,	/**< Set the display to 1 or 2 lines tall */
+    
+		US2066_CLEARDISPLAY			= 0x01,	/**< Command to clear the display */
 		
-		US2066_CLEARDISPLAY			= 0x01,
-		
-		US2066_RETURNHOME			= 0x02,
+		US2066_RETURNHOME			= 0x02,	/**< Command to return the cursor to 0, 0 */
 		
 		US2066_ENTRYMODESETBASE		= 0x04, //LCD and OLED flip curosr advance direction
 		US2066_EMS_FLIPCURSORADV	= 0x02,
@@ -115,8 +123,8 @@
 		US2066_EMS_BDSON			= 0x01,	/**< Bidirectonal segment 99 -> 0, only valid if RE set */
 		US2066_EMS_BDSOFF			= 0x00,	/**< Bidirectonal segment 0 -> 99, only valid if RE set */
 		
-		US2066_DISPLAYON			= 0x0C,
-		US2066_DISPLAYOFF			= 0x08,
+		US2066_DISPLAYON			= 0x0C,	/**< Command to turn the display on */
+		US2066_DISPLAYOFF			= 0x08,	/**< Command to turn the display off */
 		
 		US2066_SETCGRAMBASE			= 0x20,	/**< Character generator RAM */
 		US2066_SETCGRAMADDRMASK		= 0x1F,	/**< Display data RAM */
@@ -227,4 +235,3 @@
 
 
 #endif
-
