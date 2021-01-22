@@ -1,6 +1,6 @@
 /**	@defgroup	uartiface
 	@brief		Abstracted interface for general purpose UART port
-	@details	v0.2
+	@details	v0.3
 	# Description #
 	
 	# Usage #
@@ -17,14 +17,14 @@
 		take the form of UART_#_HWINFO
 
 		In addition the driver must define a value to reach the UARTPortInitialize() function.
-		This should take the form of UART_#_PORTINIT
+		This should take the form of UART_INIT
 
 		Having these defined gives a very consistent and generic means of establishing the
 		interface object in the application that looks like this:
 
 		sUARTIface_t UartObj;
 
-		UART_PORTINITIALIZE(&UartObj, 9600, UART_8None1, UART_1_HWINFO);
+		UART_INIT(&UartObj, 9600, UART_8None1, UART_1_HWINFO);
 
 		The last thing the driver must do is create a define of the capabilities that it allows.
 		This define should be options from the eUARTCapabilities_t enumeration ORed together. 
@@ -36,7 +36,7 @@
 	# File Information #
 		File:	UARTGeneralInterface.h
 		Author:	J. Beighel
-		Created:09-15-2020
+		Date:	2021-01-22
 */
 
 #ifndef __UARTINTERFACE

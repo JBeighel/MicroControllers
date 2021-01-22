@@ -6,7 +6,7 @@
 	#File Information
 		File:	TimeGeneralInterface.h
 		Author:	J. Beighel
-		Date:	12-10-2020
+		Date:	2021-01-22
 */
 
 #ifndef __TIMEIFACE
