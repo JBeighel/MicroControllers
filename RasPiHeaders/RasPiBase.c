@@ -61,17 +61,17 @@ eReturn_t BoardInit(void) {
 		return Fail_Unknown;
 	}
 	
-	eResult = I2C_1_PORTINIT(&gI2C, true, 100000, I2C_1_HWINFO);
+	eResult = I2C_INIT(&gI2C, true, 100000, I2C_1_HWINFO);
 	if (eResult != GPIO_Success) {
 		return Fail_Unknown;
 	}
 	
-	eResult = SPI_1_PORTINIT(&gSPI, SPI_1_HWINFO, 5000000, SPI_MSBFirst, SPI_Mode0);
+	eResult = SPI_INIT(&gSPI, SPI_1_HWINFO, 5000000, SPI_MSBFirst, SPI_Mode0);
 	if (eResult != SPI_Success) {
 		return Fail_Unknown;
 	}
 	
-	eResult = UART_PORTINITIALIZE(&gUART, 9600, UART_8None1, UART_1_HWINFO);
+	eResult = UART_INIT(&gUART, 9600, UART_8None1, UART_1_HWINFO);
 	if (eResult != UART_Success) {
 		return Fail_Unknown;
 	}

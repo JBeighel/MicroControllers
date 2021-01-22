@@ -1,12 +1,12 @@
 /**	@defgroup	uartraspi
 	@brief		Raspberry Pi implementation of the UART General Interface
-	@details	v0.2
+	@details	v0.3
 	#Description
 	
 	#File Information
 		File:	UART_RaspberryPi.h
 		Author:	J. Beighel
-		Date:	12-11-2020
+		Date:	2020-01-22
 */
 
 #ifndef __UARTRASPI
@@ -28,7 +28,7 @@
 		#undef UART_PORTINITIALIZE
 	#endif
 	
-	#define UART_PORTINITIALIZE		RasPiUARTPortInit
+	#define UART_INIT				RasPiUARTPortInit
 
 	#define UART_1_HWINFO			((void *)&(gUARTHWInfo[0]))
 	

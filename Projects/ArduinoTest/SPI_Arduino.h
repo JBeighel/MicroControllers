@@ -1,6 +1,6 @@
 /**	@defgroup	spiarduino
 	@brief		Arduino implementation of the SPI General Interface
-	@details	v0.1
+	@details	v0.2
 		
 */
 
@@ -16,7 +16,7 @@
 /*****	Constants	*****/
 	#define		SPI_1_HWINFO	(&gSPI1)
 	
-	#define		SPI_1_INIT		SPIArduinoInit
+	#define		SPI_INIT		SPIArduinoInit
 
 	#define		BUILD_DEBUG		1
 	#ifdef BUILD_DEBUG
@@ -66,7 +66,7 @@ eSPIReturn_t SPIArduinoInit(sSPIIface_t *pIface, void *pHWInfo, uint32_t nBusClo
 	pIface->eDataOrder = eDataOrder;
 	
 	//Configure the port for use
-	switch (pIface->eMode) {
+	switch (pIface->eDataOrder) {
 		case SPI_MSBFirst:
 			nBitOrder = MSBFIRST;
 			break;
@@ -79,7 +79,7 @@ eSPIReturn_t SPIArduinoInit(sSPIIface_t *pIface, void *pHWInfo, uint32_t nBusClo
 			return SPIFail_Unsupported;
 	}
 	
-	switch (pIface->eDataOrder) {
+	switch (pIface->eMode) {
 		case SPI_Mode0:
 			nDataMode = SPI_MODE0;
 			break;
