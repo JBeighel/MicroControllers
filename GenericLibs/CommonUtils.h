@@ -1,6 +1,6 @@
 /**	@defgroup	commonutils
 	@brief		Common utilities and objects
-	@details	v 0.7
+	@details	v 0.8
 	# Description #
 		This is a collection of commonly used utilities.
 		This includes variable types, macros, and constants.
@@ -10,7 +10,7 @@
 	# File Info #
 		File:	CommonUtils.h
 		Author:	J. Beighel
-		Date:	2021-01-19
+		Date:	2021-01-26
 */
 
 #ifndef __COMMONUTILS
@@ -42,6 +42,8 @@
 		Success			= 0,	/**< The operation completed successfully */
 		Fail_Unknown	= -1,	/**< An unknown and unrecoverable error happened during the operation */
 		Fail_NotImplem	= -2,	/**< Function not implemented */
+		Fail_CommError	= -3,	/**< Communications layer failure */
+		Fail_Invalid	= -4,	/**< Some value provided was invalid for this operaion */
 	} eReturn_t;
 
 /***** Globals		*****/
