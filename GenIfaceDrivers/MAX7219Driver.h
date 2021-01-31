@@ -14,6 +14,9 @@
 	#define __MAX7219DRIVER_H
 
 /*****	Includes	*****/
+	#include "CommonUtils.h"
+	#include "GPIOGeneralInterface.h"
+	#include "SPIGeneralInterface.h"
 
 
 /*****	Defines		*****/
@@ -125,14 +128,14 @@
 		MAX7219Led_SegG		= 0x01,	/**< Segment G */
 		MAX7219Led_SegDP	= 0x80,	/**< Segment Decimal Point */
 		
-		MAX7219Led_0		= 0x40,
-		MAX7219Led_1		= 0x20,
-		MAX7219Led_2		= 0x10,
-		MAX7219Led_3		= 0x08,
-		MAX7219Led_4		= 0x04,
-		MAX7219Led_5		= 0x02,
-		MAX7219Led_6		= 0x01,
-		MAX7219Led_7		= 0x80,
+		MAX7219Led_0		= 0x80,
+		MAX7219Led_1		= 0x40,
+		MAX7219Led_2		= 0x20,
+		MAX7219Led_3		= 0x10,
+		MAX7219Led_4		= 0x08,
+		MAX7219Led_5		= 0x04,
+		MAX7219Led_6		= 0x02,
+		MAX7219Led_7		= 0x01,
 	} eMAX7219Led_t;
 	
 	typedef struct sMAX7219Info_t {
@@ -155,6 +158,8 @@
 eMAX7219Return_t MAX7219Initialize(sMAX7219Info_t *pDev, uint8_t nNumDigits, GPIOID_t nChipSel, sGPIOIface_t *pGpioDev, sSPIIface_t *pSpiDev);
 
 eMAX7219Return_t MAX7219SetDigitLEDs(sMAX7219Info_t *pDev, uint8_t nDigit, eMAX7219Led_t eLights);
+
+eMAX7219Return_t MAX7219SetIntensity(sMAX7219Info_t *pDev, uint8_t nLevel);
 
 #endif
 

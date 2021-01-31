@@ -45,7 +45,7 @@
 	# File Information #
 		File:	SPIGeneralInterface.c
 		Author:	J. Beighel
-		Date:	2021-01-22
+		Date:	2021-01-26
 */
 
 #ifndef __SPIGENIFACE
@@ -79,6 +79,12 @@
 	} eSPIDataOrder_t;
 	
 	/**	@brief		Enumeration of clock and data sampling methods the bus will use
+		@details	CPOL is clock polarity, 0 means it begins in a low state and the 
+			first edge will be rising.  One means it begins in a high state and the 
+			first edge will be falling.
+			
+			CPHA is clock phase and spicifies when the data bits will change (output)
+			and when they will be read (input / data capture).
 		@ingroup	spiiface
 	*/
 	typedef enum eSPIMode_t {
