@@ -1,6 +1,6 @@
 /**	@defgroup	commonutils
 	@brief		Common utilities and objects
-	@details	v 0.7
+	@details	v 0.8
 	# Description #
 		This is a collection of commonly used utilities.
 		This includes variable types, macros, and constants.
@@ -10,7 +10,7 @@
 	# File Info #
 		File:	CommonUtils.h
 		Author:	J. Beighel
-		Date:	11-25-2020
+		Date:	2021-01-26
 */
 
 #ifndef __COMMONUTILS
@@ -42,6 +42,8 @@
 		Success			= 0,	/**< The operation completed successfully */
 		Fail_Unknown	= -1,	/**< An unknown and unrecoverable error happened during the operation */
 		Fail_NotImplem	= -2,	/**< Function not implemented */
+		Fail_CommError	= -3,	/**< Communications layer failure */
+		Fail_Invalid	= -4,	/**< Some value provided was invalid for this operaion */
 	} eReturn_t;
 
 /***** Globals		*****/
@@ -185,6 +187,15 @@
 		@ingroup	commonutils
 	*/
 	uint16_t CountSetBitsInInt16(uint32_t nVal);
+	
+	/**	@brief		Returns the parameter value with the bits reversed
+		@details	If the value 0xC5 (0b11000101) is passed in then the 
+			returned value will be 0xA3 (0b10100011)
+		@param		nVal		Value to reverse the bits in
+		@return		Bit reversed value
+		@ingroup	commonutils
+	*/
+	uint8_t ReverseBitsInUInt8(uint8_t nVal);
 
 /***** Functions	*****/
 

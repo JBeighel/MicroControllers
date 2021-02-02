@@ -1,6 +1,6 @@
 /**	@defgroup	i2ciface
 	@brief		Abstracted interface for general purpose I2C port communications
-	@details	v0.2
+	@details	v0.1
 	# Intent #
 		The intent of this module is to ensure that device drivers are not coupled with I2C hardware
 		implementations.  By using this interface to operate the hardware it should allow the device
@@ -31,14 +31,14 @@
 		take the form of I2C_#_HWINFO
 
 		In addition the driver must define a value to reach the I2CPortInitialize() function.
-		This should take the form of I2C_INIT
+		This should take the form of I2C_#_PORTINIT
 
 		Having these defined gives a very consistent and generic means of establishing the
 		interface object in the application that looks like this:
 
 		sI2CIface_t I2CObj;
 
-		I2C_INIT(&I2CObj, true, 100000, I2C_1_HWINFO);
+		I2C_#_PORTINIT(&I2CObj, true, 100000, I2C_1_HWINFO);
 
 		The last thing the driver must do is create a define of the capabilities that it allows.
 		This define should be options from the eI2CCapabilities_t enumeration ORed together. 
@@ -46,11 +46,6 @@
 		that it requires.  Using these defines the application should be able to determine at
 		compilation whether or not a peripheral will work on a particular bus.  This define
 		should take the form of I2C_#_CAPS
-		
-	# File Information #
-		File:	I2CGeneralInterface.c
-		Author:	J. Beighel
-		Date:	2021-01-22
 */
 
 /**	@defgroup i2ciface_priv : Private Objects

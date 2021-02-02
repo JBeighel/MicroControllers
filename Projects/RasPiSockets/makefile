@@ -1,7 +1,6 @@
-TARGET = 
+TARGET = RasPiBase.exe
 COMMONDEPS = CommonUtils.o TimeGeneralInterface.o GPIOGeneralInterface.o I2CGeneralInterface.o SPIGeneralInterface.o UARTGeneralInterface.o NetworkGeneralInterface.o
 LINUXDEPS = GPIO_RaspberryPi.o I2C_RaspberryPi.o SPI_RaspberryPi.o UART_RaspberryPi.o Network_RaspberryPi.o
-DRIVERS = 
 
 #determine operating system to set environment
 ifndef OS
@@ -17,7 +16,7 @@ ifeq ($(OS),Windows_NT)
 	CCDBG = -ggdb
 	CPPARGS += -std=c++11 -lwsock32
 	CPPDBG = -ggdb
-	DEPS = $(COMMONDEPS) $(WINDOWSDEPS) $(DRIVERS)
+	DEPS = $(COMMONDEPS) $(WINDOWSDEPS) 
 endif
 
 ifeq ($(OS),Linux)
@@ -29,14 +28,14 @@ ifeq ($(OS),Linux)
 	CCDBG = -ggdb
 	CPPARGS += -std=c++11
 	CPPDBG = -ggdb
-	DEPS = $(COMMONDEPS) $(LINUXDEPS) $(DRIVERS)
+	DEPS = $(COMMONDEPS) $(LINUXDEPS) 
 endif
 
 #Targets that are not file dependents
-.PHONY: all clean debug drivers main dispenv
+.PHONY: all clean debug main dispenv
 
 #Target to build entire project
-main: dispenv $(DEPS) $(DRIVERS) $(TARGET)
+main: dispenv $(DEPS) $(TARGET)
 	@ echo "----------------------------------------------------------"
 	@ echo "Compiled All Components"
 	@ echo "Deps: $(DEPS)"
@@ -45,7 +44,7 @@ main: dispenv $(DEPS) $(DRIVERS) $(TARGET)
 #Workspace handling targets
 all: clean main
 
-debug: 
+debug:
 	@ echo "----------------------------------------------------------"
 	@ echo "Building with debug symbols: $(CCDBG) / $(CPPDBG)"
 	@ echo ""
@@ -62,17 +61,7 @@ clean:
 	@ echo "Cleaning Build Space"
 	$(DEL) $(TARGET)
 	$(DEL) $(DEPS)
-	$(DEL) $(DRIVERS)
 	@ echo ""
-
-drivers: 
-	@ echo "----------------------------------------------------------"
-	@ echo "Cleaning Peripheral Drivers"
-	$(DEL) $(DRIVERS)
-	$(DEL) $(TARGET)
-	@ echo ""
-	#Re-enter make with any custom parameters still set
-	make CCARGS="$(CCARGS)" CPPARGS="$(CPPARGS)" 
 
 #Dependency targets
 %.o: %.c

@@ -16,7 +16,7 @@
 /*****	Constants	*****/
 	#define		SPI_1_HWINFO	(&gSPI1)
 	
-	#define		SPI_1_INIT		SPIArduinoInit
+	#define		SPI_INIT		SPIArduinoInit
 
 	#define		BUILD_DEBUG		1
 	#ifdef BUILD_DEBUG

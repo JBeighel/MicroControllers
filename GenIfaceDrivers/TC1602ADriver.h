@@ -1,12 +1,12 @@
 /**	@defgroup	tc1602adriver
 	@brief		
-	@details	v0.2
+	@details	v0.3
 	#Description
 	
 	#File Information
 		File:	TC1602ADriver.h
 		Author:	J. Beighel
-		Date:	12-10-2020
+		Date:	2021-01-18
 */
 
 #ifndef __TC1602ADRIVER
@@ -151,15 +151,15 @@
 	
 	eTC1602AReturn_t TC1602AInit8Data(sTC1602AInfo_t *pDev, sTimeIface_t *pTime, sGPIOIface_t *pGpio, bool bFlipCursorDir, uint8_t nColCnt, uint8_t nRowCnt, uint16_t nEnPin, uint16_t nReadWritePin, uint16_t nRegSelPin, uint16_t nData0, uint16_t nData1, uint16_t nData2, uint16_t nData3, uint16_t nData4, uint16_t nData5, uint16_t nData6, uint16_t nData7);
 	
-	eTC1602AReturn_t TC1602AInitClearDisplay(sTC1602AInfo_t *pDev);
+	eTC1602AReturn_t TC1602AClearDisplay(sTC1602AInfo_t *pDev);
 	
-	eTC1602AReturn_t TC1602AInitDisplayOn(sTC1602AInfo_t *pDev);
+	eTC1602AReturn_t TC1602ADisplayOn(sTC1602AInfo_t *pDev);
 	
-	eTC1602AReturn_t TC1602AInitDisplayOff(sTC1602AInfo_t *pDev);
+	eTC1602AReturn_t TC1602ADisplayOff(sTC1602AInfo_t *pDev);
 	
-	eTC1602AReturn_t TC1602AInitSetCursorPosition(sTC1602AInfo_t *pDev, uint8_t nCol, uint8_t nRow);
+	eTC1602AReturn_t TC1602ASetCursorPosition(sTC1602AInfo_t *pDev, uint8_t nCol, uint8_t nRow);
 	
-	eTC1602AReturn_t TC1602AInitPrintCharacter(sTC1602AInfo_t *pDev, char Letter);
+	eTC1602AReturn_t TC1602APrintCharacter(sTC1602AInfo_t *pDev, char Letter);
 
 /*****	Functions	*****/
 

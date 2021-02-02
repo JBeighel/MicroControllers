@@ -1,7 +1,11 @@
 /**	@defgroup	gpioarduino
 	@brief		Implementation of the GPIO General Interface for Arduino
-	@details	v0.4
-		
+	@details	v0.5
+	
+	# File Info #
+		File:	GPIO_Arduino.h
+		Author:	J. Beighel
+		Date:	2021-02-02
 */
 
 #ifndef __GPIOARDUINO
@@ -24,7 +28,7 @@
 	
 	#define TIME_INIT		ArduinoTimeIfaceInitialize
 	
-	#define TIME_CAPS		TimeCap_GetTicks | TimeCap_DelaySec | TimeCap_DelayMilliSec | TimeCap_DelayMicroSec;
+	#define TIME_CAPS		(TimeCap_GetTicks | TimeCap_DelaySec | TimeCap_DelayMilliSec | TimeCap_DelayMicroSec);
 	
 	#define DELAYMILLISEC		delay
 	
@@ -457,6 +461,8 @@ eReturn_t ArduinoTimeIfaceInitialize(sTimeIface_t *pTime) {
 	pTime->pfDelaySeconds = &ArduinoDelaySeconds;
 	pTime->pfDelayMilliSeconds = &ArduinoDelayMilliSeconds;
 	pTime->pfDelayMicroSeconds = &ArduinoDelayMicroSeconds;
+	
+	pTime->eCapabilities = TIME_CAPS;
 	
 	return Success;
 }

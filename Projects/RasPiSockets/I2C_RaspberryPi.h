@@ -1,6 +1,6 @@
 /**	@defgroup	i2craspberrypi
 	@brief		I2C General Interface implementation for Raspberry Pi
-	@details	v0.4
+	@details	v0.2
 	#Description
 		At boot pins 2 and 3 will be configured for I2C.  However, once they 
 		are assigned to be GPIO pins that will disable the I2C bus causing
@@ -10,7 +10,7 @@
 	#File Information
 		File:	I2C_RaspberryPi.h
 		Author:	J. Beighel
-		Date:	2021-01-22
+		Date:	11-25-2020
 */
 
 #ifndef __I2CRASPBERRYPI
@@ -35,7 +35,7 @@
 	/**	@brief		Function to call to initialize the first I2C bus
 		@ingroup	i2craspberrypi
 	*/
-	#define I2C_INIT			RasPiInitializeI2CBus
+	#define I2C_1_PORTINIT		RasPiInitializeI2CBus
 	
 	/**	@brief		Hardware information for the first I2C bus
 		@ingroup	i2craspberrypi
