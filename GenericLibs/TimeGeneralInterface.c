@@ -1,6 +1,6 @@
 /**	File:	TimeGeneralInterface.c
 	Author:	J. Beighel
-	Date:	12-10-2020
+	Date:	2021-02-02
 */
 
 /*****	Includes	*****/
@@ -36,6 +36,9 @@ eReturn_t TimeInterfaceInitialize(sTimeIface_t *pIface) {
 	pIface->pfDelaySeconds = &TimeDelayNotImplemented;
 	pIface->pfDelayMilliSeconds = &TimeDelayNotImplemented;
 	pIface->pfDelayMicroSeconds = &TimeDelayNotImplemented;
+	pIface->pfDelay100NanoSeconds = &TimeDelayNotImplemented;
+	
+	pIface->eCapabilities = TimeCap_None;
 	
 	return Success;
 }
