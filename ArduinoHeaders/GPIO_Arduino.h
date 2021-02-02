@@ -5,7 +5,7 @@
 	# File Info #
 		File:	GPIO_Arduino.h
 		Author:	J. Beighel
-		Date:	2021-01-22
+		Date:	2021-02-02
 */
 
 #ifndef __GPIOARDUINO
@@ -28,7 +28,7 @@
 	
 	#define TIME_INIT		ArduinoTimeIfaceInitialize
 	
-	#define TIME_CAPS		TimeCap_GetTicks | TimeCap_DelaySec | TimeCap_DelayMilliSec | TimeCap_DelayMicroSec;
+	#define TIME_CAPS		(TimeCap_GetTicks | TimeCap_DelaySec | TimeCap_DelayMilliSec | TimeCap_DelayMicroSec);
 	
 	#define DELAYMILLISEC		delay
 	
@@ -461,6 +461,8 @@ eReturn_t ArduinoTimeIfaceInitialize(sTimeIface_t *pTime) {
 	pTime->pfDelaySeconds = &ArduinoDelaySeconds;
 	pTime->pfDelayMilliSeconds = &ArduinoDelayMilliSeconds;
 	pTime->pfDelayMicroSeconds = &ArduinoDelayMicroSeconds;
+	
+	pTime->eCapabilities = TIME_CAPS;
 	
 	return Success;
 }

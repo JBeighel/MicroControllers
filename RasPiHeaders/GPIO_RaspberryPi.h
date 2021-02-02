@@ -1,6 +1,6 @@
 /**	@defgroup	gpioraspi
 	@brief		GPIO General Interface implementation for Raspberry Pi
-	@details	v0.2
+	@details	v0.3
 	# Description #
 	
 	# Usage #
@@ -8,7 +8,7 @@
 	# File Information #
 		File:	GPIO_RaspberryPi.h
 		Author:	J. Beighel
-		Created:11-24-2020
+		Date:	2021-02-02
 */
 
 #ifndef __GPIORASPBERRYPI
@@ -43,7 +43,7 @@
 	
 	#define TIME_INIT		RasPiTimeInit
 	
-	#define TIME_CAPS		(TimeCap_GetTicks | TimeCap_DelaySec | TimeCap_DelayMilliSec | TimeCap_DelayMicroSec)
+	#define TIME_CAPS		(TimeCap_GetTicks | TimeCap_DelaySec | TimeCap_DelayMilliSec | TimeCap_DelayMicroSec | TimeCap_Delay100NanoSec)
 
 	/**	@brief		Marker for the Raspberry Pi model 1 
 		@ingroup	gpioraspi
