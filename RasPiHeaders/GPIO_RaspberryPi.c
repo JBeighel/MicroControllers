@@ -1,6 +1,6 @@
 /**	File:	GPIO_RaspberryPi.c
 	Author:	J. Beighel
-	Created:11-24-2020
+	Date:	2021-02-02
 */
 
 /*****	Includes	*****/
@@ -16,6 +16,9 @@
 
 
 /*****	Prototypes 	*****/
+	//Removes the compiler warning
+	int nanosleep(const struct timespec *req, struct timespec *rem);
+
 	eGPIOReturn_t RasPiGPIOReadModeByPin(sGPIOIface_t *pIface, uint16_t nGPIOPin, eGPIOModes_t *eMode);
 	
 	eGPIOReturn_t RasPiGPIOSetModeByPin(sGPIOIface_t *pIface, uint16_t nGPIOPin, eGPIOModes_t eMode);
@@ -23,6 +26,16 @@
 	eGPIOReturn_t RasPiGPIODigitalReadByPin(sGPIOIface_t *pIface, uint16_t nGPIOPin, bool *bState);
 	
 	eGPIOReturn_t RasPiGPIODigitalWriteByPin(sGPIOIface_t *pIface, uint16_t nGPIOPin, bool bState);
+	
+	uint32_t RasPiGetCurrentTicks(void);
+	
+	eReturn_t RasPiDelaySeconds(uint32_t nDelayAmount);
+	
+	eReturn_t RasPiDelayMilliSeconds(uint32_t nDelayAmount);
+	
+	eReturn_t RasPiDelayMicroSeconds(uint32_t nDelayAmount);
+	
+	eReturn_t RasPiDelay100NanoSeconds(uint32_t nDelayAmount);
 
 /*****	Functions	*****/
 eGPIOReturn_t RasPiGPIOPortInitialize(sGPIOIface_t *pIface, void *pHWInfo) {
@@ -189,4 +202,87 @@ eGPIOReturn_t RasPiGPIODigitalWriteByPin(sGPIOIface_t *pIface, uint16_t nGPIOPin
 	*pGPIOReg = nRegVal;
 	
 	return GPIO_Success;
+}
+
+eReturn_t RasPiDelaySeconds(uint32_t nDelayAmount) {
+	sleep(nDelayAmount);
+	
+	return Success;
+}
+
+eReturn_t RasPiDelayMilliSeconds(uint32_t nDelayAmount) {
+	struct timespec tReq, tRemain;
+	
+	//Pull out the number of seconds
+	tReq.tv_sec = nDelayAmount / 1000;
+	
+	//Figure out the mSec remaining
+	tReq.tv_nsec = nDelayAmount - (tReq.tv_sec * 1000);
+	
+	//Convert to nano seconds
+	tReq.tv_nsec *= 1000000;
+	
+	nanosleep(&tReq, &tRemain);
+	
+	return Success;
+}
+
+eReturn_t RasPiDelayMicroSeconds(uint32_t nDelayAmount) {
+	struct timespec tReq, tRemain;
+	
+	//Pull out the number of seconds
+	tReq.tv_sec = nDelayAmount / 1000000;
+	
+	//Figure out the mSec remaining
+	tReq.tv_nsec = nDelayAmount - (tReq.tv_sec * 1000000);
+	
+	//Convert to nano seconds
+	tReq.tv_nsec *= 1000;
+	
+	nanosleep(&tReq, &tRemain);
+	
+	return Success;
+}
+
+eReturn_t RasPiDelay100NanoSeconds(uint32_t nDelayAmount) {
+	struct timespec tReq, tRemain;
+	
+	//Pull out the number of seconds
+	tReq.tv_sec = nDelayAmount / 10000000;
+	
+	//Figure out the mSec remaining
+	tReq.tv_nsec = nDelayAmount - (tReq.tv_sec * 10000000);
+	
+	//Convert to nano seconds
+	tReq.tv_nsec *= 100;
+	
+	nanosleep(&tReq, &tRemain);
+	
+	return Success;
+}
+
+eReturn_t RasPiTimeInit(sTimeIface_t *pTime) {
+	TimeInterfaceInitialize(pTime);
+	
+	pTime->pfGetTicks = &RasPiGetCurrentTicks;
+	pTime->pfDelaySeconds = &RasPiDelaySeconds;
+	pTime->pfDelayMilliSeconds = &RasPiDelayMilliSeconds;
+	pTime->pfDelayMicroSeconds = &RasPiDelayMicroSeconds;
+	pTime->pfDelay100NanoSeconds = &RasPiDelay100NanoSeconds;
+	
+	pTime->eCapabilities = TIME_CAPS;
+	
+	return Success;
+}
+
+uint32_t RasPiGetCurrentTicks(void) {
+	uint32_t tTime;
+	struct timespec TimeInfo;
+
+    clock_gettime(CLOCK_REALTIME, &TimeInfo);
+	
+	tTime = (uint32_t)(TimeInfo.tv_nsec / 1000000);
+	tTime += (uint32_t)(TimeInfo.tv_sec * 1000);
+	
+	return tTime;
 }

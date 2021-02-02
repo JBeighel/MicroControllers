@@ -51,16 +51,16 @@
 #define XBEE_NODEIDLEN			10
 
 /***** Definitions	*****/
-typedef enum eXBeeResult_t {
-	XBWarn_NodeIDLen= -3,
-	XBWarn_NoMessage= -2,
-	XBWarn_NoData	= -2,
-	XBWarn_Unknown	= -1,
+typedef enum eXBeeReturn_t {
+	XBWarn_NodeIDLen= 3,
+	XBWarn_NoMessage= 2,
+	XBWarn_NoData	= 2,
+	XBWarn_Unknown	= 1,
 	XB_Success		= 0,
-	XBFail_Unknown	= 1,
-	XBFail_Checksum	= 2,
-	XBFail_MsgSize	= 3,
-} eXBeeResult_t;
+	XBFail_Unknown	= -1,
+	XBFail_Checksum	= -2,
+	XBFail_MsgSize	= -3,
+} eXBeeReturn_t;
 
 typedef enum eXBeeFrameIndexes_t {
 	XBIdx_Start				= 0,
@@ -245,25 +245,25 @@ typedef struct sXBeeNetDiscovResult_t {
 
 
 /***** Prototypes 	*****/
-eXBeeResult_t XBeeInitialize(sXBeeObject_t *pXbeeObj, sUARTIface_t *pUART, uint8_t nDTRPin, uint8_t nRstPin);
+eXBeeReturn_t XBeeInitialize(sXBeeObject_t *pXbeeObj, sUARTIface_t *pUART, uint8_t nDTRPin, uint8_t nRstPin);
 
 uint8_t XBeeAPIChecksum(uint8_t *paMsg);
 
-eXBeeResult_t XBeeReadMessage(sXBeeObject_t *pXbeeObj);
+eXBeeReturn_t XBeeReadMessage(sXBeeObject_t *pXbeeObj);
 
-eXBeeResult_t XBeeParseMessage(sXBeeObject_t *pXbeeObj, sXBeeFrameRecv_t *pFrameRecv);
+eXBeeReturn_t XBeeParseMessage(sXBeeObject_t *pXbeeObj, sXBeeFrameRecv_t *pFrameRecv);
 
-eXBeeResult_t XBeeParseNetworkDiscoveryData(const uint8_t *pATCmdData, sXBeeNetDiscovResult_t *pNetworkDevice);
+eXBeeReturn_t XBeeParseNetworkDiscoveryData(const uint8_t *pATCmdData, sXBeeNetDiscovResult_t *pNetworkDevice);
 
-eXBeeResult_t XBeeATQueryCommand(sXBeeObject_t *pXbeeObj, const char ATCmd[2], uint8_t *pnFrameID);
+eXBeeReturn_t XBeeATQueryCommand(sXBeeObject_t *pXbeeObj, const char ATCmd[2], uint8_t *pnFrameID);
 
-eXBeeResult_t XBeeATSetCommand(sXBeeObject_t *pXbeeObj, const char ATCmd[2], uint32_t nValue, uint8_t *pnFrameID);
+eXBeeReturn_t XBeeATSetCommand(sXBeeObject_t *pXbeeObj, const char ATCmd[2], uint32_t nValue, uint8_t *pnFrameID);
 
-eXBeeResult_t XBeeTXReqest(sXBeeObject_t *pXbeeObj, uint64_t nDestAddr, uint16_t nNetAddr, uint16_t nDataLen, const void *pData, uint8_t *pnFrameID);
+eXBeeReturn_t XBeeTXReqest(sXBeeObject_t *pXbeeObj, uint64_t nDestAddr, uint16_t nNetAddr, uint16_t nDataLen, const void *pData, uint8_t *pnFrameID);
 
 /***** Functions	*****/
 
-eXBeeResult_t XBeeInitialize(sXBeeObject_t *pXbeeObj, sUARTIface_t *pUART, uint8_t nDTRPin, uint8_t nRstPin) {
+eXBeeReturn_t XBeeInitialize(sXBeeObject_t *pXbeeObj, sUARTIface_t *pUART, uint8_t nDTRPin, uint8_t nRstPin) {
 	pXbeeObj->nDataReadyPin = nDTRPin;
 	pXbeeObj->nResetPin = nRstPin;
 	pXbeeObj->nFrameID = 1; //Must start at 1, zero means no reply needed
@@ -289,7 +289,7 @@ uint8_t XBeeAPIChecksum(uint8_t *paMsg) {
   return nCheckSum;
 }
 
-eXBeeResult_t XBeeReadMessage(sXBeeObject_t *pXbeeObj) {
+eXBeeReturn_t XBeeReadMessage(sXBeeObject_t *pXbeeObj) {
 	uint16_t nBytes, nRead, nCtr, nBuffIdx, nMsgLen;
 	
 	pXbeeObj->pUART->pfUARTDataAvailable(pXbeeObj->pUART, &nBytes);
@@ -378,7 +378,7 @@ eXBeeResult_t XBeeReadMessage(sXBeeObject_t *pXbeeObj) {
 	return XB_Success;
 }
 
-eXBeeResult_t XBeeParseMessage(sXBeeObject_t *pXbeeObj, sXBeeFrameRecv_t *pFrameRecv) {
+eXBeeReturn_t XBeeParseMessage(sXBeeObject_t *pXbeeObj, sXBeeFrameRecv_t *pFrameRecv) {
 	pFrameRecv->nDataLen = pXbeeObj->anDataBuffer[XBIdx_LengthMSB] << 8;
 	pFrameRecv->nDataLen |= pXbeeObj->anDataBuffer[XBIdx_LengthLSB];
 	
@@ -478,9 +478,9 @@ eXBeeResult_t XBeeParseMessage(sXBeeObject_t *pXbeeObj, sXBeeFrameRecv_t *pFrame
 	return XB_Success;
 }
 
-eXBeeResult_t XBeeParseNetworkDiscoveryData(const uint8_t *pATCmdData, sXBeeNetDiscovResult_t *pNetworkDevice) {
+eXBeeReturn_t XBeeParseNetworkDiscoveryData(const uint8_t *pATCmdData, sXBeeNetDiscovResult_t *pNetworkDevice) {
 	uint16_t nCtr;
-	eXBeeResult_t eRetVal = XB_Success;
+	eXBeeReturn_t eRetVal = XB_Success;
 	
 	//2 bytes are network address, MSB -> LSB
 	pNetworkDevice->nNetAddr = pATCmdData[0] << 8; //MSB
@@ -537,7 +537,7 @@ eXBeeResult_t XBeeParseNetworkDiscoveryData(const uint8_t *pATCmdData, sXBeeNetD
 	return eRetVal;
 }
 
-eXBeeResult_t XBeeATQueryCommand(sXBeeObject_t *pXbeeObj, const char ATCmd[2], uint8_t *pnFrameID) {
+eXBeeReturn_t XBeeATQueryCommand(sXBeeObject_t *pXbeeObj, const char ATCmd[2], uint8_t *pnFrameID) {
 	uint16_t nDataLen = 4; //Frame Type byte + ID byte + 2 AT command characters
 	
 	//Set values common to all frames
@@ -564,13 +564,13 @@ eXBeeResult_t XBeeATQueryCommand(sXBeeObject_t *pXbeeObj, const char ATCmd[2], u
 	return XB_Success;
 }
 
-eXBeeResult_t XBeeATSetCommand(sXBeeObject_t *pXbeeObj, const char ATCmd[2], uint32_t nValue, uint8_t *pnFrameID) {
+eXBeeReturn_t XBeeATSetCommand(sXBeeObject_t *pXbeeObj, const char ATCmd[2], uint32_t nValue, uint8_t *pnFrameID) {
 	
 	
 	return XB_Success;
 }
 
-eXBeeResult_t XBeeTXReqest(sXBeeObject_t *pXbeeObj, uint64_t nDestAddr, uint16_t nNetAddr, uint16_t nDataBytes, const void *pData, uint8_t *pnFrameID) {
+eXBeeReturn_t XBeeTXReqest(sXBeeObject_t *pXbeeObj, uint64_t nDestAddr, uint16_t nNetAddr, uint16_t nDataBytes, const void *pData, uint8_t *pnFrameID) {
 	uint16_t nDataLen = 14 + nDataBytes; //Frame Type byte + ID byte + 8 Dest addr + 2 net addr + 1 BCast + 1 Options + Data
 	
 	if (nDataLen > XBEE_DATABYTES) {

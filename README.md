@@ -21,5 +21,8 @@ Also includes the general interface header files that specify the standard funct
 # Nucleo Headers
 Header files built for use on STM32 Nucleo boards.  Includes implementations of the generic interfaces.
 
+# RasPiHeaders
+Header files built for use on Raspberry Pi's.  Includes implementationsof the generic interface components.
+
 # Projects
 Folders containing specific projects being built.

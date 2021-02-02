@@ -28,6 +28,7 @@
 			However, the mode can be established prior to initializing this 
 			object.
 		@ingroup	keypaddrv
+	*/
 	#define KEYPAD_GPIOCAPSREQ	(GPIOCap_DigitalWrite | GPIOCap_DigitalRead)
 	
 	#define KEYPAD_OUTPINS		4

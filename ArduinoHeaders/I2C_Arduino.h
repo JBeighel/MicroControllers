@@ -5,7 +5,12 @@
 
 
 	# Design #
-
+	
+	
+	# File Info #
+		File:	I2C_Arduino.h
+		Author:	J. Beighel
+		Date:	2021-01-22
 */
 
 /**	@defgroup i2ciface_arduino_priv : Private Objects
@@ -24,7 +29,7 @@
 /*****	Constants	*****/
 	#define		I2C_1_HWINFO	(&Wire)
 	
-	#define		I2C_1_INIT		ArduinoI2CInitialize
+	#define		I2C_INIT		ArduinoI2CInitialize
 
 	#define		BUILD_DEBUG		1
 	#ifdef BUILD_DEBUG
@@ -38,23 +43,23 @@
 
 
 /*****	Prototypes		*****/
-	eI2CReturns_t ArduinoI2CInitialize(sI2CIface_t *pI2CIface, bool bActAsMaster, uint32_t nClockFreq, void *pHWInfo);
+	eI2CReturn_t ArduinoI2CInitialize(sI2CIface_t *pI2CIface, bool bActAsMaster, uint32_t nClockFreq, void *pHWInfo);
 	
-	eI2CReturns_t ArduinoI2CShutdownPort (sI2CIface_t *pI2CIface);
+	eI2CReturn_t ArduinoI2CShutdownPort (sI2CIface_t *pI2CIface);
 	
-	eI2CReturns_t ArduinoI2CReadUint8Reg (sI2CIface_t *pI2CIface, uint8_t nDevAddr, uint8_t nRegAddr, uint8_t *pnValue);
+	eI2CReturn_t ArduinoI2CReadUint8Reg (sI2CIface_t *pI2CIface, uint8_t nDevAddr, uint8_t nRegAddr, uint8_t *pnValue);
 
-	eI2CReturns_t ArduinoI2CReadData (sI2CIface_t *pI2CIface, uint8_t nDevAddr, uint8_t nNumBytes, void *pDataBuff, uint8_t *pnBytesRead);
+	eI2CReturn_t ArduinoI2CReadData (sI2CIface_t *pI2CIface, uint8_t nDevAddr, uint8_t nNumBytes, void *pDataBuff, uint8_t *pnBytesRead);
 
-	eI2CReturns_t ArduinoI2CWriteUint8Reg (sI2CIface_t *pI2CIface, uint8_t nDevAddr, uint8_t nRegAddr, uint8_t nValue);
+	eI2CReturn_t ArduinoI2CWriteUint8Reg (sI2CIface_t *pI2CIface, uint8_t nDevAddr, uint8_t nRegAddr, uint8_t nValue);
 
-	eI2CReturns_t ArduinoI2CWriteData (sI2CIface_t *pI2CIface, uint8_t nDevAddr, uint8_t nNumBytes, void *pDataBuff);
+	eI2CReturn_t ArduinoI2CWriteData (sI2CIface_t *pI2CIface, uint8_t nDevAddr, uint8_t nNumBytes, void *pDataBuff);
 
-	eI2CReturns_t ArduinoI2CGeneralCall (sI2CIface_t *pI2CIface, uint8_t nValue);
+	eI2CReturn_t ArduinoI2CGeneralCall (sI2CIface_t *pI2CIface, uint8_t nValue);
 	
 /*****	Function Code	*****/
 
-eI2CReturns_t ArduinoI2CInitialize(sI2CIface_t *pI2CIface, bool bActAsMaster, uint32_t nClockFreq, void *pHWInfo) {
+eI2CReturn_t ArduinoI2CInitialize(sI2CIface_t *pI2CIface, bool bActAsMaster, uint32_t nClockFreq, void *pHWInfo) {
 	TwoWire *pI2CBus = (TwoWire *)pHWInfo;
 	
 	//Verify the requested configuration
@@ -88,12 +93,12 @@ eI2CReturns_t ArduinoI2CInitialize(sI2CIface_t *pI2CIface, bool bActAsMaster, ui
 	return I2C_Success;
 }
 	
-eI2CReturns_t ArduinoI2CShutdownPort (sI2CIface_t *pI2CIface) {
+eI2CReturn_t ArduinoI2CShutdownPort (sI2CIface_t *pI2CIface) {
 	//Arduino does not require any shutdown
 	return I2C_Success;
 }
 
-eI2CReturns_t ArduinoI2CReadUint8Reg (sI2CIface_t *pI2CIface, uint8_t nDevAddr, uint8_t nRegAddr, uint8_t *pnValue) {
+eI2CReturn_t ArduinoI2CReadUint8Reg (sI2CIface_t *pI2CIface, uint8_t nDevAddr, uint8_t nRegAddr, uint8_t *pnValue) {
 	uint8_t nResult;
 	TwoWire *pI2CDevice = (TwoWire *)pI2CIface->pHWInfo;
 
@@ -123,7 +128,7 @@ eI2CReturns_t ArduinoI2CReadUint8Reg (sI2CIface_t *pI2CIface, uint8_t nDevAddr, 
 	return I2C_Success;
 }
 
-eI2CReturns_t ArduinoI2CReadData (sI2CIface_t *pI2CIface, uint8_t nDevAddr, uint8_t nNumBytes, void *pDataBuff, uint8_t *pnBytesRead) {
+eI2CReturn_t ArduinoI2CReadData (sI2CIface_t *pI2CIface, uint8_t nDevAddr, uint8_t nNumBytes, void *pDataBuff, uint8_t *pnBytesRead) {
 	uint8_t nCtr, nRead;
 	uint8_t *pData = (uint8_t *)pDataBuff;
 	TwoWire *pI2CDevice = (TwoWire *)pI2CIface->pHWInfo;
@@ -143,7 +148,7 @@ eI2CReturns_t ArduinoI2CReadData (sI2CIface_t *pI2CIface, uint8_t nDevAddr, uint
 	}
 }
 
-eI2CReturns_t ArduinoI2CWriteUint8Reg (sI2CIface_t *pI2CIface, uint8_t nDevAddr, uint8_t nRegAddr, uint8_t nValue) {
+eI2CReturn_t ArduinoI2CWriteUint8Reg (sI2CIface_t *pI2CIface, uint8_t nDevAddr, uint8_t nRegAddr, uint8_t nValue) {
 	uint8_t nResult;
 	TwoWire *pI2CDevice = (TwoWire *)pI2CIface->pHWInfo;
 	
@@ -169,7 +174,7 @@ eI2CReturns_t ArduinoI2CWriteUint8Reg (sI2CIface_t *pI2CIface, uint8_t nDevAddr,
 	}
 }
 
-eI2CReturns_t ArduinoI2CWriteData (sI2CIface_t *pI2CIface, uint8_t nDevAddr, uint8_t nNumBytes, void *pDataBuff) {
+eI2CReturn_t ArduinoI2CWriteData (sI2CIface_t *pI2CIface, uint8_t nDevAddr, uint8_t nNumBytes, void *pDataBuff) {
 	uint8_t nCtr;
 	uint8_t *pData = (uint8_t *)pDataBuff;
 	TwoWire *pI2CDevice = (TwoWire *)pI2CIface->pHWInfo;
@@ -185,7 +190,7 @@ eI2CReturns_t ArduinoI2CWriteData (sI2CIface_t *pI2CIface, uint8_t nDevAddr, uin
 	return I2C_Success;
 }
 
-eI2CReturns_t ArduinoI2CGeneralCall (sI2CIface_t *pI2CIface, uint8_t nValue) {
+eI2CReturn_t ArduinoI2CGeneralCall (sI2CIface_t *pI2CIface, uint8_t nValue) {
 	TwoWire *pI2CDevice = (TwoWire *)pI2CIface->pHWInfo;
 	
 	pI2CDevice->beginTransmission(I2C_GENERALCALLADDR);

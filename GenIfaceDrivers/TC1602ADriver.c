@@ -1,6 +1,6 @@
 /**	File:	TC1602ADriver.c
 	Author:	J. Beighel
-	Date:	11-05-2020
+	Date:	2020-01-18
 */
 
 /*****	Includes	*****/
@@ -119,7 +119,7 @@ eTC1602AReturn_t TC1602AInit8Data(sTC1602AInfo_t *pDev, sTimeIface_t *pTime, sGP
 	}
 	
 	TC1602AWriteByte(pDev, false, TC1602A_DISPLAYOFF);
-	TC1602AInitClearDisplay(pDev);
+	TC1602AClearDisplay(pDev);
 	
 	if (bFlipCursorDir == true) {
 		TC1602AWriteByte(pDev, false, TC1602A_ENTRYMODESETBASE | TC1602A_EMS_FLIPCURSORADV);
@@ -133,26 +133,26 @@ eTC1602AReturn_t TC1602AInit8Data(sTC1602AInfo_t *pDev, sTimeIface_t *pTime, sGP
 	return TC1602A_Success;
 }
 
-eTC1602AReturn_t TC1602AInitClearDisplay(sTC1602AInfo_t *pDev) {
+eTC1602AReturn_t TC1602AClearDisplay(sTC1602AInfo_t *pDev) {
 	TC1602AWriteByte(pDev, false, TC1602A_CLEARDISPLAY);
 	pDev->pTime->pfDelayMilliSeconds(TC1602A_DELAYCLEARMSEC);
 
 	return TC1602A_Success;
 }
 
-eTC1602AReturn_t TC1602AInitDisplayOn(sTC1602AInfo_t *pDev) {
+eTC1602AReturn_t TC1602ADisplayOn(sTC1602AInfo_t *pDev) {
 	TC1602AWriteByte(pDev, false, TC1602A_DISPLAYON);
 
 	return TC1602A_Success;
 }
 	
-eTC1602AReturn_t TC1602AInitDisplayOff(sTC1602AInfo_t *pDev) {
+eTC1602AReturn_t TC1602ADisplayOff(sTC1602AInfo_t *pDev) {
 	TC1602AWriteByte(pDev, false, TC1602A_DISPLAYOFF);
 
 	return TC1602A_Success;
 }
 	
-eTC1602AReturn_t TC1602AInitSetCursorPosition(sTC1602AInfo_t *pDev, uint8_t nCol, uint8_t nRow) {
+eTC1602AReturn_t TC1602ASetCursorPosition(sTC1602AInfo_t *pDev, uint8_t nCol, uint8_t nRow) {
 	uint8_t nAddr;
 	
 	if (nRow >= pDev->nRowCnt) {
@@ -170,7 +170,7 @@ eTC1602AReturn_t TC1602AInitSetCursorPosition(sTC1602AInfo_t *pDev, uint8_t nCol
 	return TC1602A_Success;
 }
 
-eTC1602AReturn_t TC1602AInitPrintCharacter(sTC1602AInfo_t *pDev, char Letter) {
+eTC1602AReturn_t TC1602APrintCharacter(sTC1602AInfo_t *pDev, char Letter) {
 	TC1602AWriteByte(pDev, true, Letter);
 
 	return TC1602A_Success;

@@ -30,14 +30,14 @@
 	#define MCP23017_PORTIOCNT		8
 
 /*****	Definitions	*****/
-	typedef enum eMCP23017Returns_t {
-		MCP23017Warn_Unknown	= -1,	/**< An unknown but recoverable error occurred */
+	typedef enum eMCP23017Return_t {
+		MCP23017Warn_Unknown	= 1,	/**< An unknown but recoverable error occurred */
 		MCP23017_Success		= 0,	/**< Operation completed successfully */
-		MCP23017Fail_Unknown	= 1,	/**< An unknown and unrecoverable occured */
-		MCP23017Fail_InvalidPin	= 2,	/**< Pin requested is invalid */
-		MCP23017Fail_InvalidMode= 3,	/**< Pin mode requested is invalid */
-		MCP23017Fail_WrongMode	= 4,	/**< Output requested for Input pin*/
-		MCP23017Fail_BusError	= 5,	/**< Error reported from the I2C interface */
+		MCP23017Fail_Unknown	= -1,	/**< An unknown and unrecoverable occured */
+		MCP23017Fail_InvalidPin	= -2,	/**< Pin requested is invalid */
+		MCP23017Fail_InvalidMode= -3,	/**< Pin mode requested is invalid */
+		MCP23017Fail_WrongMode	= -4,	/**< Output requested for Input pin*/
+		MCP23017Fail_BusError	= -5,	/**< Error reported from the I2C interface */
 	} eMCP23017Returns_t;
 
 	/**	@brief		Values for the I2C address of the MCP23017

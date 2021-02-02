@@ -1,6 +1,6 @@
 /**	@defgroup	uartiface
 	@brief		Abstracted interface for general purpose UART port
-	@details	v0.1
+	@details	v0.3
 	# Description #
 	
 	# Usage #
@@ -17,14 +17,14 @@
 		take the form of UART_#_HWINFO
 
 		In addition the driver must define a value to reach the UARTPortInitialize() function.
-		This should take the form of UART_#_PORTINIT
+		This should take the form of UART_INIT
 
 		Having these defined gives a very consistent and generic means of establishing the
 		interface object in the application that looks like this:
 
 		sUARTIface_t UartObj;
 
-		UART_PORTINITIALIZE(&UartObj, 9600, UART_8None1, UART_1_HWINFO);
+		UART_INIT(&UartObj, 9600, UART_8None1, UART_1_HWINFO);
 
 		The last thing the driver must do is create a define of the capabilities that it allows.
 		This define should be options from the eUARTCapabilities_t enumeration ORed together. 
@@ -36,7 +36,7 @@
 	# File Information #
 		File:	UARTGeneralInterface.h
 		Author:	J. Beighel
-		Created:09-15-2020
+		Date:	2021-01-22
 */
 
 #ifndef __UARTINTERFACE
@@ -50,13 +50,13 @@
 
 	typedef struct sUARTIface_t sUARTIface_t;
 
-	typedef enum eUARTReturns_t {
-		UART_Warn_Timeout		= -2,	/**< An operation timed out, data transfer was ncomplete */
-		UART_Warn_Unknown		= -1,	/**< An unknown warning occured communicating with the UART port */
+	typedef enum eUARTReturn_t {
+		UART_Warn_Timeout		= 2,	/**< An operation timed out, data transfer was ncomplete */
+		UART_Warn_Unknown		= 1,	/**< An unknown warning occured communicating with the UART port */
 		UART_Success			= 0,	/**< UART communication completed successfully */
-		UART_Fail_Unknown		= 1,
-		UART_Fail_Unsupported	= 2,	/**< The requested UART operation is not supported by this specified port */
-	} eUARTReturns_t;
+		UART_Fail_Unknown		= -1,
+		UART_Fail_Unsupported	= -2,	/**< The requested UART operation is not supported by this specified port */
+	} eUARTReturn_t;
 	
 	typedef enum eUARTCapabilities_t {
 		UART_NoCapabilities	= 0x00000000,	/**< Default, UART driver has no capabilities */
@@ -95,16 +95,16 @@
 		UART_8Odd2,
 	} eUARTModes_t;
 	
-	typedef eUARTReturns_t (*pfInitializeUART_t)(sUARTIface_t *pUARTIface, uint32_t nBaudRate, eUARTModes_t eMode, void *pHWInfo);
+	typedef eUARTReturn_t (*pfInitializeUART_t)(sUARTIface_t *pUARTIface, uint32_t nBaudRate, eUARTModes_t eMode, void *pHWInfo);
 	
 	typedef struct sUARTIface_t {
 		pfInitializeUART_t pfPortInitialize;
-		eUARTReturns_t	(*pfShutdown)			(sUARTIface_t *pUARTIface);
+		eUARTReturn_t	(*pfShutdown)			(sUARTIface_t *pUARTIface);
 		
-		eUARTReturns_t	(*pfUARTReadData)		(sUARTIface_t *pUARTIface, uint16_t nBuffSize, void *pDataBuff, uint16_t *pnBytesRead);
-		eUARTReturns_t	(*pfUARTWriteData)		(sUARTIface_t *pUARTIface, uint16_t nBuffSize, const void *pDataBuff);
-		eUARTReturns_t	(*pfUARTDataAvailable)	(sUARTIface_t *pUARTIface, uint16_t *pnBytesAvailable);
-		eUARTReturns_t	(*pfUARTWaitDataSend)	(sUARTIface_t *pUARTIface);
+		eUARTReturn_t	(*pfUARTReadData)		(sUARTIface_t *pUARTIface, uint16_t nBuffSize, void *pDataBuff, uint16_t *pnBytesRead);
+		eUARTReturn_t	(*pfUARTWriteData)		(sUARTIface_t *pUARTIface, uint16_t nBuffSize, const void *pDataBuff);
+		eUARTReturn_t	(*pfUARTDataAvailable)	(sUARTIface_t *pUARTIface, uint16_t *pnBytesAvailable);
+		eUARTReturn_t	(*pfUARTWaitDataSend)	(sUARTIface_t *pUARTIface);
 		
 		uint32_t		nBaudRate;
 		eUARTModes_t	eMode;
@@ -118,16 +118,16 @@
 
 
 /***** Prototypes 	*****/
-	eUARTReturns_t UARTInterfaceInitialize(sUARTIface_t *pUARTIface);
+	eUARTReturn_t UARTInterfaceInitialize(sUARTIface_t *pUARTIface);
 	
-	eUARTReturns_t UARTPortInitialize(sUARTIface_t *pUARTIface, uint32_t nBaudRate, eUARTModes_t eMode, void *pHWInfo);
+	eUARTReturn_t UARTPortInitialize(sUARTIface_t *pUARTIface, uint32_t nBaudRate, eUARTModes_t eMode, void *pHWInfo);
 	
-	eUARTReturns_t UARTShutdown(sUARTIface_t *pUARTIface);
+	eUARTReturn_t UARTShutdown(sUARTIface_t *pUARTIface);
 		
-	eUARTReturns_t UARTReadData(sUARTIface_t *pUARTIface, uint16_t nBuffSize, void *pDataBuff, uint16_t *pnBytesRead);
-	eUARTReturns_t UARTWriteData(sUARTIface_t *pUARTIface, uint16_t nBuffSize, const void *pDataBuff);
-	eUARTReturns_t UARTDataAvailable(sUARTIface_t *pUARTIface, uint16_t *pnBytesAvailable);
-	eUARTReturns_t UARTWaitDataSend(sUARTIface_t *pUARTIface);
+	eUARTReturn_t UARTReadData(sUARTIface_t *pUARTIface, uint16_t nBuffSize, void *pDataBuff, uint16_t *pnBytesRead);
+	eUARTReturn_t UARTWriteData(sUARTIface_t *pUARTIface, uint16_t nBuffSize, const void *pDataBuff);
+	eUARTReturn_t UARTDataAvailable(sUARTIface_t *pUARTIface, uint16_t *pnBytesAvailable);
+	eUARTReturn_t UARTWaitDataSend(sUARTIface_t *pUARTIface);
 
 /***** Functions	*****/
 	

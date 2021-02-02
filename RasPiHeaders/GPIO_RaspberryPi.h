@@ -1,6 +1,6 @@
 /**	@defgroup	gpioraspi
 	@brief		GPIO General Interface implementation for Raspberry Pi
-	@details	v0.1
+	@details	v0.3
 	# Description #
 	
 	# Usage #
@@ -8,21 +8,26 @@
 	# File Information #
 		File:	GPIO_RaspberryPi.h
 		Author:	J. Beighel
-		Created:11-24-2020
+		Date:	2021-02-02
 */
 
 #ifndef __GPIORASPBERRYPI
 	#define __GPIORASPBERRYPI
 
 /*****	Includes	*****/
+	#define _GNU_SOURCE
+	#define _POSIX_C_SOURCE      199309L
+
 	#include <stdio.h>
 	#include <stdlib.h>
 	
 	#include <fcntl.h>
 	#include <sys/mman.h>
 	#include <unistd.h>
+	#include <time.h>
 	
 	#include "CommonUtils.h"
+	#include "TimeGeneralInterface.h"
 	#include "GPIOGeneralInterface.h"
 
 /*****	Definitions	*****/
@@ -35,6 +40,10 @@
 		@ingroup	gpioraspi
 	*/
 	#define GPIO_INIT		RasPiGPIOPortInitialize
+	
+	#define TIME_INIT		RasPiTimeInit
+	
+	#define TIME_CAPS		(TimeCap_GetTicks | TimeCap_DelaySec | TimeCap_DelayMilliSec | TimeCap_DelayMicroSec | TimeCap_Delay100NanoSec)
 
 	/**	@brief		Marker for the Raspberry Pi model 1 
 		@ingroup	gpioraspi
@@ -75,7 +84,7 @@
 	/**	@brief		Offset from the peripheral register to the GPIO registers
 		@ingroup	gpioraspi
 	*/
-	#define RASPI_GPIOOFFSET		0x00200000
+	#define RASPI_GPIOOFFSET	0x00200000
 	
 	/**	@brief		Offset from the GPIO register to the Pin Mode register
 		@ingroup	gpioraspi
@@ -173,7 +182,8 @@
 	*/
 	eGPIOReturn_t RasPiGPIOPortInitialize(sGPIOIface_t *pIface, void *pHWInfo);
 	
-
+	eReturn_t RasPiTimeInit(sTimeIface_t *pTime);
+	
 /*****	Functions	*****/
 
 
