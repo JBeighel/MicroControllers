@@ -14,13 +14,14 @@
 
 /*****	Includes	*****/
 	#include "CommonUtils.h"
+	#include "TimeGeneralInterface.h"
 	#include "GPIOGeneralInterface.h"
 
 /*****	Defines		*****/
-	#define WS2812B_0High100NSec	400
-	#define WS2812B_0Low100NSec		800
-	#define WS2812B_1High100NSec	800
-	#define WS2812B_1Low100NSec		400
+	#define WS2812B_0High100NSec	4 //400
+	#define WS2812B_0Low100NSec		8 //800
+	#define WS2812B_1High100NSec	8 //800
+	#define WS2812B_1Low100NSec		4 //400
 	
 	#define WS2812B_ResetUSec		50
 
@@ -47,6 +48,7 @@
 		sGPIOIface_t *pGpio;		/**< Pointer to GPIO interface */
 		GPIOID_t nPinNum;			/**< Pin connected to light string */
 		eWS2812BLight_t eOrder;		/**< Light order to use for this set */
+		uint32_t nLightNum;			/**< Number of lights being controlled */
 		uint32_t anLights[64];		/**< Array of light colors to write */
 	} sWS2812BInfo_t;
 
