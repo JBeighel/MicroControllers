@@ -44,12 +44,36 @@ void setup() {
 }
 
 void loop() {
+  /*
   WS2812BSetLightColor(&gLED, 0, 255, 255, 255);
   WS2812BSetLightColor(&gLED, 1, 0, 0, 255);
   WS2812BSetLightColor(&gLED, 2, 0, 255, 0);
   WS2812BSetLightColor(&gLED, 3, 255, 0, 0);
 
   WS2812BUpdateLights(&gLED);  
+  */
+  digitalWrite(PIN_LEDCTRL, HIGH);
+  digitalWrite(PIN_LEDCTRL, LOW);
+  digitalWrite(PIN_LEDCTRL, HIGH);
+  digitalWrite(PIN_LEDCTRL, LOW);
+  delayMicroseconds(1);
+
+  gGPIO.pfDigitalWriteByPin(&gGPIO, PIN_LEDCTRL, true);
+  gGPIO.pfDigitalWriteByPin(&gGPIO, PIN_LEDCTRL, false);
+  gGPIO.pfDigitalWriteByPin(&gGPIO, PIN_LEDCTRL, true);
+  gGPIO.pfDigitalWriteByPin(&gGPIO, PIN_LEDCTRL, false);
+  delayMicroseconds(1);
+
+  gGPIO.pfDigitalWriteByPin(&gGPIO, PIN_LEDCTRL, true);
+  gTime.pfDelay100NanoSeconds(1);
+  gGPIO.pfDigitalWriteByPin(&gGPIO, PIN_LEDCTRL, false);
+  gTime.pfDelay100NanoSeconds(1);
+  gGPIO.pfDigitalWriteByPin(&gGPIO, PIN_LEDCTRL, true);
+  gTime.pfDelay100NanoSeconds(1);
+  gGPIO.pfDigitalWriteByPin(&gGPIO, PIN_LEDCTRL, false);
+  delayMicroseconds(1);
+
+  delay(10);
   
   return;
 }
