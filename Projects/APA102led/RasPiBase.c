@@ -20,7 +20,32 @@
 
 
 /*****	Constants	*****/
-
+const uint32_t anPattern[] = {
+	0x00220000,
+	0x00220000,
+	0x00221100,
+	0x00221100,
+	0x00222200,
+	0x00222200,
+	0x00112200,
+	0x00112200,
+	0x00002200,
+	0x00002200,
+	0x00002211,
+	0x00002211,
+	0x00002222,
+	0x00002222,
+	0x00001122,
+	0x00001122,
+	0x00000022,
+	0x00000022,
+	0x00110022,
+	0x00110022,
+	0x00220022,
+	0x00220022,
+	0x00220011,
+	0x00220011,
+};
 
 /*****	Globals		*****/
 	sSPIIface_t gSPI;
@@ -53,13 +78,17 @@ int main(int nArgCnt, char **aArgVals) {
 		return 1;
 	}
 	
-	APA102SetLightColor(&gLed, 0, 150, 150, 150);
-	APA102SetLightColor(&gLed, 1, 0, 0, 150);
-	APA102SetLightColor(&gLed, 2, 0, 150, 0);
-	APA102SetLightColor(&gLed, 3, 150, 0, 0);
-	APA102SetLightColor(&gLed, 4, 150, 150, 0);
-	APA102SetLightColor(&gLed, 5, 150, 0, 150);
-	APA102SetLightColor(&gLed, 6, 0, 150, 150);
+	APA102SetLightColor(&gLed, 0, 30, 30, 30);
+	APA102SetLightColor(&gLed, 1, 0, 0, 30);
+	APA102SetLightColor(&gLed, 2, 0, 15, 30);
+	APA102SetLightColor(&gLed, 3, 0, 30, 30);
+	APA102SetLightColor(&gLed, 4, 0, 30, 15);
+	APA102SetLightColor(&gLed, 5, 0, 30, 0);
+	APA102SetLightColor(&gLed, 6, 15, 30, 0);
+	APA102SetLightColor(&gLed, 7, 30, 30, 0);
+	APA102SetLightColor(&gLed, 8, 30, 15, 0);
+	APA102SetLightColor(&gLed, 9, 30, 0, 0);
+	APA102SetLightColor(&gLed, 10, 30, 0, 15);
 	APA102UpdateLights(&gLed);
 	
 	return 0;
