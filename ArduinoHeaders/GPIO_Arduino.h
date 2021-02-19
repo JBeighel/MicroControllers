@@ -28,7 +28,7 @@
 	
 	#define TIME_INIT		ArduinoTimeIfaceInitialize
 	
-	#define TIME_CAPS		(TimeCap_GetTicks | TimeCap_DelaySec | TimeCap_DelayMilliSec | TimeCap_DelayMicroSec);
+	#define TIME_CAPS		((eTimeCapabilities_t)(TimeCap_GetTicks | TimeCap_DelaySec | TimeCap_DelayMilliSec | TimeCap_DelayMicroSec));
 	
 	#define DELAYMILLISEC		delay
 	

@@ -6,7 +6,7 @@
 		It functions almost identically to the TC1602A controller so that driver
 		was used as the base for this.  The only change was the row bases values.
 
-		The SPI bus transfer was tested at 1 MHz
+		The SPI bus transfer was tested at 1 MHz, and requires SPI Mode 3
 	#File Information
 		File:	US2066Driver.h
 		Author:	J. Beighel
