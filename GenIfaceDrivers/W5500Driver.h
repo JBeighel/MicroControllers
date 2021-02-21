@@ -15,6 +15,8 @@
 		Socket Listen and Socket Connect functions will create sockets as client or server for 
 		a specified protocol (TCP or UDP).  The Socket number can be used in Socket Status to
 		see the condition of the socker.
+		
+		The part requires SPI Mode 0 or 3
 	
 	# File Info #
 		File:	W5500Driver.c
@@ -316,7 +318,7 @@
 		W5500Phy_CfgAllCapAuto	= 0x38,	/**< Set Phy to allow all capabilities and auto-negotiation enabled */
 	} eW5500PhyCfg_t;
 	
-	/**< @brief		Individual socket transmit an recieve buffer size values
+	/**	@brief		Individual socket transmit an recieve buffer size values
 		@ingroup	w5500driver
 	*/
 	typedef enum eW5500SckBuffSz_t {
@@ -338,7 +340,9 @@
 		IPPROTO_INVALID,	/**< Unknown or invalid protocol */
 	} eW5500SckProt_t;
 	
-	/**< @brief		Object representing the W5500 device
+	/**	@brief		Object representing the W5500 device
+		@ingroup	w5500driver
+	*/
 	typedef struct sW5500Obj_t {
 		sGPIOIface_t *pGPIO;		/**< Pointer to GPIO module for Chip Select and Interrupt */
 		uint8_t nChipSelectPin;		/**< Chip select pin in the GPIO module */

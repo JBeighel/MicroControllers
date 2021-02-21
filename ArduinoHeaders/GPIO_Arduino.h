@@ -1,6 +1,6 @@
 /**	@defgroup	gpioarduino
 	@brief		Implementation of the GPIO General Interface for Arduino
-	@details	v0.5
+	@details	v0.6
 	
 	# File Info #
 		File:	GPIO_Arduino.h
@@ -108,10 +108,62 @@
 		const uint8_t gArduinoPWMList[] = { 2, 3, 5, 6, 9, 10, 11, 12, 16, 17, 19 }; //16 is A2, 17 is A3, and 19 is A5
 	#endif
 	
-	#ifdef ARDUINO_SAMD_MKRZERO	//Compiling for Mkr Zero
+	#ifdef ARDUINO_SAMD_ZERO	//Compiling for Mkr Zero
 		#define ARDUINO_MODEL		"Arduino Mkr Zero"
 		
-		#error "Support for Arduino Mkr Zero incomplete"
+		#warn "GPIO Settings for Arduino MKR Zero are untested"
+		
+		/**	@brief		Count of available GPIO pins
+			@ingroup	gpioarduino
+		*/
+		#define ARDUINO_GPIOCNT		(sizeof(gArduinoGPIOList) / sizeof(uint8_t))
+		
+		#define ARDUINO_DACCNT		(sizeof(gArduinoDACList) / sizeof(uint8_t))
+		
+		#define ARDUINO_ADCCNT		(sizeof(gArduinoADCList) / sizeof(uint8_t))
+		
+		#define ARDUINO_PWMCNT		(sizeof(gArduinoPWMList) / sizeof(uint8_t))
+		
+		/**	@brief		Available bit depth for Analog Inputs
+			@ingroup	gpioarduino
+		*/
+		#define ARDUINO_ADCBITDEPTH	12
+		
+		/**	@brief		Available bit depth for Analog Outputs
+			@details	Arduino uses this same bit depth for PWM and DAC outputs.  So the values
+				must match.
+			@ingroup	gpioarduino
+		*/
+		#define ARDUINO_DACBITDEPTH	ARDUINO_PWMBITDEPTH
+		
+		/**	@brief		Available bit depth for PWM Outputs
+			@ingroup	gpioarduino
+		*/
+		#define ARDUINO_PWMBITDEPTH	10
+		
+		/** @brief		Constant array of all pin numbers to use for GPIO
+			@details	There are 22 potential GPIO pins, owever 7 are used by the peripheral buses
+				Pin 13 and 14 are used for the UART.
+				Pin 8 is MOSI, Pin 10 is MISO and Pin 9 are SCK; reserved for SPI
+				Pin 11 is SDA and Pin 12 is SCL; reserved for I2C
+			@ingroup	gpioarduino
+		*/
+		const uint8_t gArduinoGPIOList[] = { 0, 1, 2, 3, 4, 5, 6, 7, 14, 15, 16, 17, 18, 19, 20 };
+		
+		/** @brief		Constant array of all pin numbers that support Analog Input
+			@ingroup	gpioarduino
+		*/
+		const uint8_t gArduinoADCList[] = { 14, 15, 16, 17, 18, 19, 20 }; //14 is A0 through 20 is A6
+		
+		/** @brief		Constant array of all pin numbers that support Analog Ouput
+			@ingroup	gpioarduino
+		*/
+		const uint8_t gArduinoDACList[] = { 14 }; //14 is A0
+		
+		/** @brief		Constant array of all pin numbers that support PWM Output
+			@ingroup	gpioarduino
+		*/
+		const uint8_t gArduinoPWMList[] = { 2, 3, 5, 6 };
 	#endif
 	
 	#ifdef ARDUINO_TRINKET_M0 //Compiling for Adafruit Trinket M0
