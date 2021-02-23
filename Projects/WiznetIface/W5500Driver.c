@@ -62,8 +62,25 @@
 	*/
 	eNetReturn_t W5500NetTCPServCloseHost(sTCPServ_t *pTCPServ);
 	
+	/**	@brief		Block until a connection request arrives then accept it
+		@details	The function will monitor the state of the listening socket until it
+			leaves the listening state.  The Wiznet device will automatically accept any
+			and all connection requests and change the state to established.  When this
+			happens the function will retrieve the connection details set a new socket to
+			listen on the socket then return.
+		@param		pTCPServ		Pointer to the Wiznet5500 TCP server interface object
+		@param		pClientSck		Returns information about the client that connected
+		@return		Net_Success on success, or a code indicating the failure
+		@ingroup	w5500driver
+	*/
 	eNetReturn_t W5500NetTCPServAcceptClient(sTCPServ_t *pTCPServ, sSocket_t *pClientSck);
 	
+	/**	@brief		Closes down a client socket
+		@param		pTCPServ		Pointer to the Wiznet5500 TCP server interface object
+		@param		pSck			Pointer to the socket to close
+		@return		Net_Success on success, or a code indicating the failure
+		@ingroup	w5500driver
+	*/
 	eNetReturn_t W5500NetTCPServCloseSocket(sTCPServ_t *pTCPServ, sSocket_t *pSck);
 
 /***** Functions	*****/
@@ -671,14 +688,16 @@ eW5500Return_t W5500CreateTCPServer(sW5500Obj_t *pDev, sTCPServ_t *pTCPServ) {
 	
 	//Fill in structure variables
 	pTCPServ->eCapabilities = W5500_TCPSERVCAPS;
-	pTCPServ->HostSck = SOCKET_INVALID;
+	pTCPServ->HostSck.nSocket = SOCKET_INVALID;
+	pTCPServ->HostSck.Conn.Port = 0;
+	pTCPServ->HostSck.Conn.Addr.nNetLong = 0;
 	pTCPServ->pHWInfo = (void *)pDev;
 	
 	//Fill in function pointers
 	pTCPServ->pfBind = &W5500NetTCPServBind;
 	pTCPServ->pfCloseHost = &W5500NetTCPServCloseHost;
-	pTCBServ->pfAcceptClient = &W5500NetTCPServAcceptClient;
-	pTCPServ->pfCloseSocket = &W5500NetTCPServClosesSocket;
+	pTCPServ->pfAcceptClient = &W5500NetTCPServAcceptClient;
+	pTCPServ->pfCloseSocket = &W5500NetTCPServCloseSocket;
 	
 	return W5500_Success;
 }
@@ -686,12 +705,24 @@ eW5500Return_t W5500CreateTCPServer(sW5500Obj_t *pDev, sTCPServ_t *pTCPServ) {
 eNetReturn_t W5500NetTCPServBind(sTCPServ_t *pTCPServ, sConnInfo_t *pConn) {
 	eW5500Return_t eResult;
 	sW5500Obj_t * pDev = (sW5500Obj_t *)pTCPServ->pHWInfo;
+	IN_ADDR IPAddr;
+	uint8_t nSck;
 	
-	eResult = W5500SocketListen(pDev, &(pTCPServ->HostSck), pConn->Port, IPPROTO_TCP);
+	W5500ReadIPAddress(pDev, &IPAddr);
+	
+	eResult = W5500SocketListen(pDev, &nSck, pConn->Port, IPPROTO_TCP);
+	pTCPServ->HostSck.nSocket = nSck;
 	
 	if (eResult < W5500_Success) {
+		pTCPServ->HostSck.nSocket = SOCKET_INVALID;
+		pTCPServ->HostSck.Conn.Port = 0;
+		pTCPServ->HostSck.Conn.Addr.nNetLong = 0;
+		
 		return NetFail_BindErr;
 	} else {
+		pTCPServ->HostSck.Conn.Port = pConn->Port;
+		pTCPServ->HostSck.Conn.Addr.nNetLong = IPAddr.S_un.S_addr;
+		
 		return Net_Success;
 	}
 }
@@ -700,11 +731,15 @@ eNetReturn_t W5500NetTCPServCloseHost(sTCPServ_t *pTCPServ) {
 	eW5500Return_t eResult;
 	sW5500Obj_t * pDev = (sW5500Obj_t *)pTCPServ->pHWInfo;
 	
-	if (pTCPServ->HostSck == SOCKET_INVALID) {
+	if (pTCPServ->HostSck.nSocket == SOCKET_INVALID) {
 		return NetFail_InvSocket;
 	}
 	
-	eResult = W5500CloseSocket(pDev, pTCPServ->HostSck);
+	eResult = W5500CloseSocket(pDev, pTCPServ->HostSck.nSocket);
+	
+	pTCPServ->HostSck.nSocket = SOCKET_INVALID;
+	pTCPServ->HostSck.Conn.Port = 0;
+	pTCPServ->HostSck.Conn.Addr.nNetLong = 0;
 	
 	if (eResult < W5500_Success) {
 		return NetFail_Unknown;
@@ -716,21 +751,26 @@ eNetReturn_t W5500NetTCPServCloseHost(sTCPServ_t *pTCPServ) {
 eNetReturn_t W5500NetTCPServAcceptClient(sTCPServ_t *pTCPServ, sSocket_t *pClientSck) {
 	eW5500Return_t eResult;
 	sW5500Obj_t *pDev = (sW5500Obj_t *)pTCPServ->pHWInfo;
-	uint16_t nServPort, nCount;
+	uint16_t nCount, nServPort;
+	uint32_t nIPAddr;
+	uint8_t nSck;
 	eW5500SckProt_t eProt;
 	eW5500SckStat_t eState;
 	SOCKADDR_IN ConnAddr;
-	uint8_t anPortBytes[2];
+	
+	//Clear socket info in case of failure
+	pClientSck->nSocket = SOCKET_INVALID;
+	pClientSck->Conn.Port = 0;
+	pClientSck->Conn.Addr.nNetLong = 0;
 	
 	//Get port host is listening on
-	W5500ReadData(pDev, W5500SckReg_SourcePort0, (eW5500Control_t)(pTCPServ->HostSck << W5500BSB_SocketLShift), anRegVal, 2);
-	nServPort = anPortBytes[0] << 8;
-	nServPort |= anPortBytes[1];
+	nServPort = pTCPServ->HostSck.nSocket;
+	nIPAddr = pTCPServ->HostSck.Conn.Addr.nNetLong;
 	
 	//Wait for a connection request
 	eState = W5500SckStat_Listen;
 	while (eState == W5500SckStat_Listen) {
-		eResult = W5500SocketStatus(pDev, pTCPServ->HostSck, &eProt, &eState, &nBytesAvail, &ConnAddr, sizeof(SOCKADDR_IN));
+		eResult = W5500SocketStatus(pDev, pTCPServ->HostSck.nSocket, &eProt, &eState, &nCount, &ConnAddr, sizeof(SOCKADDR_IN));
 		
 		if (eResult != W5500_Success) { //failed to get socket information
 			return NetFail_Unknown;
@@ -738,12 +778,15 @@ eNetReturn_t W5500NetTCPServAcceptClient(sTCPServ_t *pTCPServ, sSocket_t *pClien
 	}
 	
 	//Pull back the connection information
-	pClientSck->nSocket = pTCPServ->HostSck;
+	pClientSck->nSocket = pTCPServ->HostSck.nSocket;
 	pClientSck->Conn.Port = ConnAddr.sin_port;
-	pClientSck->Conn.Addr.nNetLong = ConnAddr.sin_addr.S_addr;
+	pClientSck->Conn.Addr.nNetLong = ConnAddr.sin_addr.S_un.S_addr;
 	
 	//Start a new host socket listening
-	eResult = W5500SocketListen(pDev, &(pTCPServ->HostSck), nServPort, IPPROTO_TCP);
+	eResult = W5500SocketListen(pDev, &nSck, nServPort, IPPROTO_TCP);
+	pTCPServ->HostSck.nSocket = nSck;
+	pTCPServ->HostSck.Conn.Port = nServPort;
+	pTCPServ->HostSck.Conn.Addr.nNetLong = nIPAddr;
 	
 	if (eResult < W5500_Success) {
 		return NetFail_BindErr;
@@ -753,5 +796,21 @@ eNetReturn_t W5500NetTCPServAcceptClient(sTCPServ_t *pTCPServ, sSocket_t *pClien
 }
 
 eNetReturn_t W5500NetTCPServCloseSocket(sTCPServ_t *pTCPServ, sSocket_t *pSck) {
+	eW5500Return_t eResult;
+	sW5500Obj_t * pDev = (sW5500Obj_t *)pTCPServ->pHWInfo;
 	
+	if (pSck->nSocket == SOCKET_INVALID) {
+		return NetFail_InvSocket;
+	}
+	
+	eResult = W5500CloseSocket(pDev, pSck->nSocket);
+	pSck->nSocket = SOCKET_INVALID;
+	pSck->Conn.Port = 0;
+	pSck->Conn.Addr.nNetLong = 0;
+	
+	if (eResult < W5500_Success) {
+		return NetFail_Unknown;
+	} else {
+		return Net_Success;
+	}
 }

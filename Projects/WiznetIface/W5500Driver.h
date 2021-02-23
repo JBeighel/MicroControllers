@@ -34,6 +34,7 @@
 	#include "CommonUtils.h"
 	#include "GPIOGeneralInterface.h"
 	#include "SPIGeneralInterface.h"
+	#include "NetworkGeneralInterface.h"
 
 /***** Definitions	*****/
 	#define W5500_TCPSERVCAPS		((eTCPServerCapabilities_t)(TCPServ_Bind | TCPServ_CloseHost | TCPServ_CloseClient | TCPServ_AcceptConn))
@@ -530,6 +531,12 @@
 
 	eW5500Return_t W5500SocketUDPSend(sW5500Obj_t *pDev, uint8_t nSocket, IN_ADDR *pAddr, uint16_t nPort, uint8_t *pBuff, uint16_t nBuffSize);
 	
+	/**	@brief		Closes down a client socket
+		@param		pTCPServ		Pointer to the Wiznet5500 TCP server interface object
+		@param		nSocket			Socket to close
+		@return		Net_Success on success, or a code indicating the failure
+		@ingroup	w5500driver
+	*/
 	eW5500Return_t W5500CloseSocket(sW5500Obj_t *pDev, uint8_t nSocket);
 	
 	/**	@brief		Create a TCP Server interface object through the Wiznet 5500
