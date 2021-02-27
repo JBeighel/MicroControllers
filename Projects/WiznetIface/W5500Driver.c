@@ -761,7 +761,7 @@ eNetReturn_t W5500NetTCPServAcceptClient(sTCPServ_t *pTCPServ, sSocket_t *pClien
 	uint32_t nIPAddr;
 	uint8_t nSck;
 	eW5500SckProt_t eProt;
-	eW5500SckStat_t eState;
+	eW5500SckStat_t eState, eLastState;
 	SOCKADDR_IN ConnAddr;
 	
 	//Clear socket info in case of failure
@@ -770,7 +770,7 @@ eNetReturn_t W5500NetTCPServAcceptClient(sTCPServ_t *pTCPServ, sSocket_t *pClien
 	pClientSck->Conn.Addr.nNetLong = 0;
 	
 	//Get port host is listening on
-	nServPort = pTCPServ->HostSck.nSocket;
+	nServPort = pTCPServ->HostSck.Conn.Port;
 	nIPAddr = pTCPServ->HostSck.Conn.Addr.nNetLong;
 	
 	//Wait for a connection request
@@ -781,6 +781,19 @@ eNetReturn_t W5500NetTCPServAcceptClient(sTCPServ_t *pTCPServ, sSocket_t *pClien
 		if (eResult != W5500_Success) { //failed to get socket information
 			return NetFail_Unknown;
 		}
+		
+		if (eState != eLastState) {
+			eLastState = eState;
+			
+			if (eLastState != W5500SckStat_Establish) {
+				//Need to confirm a state change to avoid spurious read error
+				eState = W5500SckStat_Listen;
+			}
+		}
+	}
+	
+	if (eState != W5500SckStat_Establish) {
+		return NetFail_SocketState;
 	}
 	
 	//Pull back the connection information

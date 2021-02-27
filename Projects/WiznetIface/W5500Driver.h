@@ -37,7 +37,25 @@
 	#include "NetworkGeneralInterface.h"
 
 /***** Definitions	*****/
-	#define W5500_TCPSERVCAPS		((eTCPServerCapabilities_t)(TCPServ_Bind | TCPServ_CloseHost | TCPServ_CloseClient | TCPServ_AcceptConn))
+	/**	@brief		TCP Server interface capabilites available
+		@ingroup	w5500driver
+	*/
+	#define W5500_TCPSERVCAPS		((eTCPServerCapabilities_t)(TCPServ_Bind | TCPServ_CloseHost | TCPServ_CloseClient | TCPServ_AcceptConn | TCPServ_Receive | TCPServ_Send))
+	
+	/**	@brief		TCP Client interface capabilites available
+		@ingroup	w5500driver
+	*/
+	#define W5500_TCPCLIENTCAPS		((eTCPClientCapabilities_t)(TCPClient_None))
+	
+	/**	@brief		UDP Server interface capabilites available
+		@ingroup	w5500driver
+	*/
+	#define W5500_UDPSERVCAPS		((eUDPServerCapabilities_t)(UDPServ_None))
+	
+	/**	@brief		UDP Client interface capabilites available
+		@ingroup	w5500driver
+	*/
+	#define W5500_TCPCLIENTCAPS		((eUDPClientCapabilities_t)(UDPClient_None))
 
 	/**	@brief		W5500 Version register always indicates version 0x04
 		@ingroup	w5500driver
