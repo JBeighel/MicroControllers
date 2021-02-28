@@ -1,8 +1,8 @@
 /**
   ******************************************************************************
-  * @file    wwdg.c
+  * @file    iwdg.c
   * @brief   This file provides code for the configuration
-  *          of the WWDG instances.
+  *          of the IWDG instances.
   ******************************************************************************
   * @attention
   *
@@ -18,44 +18,27 @@
   */
 
 /* Includes ------------------------------------------------------------------*/
-#include "wwdg.h"
+#include "iwdg.h"
 
 /* USER CODE BEGIN 0 */
 
 /* USER CODE END 0 */
 
-WWDG_HandleTypeDef hwwdg;
+IWDG_HandleTypeDef hiwdg;
 
-/* WWDG init function */
-void MX_WWDG_Init(void)
+/* IWDG init function */
+void MX_IWDG_Init(void)
 {
 
-  hwwdg.Instance = WWDG;
-  hwwdg.Init.Prescaler = WWDG_PRESCALER_8;
-  hwwdg.Init.Window = 64;
-  hwwdg.Init.Counter = 64;
-  hwwdg.Init.EWIMode = WWDG_EWI_DISABLE;
-  if (HAL_WWDG_Init(&hwwdg) != HAL_OK)
+  hiwdg.Instance = IWDG;
+  hiwdg.Init.Prescaler = IWDG_PRESCALER_4;
+  hiwdg.Init.Window = 4095;
+  hiwdg.Init.Reload = 4095;
+  if (HAL_IWDG_Init(&hiwdg) != HAL_OK)
   {
     Error_Handler();
   }
 
-}
-
-void HAL_WWDG_MspInit(WWDG_HandleTypeDef* wwdgHandle)
-{
-
-  if(wwdgHandle->Instance==WWDG)
-  {
-  /* USER CODE BEGIN WWDG_MspInit 0 */
-
-  /* USER CODE END WWDG_MspInit 0 */
-    /* WWDG clock enable */
-    __HAL_RCC_WWDG_CLK_ENABLE();
-  /* USER CODE BEGIN WWDG_MspInit 1 */
-
-  /* USER CODE END WWDG_MspInit 1 */
-  }
 }
 
 /* USER CODE BEGIN 1 */
