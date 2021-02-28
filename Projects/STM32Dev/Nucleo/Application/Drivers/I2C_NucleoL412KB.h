@@ -1,6 +1,6 @@
-/**	@defgroup i2ciface_nucleo
-	@brief
-	@details
+/**	@defgroup	i2ciface_nucleo
+	@brief		I2C General Interface Implementation for ST Nucleo boards
+	@details	v0.1
 	# Intent #
 
 
@@ -26,6 +26,7 @@
 	#include "I2CGeneralInterface.h"
 
 /*****	Constants	*****/
+	#define		I2C_1_HWINFO	(&hi2c1)
 	#define		I2C_3_HWINFO	(&hi2c3)
 	
 	#define		I2C_INIT		NucleoI2CInitialize

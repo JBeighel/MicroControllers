@@ -15,7 +15,7 @@
 
 /***** Functions	*****/
 
-eUARTReturns_t NucleoUARTPortInitialize(sUARTIface_t *pUARTIface, uint32_t nBaudRate, eUARTModes_t eReqMode, void *pHWInfo) {
+eUARTReturn_t NucleoUARTPortInitialize(sUARTIface_t *pUARTIface, uint32_t nBaudRate, eUARTModes_t eReqMode, void *pHWInfo) {
 	UARTInterfaceInitialize(pUARTIface); //Make sure all function pointers are valid
 
 	//Hardware settings are made in the Cube, no real way to change them here
@@ -35,12 +35,12 @@ eUARTReturns_t NucleoUARTPortInitialize(sUARTIface_t *pUARTIface, uint32_t nBaud
 	return UART_Success;
 }
 
-eUARTReturns_t NucleoUARTShutdown(sUARTIface_t *pUARTIface) {
+eUARTReturn_t NucleoUARTShutdown(sUARTIface_t *pUARTIface) {
 	//Ho means to shut down the hardware on Nucleo
 	return UART_Fail_Unsupported;
 }
 
-eUARTReturns_t NucleoUARTReadData(sUARTIface_t *pUARTIface, uint16_t nDataSize, void *pDataBuff, uint16_t *pnBytesRead) {
+eUARTReturn_t NucleoUARTReadData(sUARTIface_t *pUARTIface, uint16_t nDataSize, void *pDataBuff, uint16_t *pnBytesRead) {
 	HAL_StatusTypeDef eResult;
 
 	eResult = HAL_UART_Receive((UART_HandleTypeDef *)pUARTIface->pHWInfo, (uint8_t *)pDataBuff, nDataSize, UART_TIMEOUT);
@@ -56,7 +56,7 @@ eUARTReturns_t NucleoUARTReadData(sUARTIface_t *pUARTIface, uint16_t nDataSize, 
 	}
 }
 
-eUARTReturns_t NucleoUARTWriteData(sUARTIface_t *pUARTIface, uint16_t nDataSize, const void *pDataBuff) {
+eUARTReturn_t NucleoUARTWriteData(sUARTIface_t *pUARTIface, uint16_t nDataSize, const void *pDataBuff) {
 	HAL_StatusTypeDef eResult;
 
 	eResult = HAL_UART_Transmit((UART_HandleTypeDef *)pUARTIface->pHWInfo, (uint8_t *)pDataBuff, nDataSize, UART_TIMEOUT);
@@ -68,13 +68,13 @@ eUARTReturns_t NucleoUARTWriteData(sUARTIface_t *pUARTIface, uint16_t nDataSize,
 	}
 }
 
-eUARTReturns_t NucleoUARTDataAvailable(sUARTIface_t *pUARTIface, uint16_t *pnBytesAvailable) {
+eUARTReturn_t NucleoUARTDataAvailable(sUARTIface_t *pUARTIface, uint16_t *pnBytesAvailable) {
 	//(*pnBytesAvailable) = ((HardwareSerial *)pUARTIface->pHWInfo)->available();
 
 	return UART_Fail_Unsupported;
 }
 
-eUARTReturns_t NucleoUARTWaitDataSend(sUARTIface_t *pUARTIface) {
+eUARTReturn_t NucleoUARTWaitDataSend(sUARTIface_t *pUARTIface) {
 	//((HardwareSerial *)pUARTIface->pHWInfo)->flush();
 	return UART_Fail_Unsupported;
 }

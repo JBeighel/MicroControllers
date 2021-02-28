@@ -1,7 +1,11 @@
 /**	@defgroup	gpionucleo
 	@brief		Implementation of the GPIO General Interface for STM32 Nucleo32 L412KB
 	@details	v0.1
-		
+		All of the GPIO pins are configured by the ST Cube MX tool.  This will
+		define their functionality.  This interface will allow interactions
+		with all of the IO pins regardless of this configuration.  It is left
+		to other portions of the application to account for the ST Cube MX pin
+		configurations.
 */
 
 #ifndef __GPIONUCLEO
@@ -16,30 +20,16 @@
 
 
 /***** Definitions	*****/
-	#define NUCLEO_PININFOTYPE	uint16_t
+
 
 /***** Constants	*****/
-	/**	@brief		Default GPIO hardware information object
-		@ingroup	gpionucleo
-	*/
-	#define GPIO_B_HWINFO		((void *)GPIOB)
-	
-	#define GPIO_INIT		NucleoGPIOPortInitialize
-	
-	#define DELAYMILLISEC		osDelay
-	
-	//#define DELAYMICROSEC		delayMicroseconds
+	#define GPIO_INIT			NucleoGPIOPortInitialize
 
-	/**	@brief		Count of available GPIO pins
-		@ingroup	gpionucleo
-	*/
-	#define NUCLEO_GPIOCNT		(sizeof(gNucleoGPIOList) / sizeof(NUCLEO_PININFOTYPE))
+	#define GPIO_A_HWINFO	((void *)GPIOA)
+	#define GPIO_B_HWINFO	((void *)GPIOB)
+	#define GPIO_H_HWINFO	((void *)GPIOH)
 
-	#define NUCLEO_DACCNT		(sizeof(gNucleoDACList) / sizeof(NUCLEO_PININFOTYPE))
-
-	#define NUCLEO_ADCCNT		(sizeof(gNucleoADCList) / sizeof(NUCLEO_PININFOTYPE))
-
-	#define NUCLEO_PWMCNT		(sizeof(gNucleoPWMList) / sizeof(NUCLEO_PININFOTYPE))
+	#define NUCLEO_GPIOCNT		16
 
 	/**	@brief		Available bit depth for Analog Inputs
 		@ingroup	gpionucleo
@@ -56,7 +46,6 @@
 	*/
 	#define NUCLEO_PWMBITDEPTH	10
 
-	
 /***** Constants	*****/
 
 

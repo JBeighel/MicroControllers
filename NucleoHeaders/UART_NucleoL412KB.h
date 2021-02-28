@@ -1,6 +1,6 @@
 /**	@defgroup	uartiface_nucleoL412KB
-	@brief		
-	@details	v0.1
+	@brief		UART General Interface Implementation for ST Nucleo boards
+	@details	v0.2
 		
 */
 
@@ -39,14 +39,14 @@
 
 
 /***** Prototypes 	*****/
-	eUARTReturns_t NucleoUARTPortInitialize(sUARTIface_t *pUARTIface, uint32_t nBaudRate, eUARTModes_t eReqMode, void *pHWInfo);
+	eUARTReturn_t NucleoUARTPortInitialize(sUARTIface_t *pUARTIface, uint32_t nBaudRate, eUARTModes_t eReqMode, void *pHWInfo);
 	
-	eUARTReturns_t NucleoUARTShutdown(sUARTIface_t *pUARTIface);
+	eUARTReturn_t NucleoUARTShutdown(sUARTIface_t *pUARTIface);
 		
-	eUARTReturns_t NucleoUARTReadData(sUARTIface_t *pUARTIface, uint16_t nDataSize, void *pDataBuff, uint16_t *pnBytesRead);
-	eUARTReturns_t NucleoUARTWriteData(sUARTIface_t *pUARTIface, uint16_t nDataSize, const void *pDataBuff);
-	eUARTReturns_t NucleoUARTDataAvailable(sUARTIface_t *pUARTIface, uint16_t *pnBytesAvailable);
-	eUARTReturns_t NucleoUARTWaitDataSend(sUARTIface_t *pUARTIface);
+	eUARTReturn_t NucleoUARTReadData(sUARTIface_t *pUARTIface, uint16_t nDataSize, void *pDataBuff, uint16_t *pnBytesRead);
+	eUARTReturn_t NucleoUARTWriteData(sUARTIface_t *pUARTIface, uint16_t nDataSize, const void *pDataBuff);
+	eUARTReturn_t NucleoUARTDataAvailable(sUARTIface_t *pUARTIface, uint16_t *pnBytesAvailable);
+	eUARTReturn_t NucleoUARTWaitDataSend(sUARTIface_t *pUARTIface);
 
 /***** Functions	*****/
 

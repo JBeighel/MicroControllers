@@ -1,6 +1,6 @@
 /**	@defgroup	uartiface_nucleoL412KB
-	@brief		
-	@details	v0.1
+	@brief		UART General Interface Implementation for ST Nucleo boards
+	@details	v0.2
 		
 */
 

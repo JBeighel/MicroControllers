@@ -10,21 +10,6 @@
 /***** Constants	*****/
 
 
-	/** @brief		Constant array of all pin numbers that support Analog Input
-		@ingroup	gpionucleo
-	*/
-	const NUCLEO_PININFOTYPE gNucleoADCList[] = { };
-
-	/** @brief		Constant array of all pin numbers that support Analog Ouput
-		@ingroup	gpionucleo
-	*/
-	const NUCLEO_PININFOTYPE gNucleoDACList[] = { };
-
-	/** @brief		Constant array of all pin numbers that support PWM Output
-		@ingroup	gpionucleo
-	*/
-	const NUCLEO_PININFOTYPE gNucleoPWMList[] = { };
-
 /***** Globals		*****/
 
 
@@ -38,8 +23,8 @@ eGPIOReturn_t NucleoGPIOPortInitialize(sGPIOIface_t *pIface, void *pHWInfo) {
 
 	//All of this is handled by the STM Cube built project, os just fill out the object
 
-	GPIOInterfaceInitialize(pIface); //Set a base sanity for the interface
-	pIface->pHWInfo = pHWInfo;
+	GPIOInterfaceInitialize(pIface); //Set a sane base for the interface
+	pIface->pHWInfo = pHWInfo; //HW info is the port the pin is on
 
 	//Set pointers for all supported functions
 	pIface->pfPortInit = &NucleoGPIOPortInitialize;
@@ -60,24 +45,12 @@ eGPIOReturn_t NucleoGPIOPortInitialize(sGPIOIface_t *pIface, void *pHWInfo) {
 
 	pIface->pHWInfo = pHWInfo;
 
-	//Set the capabilities of all the IO points
+	//Set the capabilities of all the IO points (even if they aren't configured to be IO)
 	for (nCtr = 0; nCtr < pIface->nGPIOCnt; nCtr++) {
 		pIface->aGPIO[nCtr].eCapabilities = (eGPIOModes_t)(GPIO_DigitalInput | GPIO_DigitalOutput | GPIO_InputPullup);
 
-		if (NumberInArray_u16(gNucleoGPIOList[nCtr], gNucleoPWMList, NUCLEO_PWMCNT) == true) {
-			pIface->aGPIO[nCtr].eCapabilities = (eGPIOModes_t)(pIface->aGPIO[nCtr].eCapabilities | GPIO_OutputPWM);
-		}
-
-		if (NumberInArray_u16(gNucleoGPIOList[nCtr], gNucleoADCList, NUCLEO_ADCCNT) == true) {
-			pIface->aGPIO[nCtr].eCapabilities = (eGPIOModes_t)(pIface->aGPIO[nCtr].eCapabilities | GPIO_AnalogInput);
-		}
-
-		if (NumberInArray_u16(gNucleoGPIOList[nCtr], gNucleoDACList, NUCLEO_DACCNT) == true) {
-			pIface->aGPIO[nCtr].eCapabilities = (eGPIOModes_t)(pIface->aGPIO[nCtr].eCapabilities | GPIO_AnalogOutput);
-		}
-
 		pIface->aGPIO[nCtr].eMode = GPIO_None;
-		pIface->aGPIO[nCtr].pHWInfo = (void *)((uint32_t)gNucleoGPIOList[nCtr]);
+		pIface->aGPIO[nCtr].pHWInfo = NULL;
 	}
 
 	return GPIO_Success;
@@ -89,10 +62,9 @@ eGPIOReturn_t NucleoGPIOSetModeByPin(sGPIOIface_t *pIface, uint16_t nGPIOPin, eG
 }
 	
 eGPIOReturn_t NucleoGPIODigitalWriteByPin(sGPIOIface_t *pIface, uint16_t nGPIOPin, bool bState) {
-	uint32_t nIdx = IndexInArray_u16(nGPIOPin, gNucleoGPIOList, NUCLEO_GPIOCNT);
 	GPIO_PinState eState;
 	
-	if (nIdx >= NUCLEO_GPIOCNT) {
+	if (nGPIOPin >= NUCLEO_GPIOCNT) {
 		return GPIOFail_InvalidPin;
 	}
 

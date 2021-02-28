@@ -15,7 +15,7 @@
 	
 /*****	Function Code	*****/
 
-eI2CReturns_t NucleoI2CInitialize(sI2CIface_t *pI2CIface, bool bActAsMaster, uint32_t nClockFreq, void *pHWInfo) {
+eI2CReturn_t NucleoI2CInitialize(sI2CIface_t *pI2CIface, bool bActAsMaster, uint32_t nClockFreq, void *pHWInfo) {
 	//pHWInfo is I2C_HandleTypeDef *
 	
 	//Ensure a base sanity in the object
@@ -49,7 +49,7 @@ eI2CReturns_t NucleoI2CInitialize(sI2CIface_t *pI2CIface, bool bActAsMaster, uin
 	return I2C_Success;
 }
 	
-eI2CReturns_t NucleoI2CReadUint8Reg (sI2CIface_t *pI2CIface, uint8_t nDevAddr, uint8_t nRegAddr, uint8_t *pnValue) {
+eI2CReturn_t NucleoI2CReadUint8Reg (sI2CIface_t *pI2CIface, uint8_t nDevAddr, uint8_t nRegAddr, uint8_t *pnValue) {
 	//pHWInfo is I2C_HandleTypeDef *
 
 	nDevAddr <<= 1; //Values are set to have the address by itself, reposition to add space for read/write bit
@@ -62,7 +62,7 @@ eI2CReturns_t NucleoI2CReadUint8Reg (sI2CIface_t *pI2CIface, uint8_t nDevAddr, u
 	return I2C_Success;
 }
 
-eI2CReturns_t NucleoI2CReadData (sI2CIface_t *pI2CIface, uint8_t nDevAddr, uint8_t nNumBytes, void *pDataBuff, uint8_t *pnBytesRead) {
+eI2CReturn_t NucleoI2CReadData (sI2CIface_t *pI2CIface, uint8_t nDevAddr, uint8_t nNumBytes, void *pDataBuff, uint8_t *pnBytesRead) {
 	HAL_StatusTypeDef nResult;
 
 	(*pnBytesRead) = 0; //Set a default return value
@@ -78,7 +78,7 @@ eI2CReturns_t NucleoI2CReadData (sI2CIface_t *pI2CIface, uint8_t nDevAddr, uint8
 	return I2C_Success;
 }
 
-eI2CReturns_t NucleoI2CWriteUint8Reg (sI2CIface_t *pI2CIface, uint8_t nDevAddr, uint8_t nRegAddr, uint8_t nValue) {
+eI2CReturn_t NucleoI2CWriteUint8Reg (sI2CIface_t *pI2CIface, uint8_t nDevAddr, uint8_t nRegAddr, uint8_t nValue) {
 	HAL_StatusTypeDef nResult;
 	uint8_t aBytes[2];
 	
@@ -97,7 +97,7 @@ eI2CReturns_t NucleoI2CWriteUint8Reg (sI2CIface_t *pI2CIface, uint8_t nDevAddr, 
 	return I2C_Success;
 }
 
-eI2CReturns_t NucleoI2CWriteData (sI2CIface_t *pI2CIface, uint8_t nDevAddr, uint8_t nNumBytes, void *pDataBuff) {
+eI2CReturn_t NucleoI2CWriteData (sI2CIface_t *pI2CIface, uint8_t nDevAddr, uint8_t nNumBytes, void *pDataBuff) {
 	HAL_StatusTypeDef nResult;
 
 	nDevAddr <<= 1; //Values are set to have the address by itself, reposition to add space for read/write bit
@@ -111,7 +111,7 @@ eI2CReturns_t NucleoI2CWriteData (sI2CIface_t *pI2CIface, uint8_t nDevAddr, uint
 	return I2C_Success;
 }
 
-eI2CReturns_t NucleoI2CGeneralCall (sI2CIface_t *pI2CIface, uint8_t nValue) {
+eI2CReturn_t NucleoI2CGeneralCall (sI2CIface_t *pI2CIface, uint8_t nValue) {
 	HAL_I2C_Master_Transmit((I2C_HandleTypeDef *)pI2CIface->pHWInfo, I2C_GENERALCALLADDR, &nValue, 1, I2C_TIMEOUT);
 
 	return I2C_Success;
