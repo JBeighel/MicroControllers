@@ -64,10 +64,10 @@ void Error_Handler(void);
 #define GPI_A04_2_GPIO_Port GPIOA
 #define GPI_A05_3_Pin GPIO_PIN_5
 #define GPI_A05_3_GPIO_Port GPIOA
-#define GPI_B00_0_Pin GPIO_PIN_0
-#define GPI_B00_0_GPIO_Port GPIOB
-#define GPI_B01_1_Pin GPIO_PIN_1
-#define GPI_B01_1_GPIO_Port GPIOB
+#define GPO_B00_0_Pin GPIO_PIN_0
+#define GPO_B00_0_GPIO_Port GPIOB
+#define GPO_B01_1_Pin GPIO_PIN_1
+#define GPO_B01_1_GPIO_Port GPIOB
 #define GPI_A08_4_Pin GPIO_PIN_8
 #define GPI_A08_4_GPIO_Port GPIOA
 #define GPI_A11_5_Pin GPIO_PIN_11
@@ -78,10 +78,10 @@ void Error_Handler(void);
 #define SWDIO_GPIO_Port GPIOA
 #define SWCLK_Pin GPIO_PIN_14
 #define SWCLK_GPIO_Port GPIOA
-#define GPI_B03_2_Pin GPIO_PIN_3
-#define GPI_B03_2_GPIO_Port GPIOB
-#define GPI_H03_5_Pin GPIO_PIN_3
-#define GPI_H03_5_GPIO_Port GPIOH
+#define GPO_B03_2_Pin GPIO_PIN_3
+#define GPO_B03_2_GPIO_Port GPIOB
+#define GPO_H03_5_Pin GPIO_PIN_3
+#define GPO_H03_5_GPIO_Port GPIOH
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */

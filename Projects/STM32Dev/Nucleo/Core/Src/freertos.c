@@ -119,7 +119,7 @@ void MX_FREERTOS_Init(void) {
   * @retval None
   */
 /* USER CODE END Header_BootstrapTask */
-void BootstrapTask(void const * argument)
+__weak void BootstrapTask(void const * argument)
 {
   /* USER CODE BEGIN BootstrapTask */
   /* Infinite loop */
