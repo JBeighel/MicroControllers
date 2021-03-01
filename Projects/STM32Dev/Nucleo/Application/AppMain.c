@@ -34,6 +34,8 @@ void BootstrapTask(void const * argument) {
 	UART_INIT(&gUart1, 115200, UART_8None1, UART_1_HWINFO);
 	UART_INIT(&gUart2, 115200, UART_8None1, UART_2_HWINFO);
 
+	SPI_INIT(&gSpi1, SPI_1_HWINFO, 4000000, SPI_MSBFirst, SPI_Mode1);
+
 	TIME_INIT(&gTime);
 
 	while (1) {

@@ -23,10 +23,12 @@
 	#include "GPIOGeneralInterface.h"
 	#include "I2CGeneralInterface.h"
 	#include "UARTGeneralInterface.h"
+	#include "SPIGeneralInterface.h"
 
 	#include "GPIO_NucleoL412KB.h"
 	#include "I2C_NucleoL412KB.h"
 	#include "UART_NucleoL412KB.h"
+	#include "SPI_NucleoL412KB.h"
 
 /*****	Defines		*****/
 
@@ -47,6 +49,8 @@
 
 	sUARTIface_t gUart1;
 	sUARTIface_t gUart2;
+
+	sSPIIface_t gSpi1;
 
 	sTimeIface_t gTime;
 
