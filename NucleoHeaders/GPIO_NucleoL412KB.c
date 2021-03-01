@@ -44,6 +44,7 @@ eGPIOReturn_t NucleoGPIOPortInitialize(sGPIOIface_t *pIface, void *pHWInfo) {
 	}
 
 	pIface->pHWInfo = pHWInfo;
+	pIface->ePortCapabilities = GPIO_CAPS;
 
 	//Set the capabilities of all the IO points (even if they aren't configured to be IO)
 	for (nCtr = 0; nCtr < pIface->nGPIOCnt; nCtr++) {
@@ -91,3 +92,42 @@ eGPIOReturn_t NucleoGPIODigitalReadByPin(sGPIOIface_t *pIface, uint16_t nGPIOPin
 	return GPIO_Success;
 }
 
+eReturn_t NucleoTimeInitialize(sTimeIface_t *pIface) {
+	TimeInterfaceInitialize(pIface);
+
+	pIface->pfGetTicks = &NucleoGetCurrentTicks;
+	pIface->pfDelaySeconds = &NucleoTimeDelaySeconds;
+	pIface->pfDelayMilliSeconds = &NucleoTimeDelayMilliSeconds;
+
+	pIface->eCapabilities = TIME_CAPS;
+
+	return Success;
+}
+
+uint32_t NucleoGetCurrentTicks(void) {
+	#if NUCLEO_TIMESRC == NUCLEO_TIMESRC_RTOS
+		return xTaskGetTickCount();
+	#elif #if NUCLEO_TIMESRC == NUCLEO_TIMESRC_HAL
+		return HAL_GetTick();
+	#endif
+}
+
+eReturn_t NucleoTimeDelaySeconds(uint32_t nDelayAmount) {
+	#if NUCLEO_TIMESRC == NUCLEO_TIMESRC_RTOS
+		vTaskDelay(nDelayAmount * 1000);
+	#elif #if NUCLEO_TIMESRC == NUCLEO_TIMESRC_HAL
+		HAL_Delay(nDelayAmount * 1000);
+	#endif
+
+	return Success;
+}
+
+eReturn_t NucleoTimeDelayMilliSeconds(uint32_t nDelayAmount) {
+	#if NUCLEO_TIMESRC == NUCLEO_TIMESRC_RTOS
+		vTaskDelay(nDelayAmount);
+	#elif #if NUCLEO_TIMESRC == NUCLEO_TIMESRC_HAL
+		HAL_Delay(nDelayAmount);
+	#endif
+
+	return Success;
+}

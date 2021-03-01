@@ -1,12 +1,12 @@
 /**	@defgroup	gpioiface
 	@brief		General interface for using GPIO pins
-	@details	v0.4
+	@details	v0.5
 	#Description
 	
 	#File Information
 		File:	GPIOGeneralInterface.h
 		Author:	J. Beighel
-		Date:	12-10-2020
+		Date:	28-02-2021
 */
 
 #ifndef __gpioiface
@@ -99,6 +99,8 @@
 	} sGPIOInfo_t;
 
 	typedef struct sGPIOIface_t {
+		eGPIOCapabilities_t ePortCapabilities;
+
 		pfGPIOPortInitialize_t pfPortInit;
 		pfGPIOSetModeByPin_t pfSetModeByPin;
 		pfGPIOReadModeByPin_t pfReadModeByPin;

@@ -17,14 +17,14 @@
 	#include "UARTGeneralInterface.h"
 
 /***** Definitions	*****/
-	#define UART_1_HWINFO (huart1)
+	#define UART_1_HWINFO ((void *)&huart1)
 	
-	#define UART_2_HWINFO (huart2)
+	#define UART_2_HWINFO ((void *)&huart2)
 	
-	#ifdef UART_PORTINITIALIZE
-		#undef UART_PORTINITIALIZE
+	#ifdef UART_INIT
+		#undef UART_INIT
 	#endif
-	#define UART_PORTINITIALIZE	NucleoUARTPortInitialize
+	#define UART_INIT	NucleoUARTPortInitialize
 	
 	#ifndef mSecDelay
 		#define mSecDelay	osDelay

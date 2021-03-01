@@ -1,6 +1,6 @@
 /*	File:	GPIOGeneralInterface.c
 	Author:	J. Beighel
-	Date:	12-10-2020
+	Date:	28-02-2021
 */
 
 /***** Includes		*****/
@@ -53,6 +53,8 @@ eGPIOReturn_t GPIOInterfaceInitialize(sGPIOIface_t *pIface) {
 	pIface->nGPIOCnt = 0;
 
 	pIface->pHWInfo = NULL;
+
+	pIface->ePortCapabilities = GPIOCap_None;
 
 	return GPIO_Success;
 }

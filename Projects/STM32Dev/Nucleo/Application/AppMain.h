@@ -42,6 +42,14 @@
 	sGPIOIface_t gGpioB;
 	sGPIOIface_t gGpioH;
 
+	sI2CIface_t gI2C1;
+	sI2CIface_t gI2C3;
+
+	sUARTIface_t gUart1;
+	sUARTIface_t gUart2;
+
+	sTimeIface_t gTime;
+
 /*****	Prototypes 	*****/
 
 
