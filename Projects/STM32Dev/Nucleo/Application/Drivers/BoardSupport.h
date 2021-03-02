@@ -1,6 +1,6 @@
-/**	@defgroup	GROUPNAME
+/**	@defgroup	boardsupport
 	@brief
-	@details	v
+	@details	v0.1
 	#Description
 
 	#File Information
@@ -9,18 +9,13 @@
 		Date:	MM-DD-YYYY
 */
 
-#ifndef __NAME_H
-	#define __NAME_H
+#ifndef __BOARDSUPPORT_H
+	#define __BOARDSUPPORT_H
 
 /*****	Includes	*****/
-	#include "FreeRTOS.h"
-	#include "task.h"
-	#include "main.h"
-	#include "cmsis_os.h"
-	#include "iwdg.h"
-
 	#include "PinSupport.h"
-	#include "BoardSupport.h"
+
+	#include "APA102Driver.h"
 
 /*****	Defines		*****/
 
@@ -32,13 +27,13 @@
 
 
 /*****	Globals		*****/
-
+	extern sAPA102Info_t gLEDString;
 
 /*****	Prototypes 	*****/
 
 
 /*****	Functions	*****/
-
+	eReturn_t BoardSetup();
 
 #endif
 
