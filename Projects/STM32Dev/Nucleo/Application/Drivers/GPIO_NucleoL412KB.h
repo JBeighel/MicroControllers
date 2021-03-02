@@ -6,6 +6,15 @@
 		with all of the IO pins regardless of this configuration.  It is left
 		to other portions of the application to account for the ST Cube MX pin
 		configurations.
+
+		NucleoL412KB
+		With the PH3 pin set to output I could not get it to change state.
+			Unsure if this is a settings issue or code problem.
+
+	#File Information
+		File:	GPIO_NucleoL412KB.h
+		Author:	J. Beighel
+		Date:	2021-03-01
 */
 
 #ifndef __GPIONUCLEO

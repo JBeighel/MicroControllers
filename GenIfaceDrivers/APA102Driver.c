@@ -1,6 +1,6 @@
 /**	File:	APA102Driver.c
 	Author:	J. Beighel
-	Date:	2021-02-02
+	Date:	2021-03-02
 */
 
 /*****	Includes	*****/
@@ -33,10 +33,14 @@ eAPA102Return_t APA102Initialize(sAPA102Info_t *pDev, sSPIIface_t *pSpiDev) {
 	pDev->nLightNum = 11;
 	memset(pDev->anLights, 0, sizeof(uint32_t) * pDev->nLightNum);
 	
+	if (pSpiDev->eMode != SPI_Mode3) {
+		return SPIFail_Mode;
+	}
+
 	return Success;
 }
 
-eAPA102Return_t APA102SetLightColor(sAPA102Info_t *pDev, uint32_t nLightID, uint8_t nRed, uint8_t nGreen, uint8_t nBlue) {
+eAPA102Return_t APA102SetLightColorBytes(sAPA102Info_t *pDev, uint32_t nLightID, uint8_t nRed, uint8_t nGreen, uint8_t nBlue) {
 	uint32_t nLightVal = 0;
 	
 	nLightVal |= APA102PositionRedByte(pDev->eOrder, nRed);
@@ -45,6 +49,18 @@ eAPA102Return_t APA102SetLightColor(sAPA102Info_t *pDev, uint32_t nLightID, uint
 	
 	pDev->anLights[nLightID] = nLightVal;
 	
+	return Success;
+}
+
+eAPA102Return_t APA102SetLightColor(sAPA102Info_t *pDev, uint32_t nLightID, uint32_t nColor) {
+	uint32_t nLightVal = 0;
+
+	nLightVal |= APA102PositionRedByte(pDev->eOrder, (nColor & APA102_RedMask) >> APA102_RedShift);
+	nLightVal |= APA102PositionGreenByte(pDev->eOrder, (nColor & APA102_GreenMask) >> APA102_GreenShift);
+	nLightVal |= APA102PositionBlueByte(pDev->eOrder, (nColor & APA102_BlueMask) >> APA102_BlueShift);
+
+	pDev->anLights[nLightID] = nLightVal;
+
 	return Success;
 }
 

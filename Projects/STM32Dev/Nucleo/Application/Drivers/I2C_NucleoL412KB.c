@@ -1,3 +1,9 @@
+/*	#File Information
+		File:	I2C_NucleoL412KB.c
+		Author:	J. Beighel
+		Date:	2021-03-01
+*/
+
 /*****	Includes	*****/
 	#include "I2C_NucleoL412KB.h"
 

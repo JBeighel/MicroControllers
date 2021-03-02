@@ -10,10 +10,14 @@
 
 
 /*****	Definitions	*****/
-
+#define PATTERN_LEN		(sizeof(manPattern) / sizeof(uint32_t))
 
 /*****	Constants	*****/
-
+const uint32_t manPattern[] = {
+	APA102_DimRed,
+	APA102_DimGreen,
+	APA102_DimBlue,
+};
 
 /*****	Globals		*****/
 
@@ -24,6 +28,7 @@
 /*****	Functions	*****/
 
 void BootstrapTask(void const * argument) {
+	uint8_t nLightCtr, nPatternCtr, nPatternStart;
 	sAPA102Info_t LEDString;
 
 	GPIO_INIT(&gGpioA, GPIO_A_HWINFO);
@@ -41,24 +46,38 @@ void BootstrapTask(void const * argument) {
 	TIME_INIT(&gTime);
 
 	APA102Initialize(&LEDString, &gSpi1);
-	APA102SetLightColor(&LEDString, 0, 70, 0, 0);
-	APA102SetLightColor(&LEDString, 1, 0, 70, 0);
-	APA102SetLightColor(&LEDString, 2, 0, 0, 70);
-	APA102SetLightColor(&LEDString, 3, 70, 0, 0);
-	APA102SetLightColor(&LEDString, 4, 0, 70, 0);
 
-	APA102UpdateLights(&LEDString);
-
+	nPatternStart = 0;
 	while (1) {
+		nPatternCtr = nPatternStart;
+		for (nLightCtr = 0; nLightCtr < 5; nLightCtr++) {
+			APA102SetLightColor(&LEDString, nLightCtr, manPattern[nPatternCtr]);
+
+			nPatternCtr += 1;
+			if (nPatternCtr >= PATTERN_LEN) {
+				nPatternCtr = 0;
+			}
+		}
+		APA102UpdateLights(&LEDString);
+
+		nPatternStart += 1;
+		if (nPatternStart >= PATTERN_LEN) {
+			nPatternStart = 0;
+		}
+
 		gGpioB.pfDigitalWriteByPin(&gGpioB, GPO_B03_2_Pin, true);
+		gGpioB.pfDigitalWriteByPin(&gGpioB, GPO_H03_5_Pin, true);
+		gGpioB.pfDigitalWriteByPin(&gGpioB, GPO_B01_1_Pin, false);
 
 		HAL_IWDG_Refresh(&hiwdg);
-		osDelay(100);
+		osDelay(200);
 
 		gGpioB.pfDigitalWriteByPin(&gGpioB, GPO_B03_2_Pin, false);
+		gGpioB.pfDigitalWriteByPin(&gGpioB, GPO_H03_5_Pin, false);
+		gGpioB.pfDigitalWriteByPin(&gGpioB, GPO_B01_1_Pin, true);
 
 		HAL_IWDG_Refresh(&hiwdg);
-		osDelay(100);
+		osDelay(200);
 	}
 
 	return;

@@ -6,6 +6,10 @@
 
 	# Design #
 
+	#File Information
+		File:	I2C_NucleoL412KB.h
+		Author:	J. Beighel
+		Date:	2021-03-01
 */
 
 /**	@defgroup i2ciface_nucleo_priv : Private Objects

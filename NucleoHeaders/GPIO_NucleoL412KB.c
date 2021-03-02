@@ -1,3 +1,9 @@
+/* #File Information
+		File:	GPIO_NucleoL412KB.c
+		Author:	J. Beighel
+		Date:	2021-03-01
+*/
+
 /***** Includes		*****/
 	#include "GPIO_NucleoL412KB.h"
 
