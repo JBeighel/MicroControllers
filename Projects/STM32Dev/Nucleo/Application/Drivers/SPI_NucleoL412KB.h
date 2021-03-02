@@ -2,7 +2,14 @@
 	@brief		SPI General Interface Implementation for ST Nucleo Boards
 	@details	v0.1
 	#Description
-
+		In the CubeMX it has Clock Polarity (CPOL) where true has the clock remain
+		high and start with a falling edge.  Clock Phase (CPHA) has 1 Edge and 2
+		Edge options, meaning the first or second edge is used for data capture.
+		CPOL	CPHA	Mode
+		False	2 Edge	0
+		False	1 Edge	1
+		True	2 Edge	3
+		True	1 Edge	4
 	#File Information
 		File:	SPI_NucleoL412KB.h
 		Author:	J. Beighel

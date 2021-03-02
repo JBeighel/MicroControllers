@@ -30,6 +30,8 @@
 	#include "UART_NucleoL412KB.h"
 	#include "SPI_NucleoL412KB.h"
 
+	#include "APA102Driver.h"
+
 /*****	Defines		*****/
 
 

@@ -14,14 +14,7 @@
       <ProjectName>Nucleo</ProjectName>
       <ProjectNature>C</ProjectNature>
       <Secure />
-      <filestoremove>
-        <file>
-          <name>Core\Src\wwdg.c</name>
-        </file>
-        <file>
-          <name>Drivers\STM32L4xx_HAL_Driver\Src\stm32l4xx_hal_wwdg.c</name>
-        </file>
-      </filestoremove>
+      <filestoremove />
       <sourceEntriesToRemove>
         <sourceEntry />
       </sourceEntriesToRemove>

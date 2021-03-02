@@ -24,6 +24,8 @@
 /*****	Functions	*****/
 
 void BootstrapTask(void const * argument) {
+	sAPA102Info_t LEDString;
+
 	GPIO_INIT(&gGpioA, GPIO_A_HWINFO);
 	GPIO_INIT(&gGpioB, GPIO_B_HWINFO);
 	GPIO_INIT(&gGpioH, GPIO_H_HWINFO);
@@ -34,9 +36,18 @@ void BootstrapTask(void const * argument) {
 	UART_INIT(&gUart1, 115200, UART_8None1, UART_1_HWINFO);
 	UART_INIT(&gUart2, 115200, UART_8None1, UART_2_HWINFO);
 
-	SPI_INIT(&gSpi1, SPI_1_HWINFO, 4000000, SPI_MSBFirst, SPI_Mode1);
+	SPI_INIT(&gSpi1, SPI_1_HWINFO, 4000000, SPI_MSBFirst, SPI_Mode3);
 
 	TIME_INIT(&gTime);
+
+	APA102Initialize(&LEDString, &gSpi1);
+	APA102SetLightColor(&LEDString, 0, 70, 0, 0);
+	APA102SetLightColor(&LEDString, 1, 0, 70, 0);
+	APA102SetLightColor(&LEDString, 2, 0, 0, 70);
+	APA102SetLightColor(&LEDString, 3, 70, 0, 0);
+	APA102SetLightColor(&LEDString, 4, 0, 70, 0);
+
+	APA102UpdateLights(&LEDString);
 
 	while (1) {
 		gGpioB.pfDigitalWriteByPin(&gGpioB, GPO_B03_2_Pin, true);
