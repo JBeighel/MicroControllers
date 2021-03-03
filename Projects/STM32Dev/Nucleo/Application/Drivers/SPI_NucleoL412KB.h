@@ -30,7 +30,7 @@
 
 	#define SPI_INIT		NucleoInitializeSPIBus
 
-	#define SPI_CAPS		((eSPICapabilities_t)SPI_BeginTransfer | SPI_EndTransfer | SPI_BiDir1Byte)
+	#define SPI_CAPS		(SPI_BeginTransfer | SPI_EndTransfer | SPI_BiDir1Byte)
 
 	#define I2C_TIMEOUT		100
 

@@ -1,6 +1,6 @@
 /**	@defgroup	timeiface
 	@brief		General interface for basic time functions
-	@details	v0.2
+	@details	v0.3
 	# Intent #
 		This module is to create a common interface to provide basic time functions.  
 		Applications that need time functions can use this interface to access this 
@@ -39,7 +39,7 @@
 	#File Information
 		File:	TimeGeneralInterface.h
 		Author:	J. Beighel
-		Date:	2021-02-02
+		Date:	2021-03-03
 */
 
 #ifndef __TIMEIFACE
@@ -67,24 +67,34 @@
 		TimeCap_DelayMilliSec	= 0x0004,	/**< Can delay for milliseconds */
 		TimeCap_DelayMicroSec	= 0x0008,	/**< Can delay for microseconds */
 		TimeCap_Delay100NanoSec	= 0x0010,	/**< Can delay for 100s of nanoseconds */
+
+		TimeCap_WatchdogStart	= 0x0020,	/**< Can start the watchdog timer after initialization */
+		TimeCap_WatchdogStop	= 0x0020,	/**< Can stop the watchdog timer during runtime */
+		TimeCap_WatchdogRefresh	= 0x0040,	/**< Can refresh the watchdog timer */
 	} eTimeCapabilities_t;
 	
 	/**	@brief		Function type to use in order to get the current system tick count
 		@return		The current cound of system ticks, this number will overflow and wrap 
 						at some point
-		@ingroup	gpioiface
+		@ingroup	timeiface
 	*/
 	typedef uint32_t (*pfGetCurrentTicks_t)(void);
 	
 	/**	@brief		Function type to use in order to delay for a specified time period
 		@details	The time period can be in any units
 		@param		nDelayTime		Number of milliseconds to delay for
-		@ingroup	gpioiface
+		@ingroup	timeiface
 	*/
 	typedef eReturn_t (*pfTimeDelay_t)(uint32_t nDelayAmount);
 	
 	typedef eReturn_t (*pfTimeIfaceInitialize_t)(sTimeIface_t *pTime);
 	
+	/**	@brief		Function type to use for controlling the watchdog
+	 *	@return		Success if the operation succeeds or a code indicating the failure
+	 *	@ingroup	timeiface
+	 */
+	typedef eReturn_t (*pfWatchdogControl_t)(void);
+
 	/**	@brief		Interface object for time methods
 		@ingroup	timeiface
 	*/
@@ -95,6 +105,10 @@
 		pfTimeDelay_t pfDelayMicroSeconds;	/**< Function pointer for delay by microseconds */
 		pfTimeDelay_t pfDelay100NanoSeconds;	/**< Function pointer for delay by 100s nanoseconds */
 		
+		pfWatchdogControl_t pfWatchdogStart;	/**< Function pointer to start watchdog timer */
+		pfWatchdogControl_t pfWatchdogStop;		/**< Function pointer to stop watchdog timer */
+		pfWatchdogControl_t pfWatchdogRefresh;	/**< Function pointer for watchdog timer refresh */
+
 		eTimeCapabilities_t eCapabilities;	/**< Capabilities of this implementation */
 	} sTimeIface_t;
 	

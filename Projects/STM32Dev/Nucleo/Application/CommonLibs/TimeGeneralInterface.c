@@ -1,6 +1,6 @@
 /**	File:	TimeGeneralInterface.c
 	Author:	J. Beighel
-	Date:	2021-02-02
+	Date:	2021-03-03
 */
 
 /*****	Includes	*****/
@@ -29,6 +29,11 @@
 	*/
 	eReturn_t TimeDelayNotImplemented(uint32_t nDelayAmount);
 
+	/**	@brief	Watchdog timer control function not implemented
+	 *	@ingroup	timeiface
+	 */
+	eReturn_t WatchdogNotImplemented(void);
+
 /*****	Functions	*****/
 
 eReturn_t TimeInterfaceInitialize(sTimeIface_t *pIface) {
@@ -38,6 +43,10 @@ eReturn_t TimeInterfaceInitialize(sTimeIface_t *pIface) {
 	pIface->pfDelayMicroSeconds = &TimeDelayNotImplemented;
 	pIface->pfDelay100NanoSeconds = &TimeDelayNotImplemented;
 	
+	pIface->pfWatchdogStart = &WatchdogNotImplemented;
+	pIface->pfWatchdogStop = &WatchdogNotImplemented;
+	pIface->pfWatchdogRefresh = &WatchdogNotImplemented;
+
 	pIface->eCapabilities = TimeCap_None;
 	
 	return Success;
@@ -48,5 +57,9 @@ uint32_t TimeCurrentTicksNotImplemented(void) {
 }
 
 eReturn_t TimeDelayNotImplemented(uint32_t nDelayAmount) {
+	return Fail_NotImplem;
+}
+
+eReturn_t WatchdogNotImplemented(void) {
 	return Fail_NotImplem;
 }

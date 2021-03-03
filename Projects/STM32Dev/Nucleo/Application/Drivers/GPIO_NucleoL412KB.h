@@ -11,6 +11,10 @@
 		With the PH3 pin set to output I could not get it to change state.
 			Unsure if this is a settings issue or code problem.
 
+		The watchdog interface is initialized and started during the boot up
+		functions the Cube generates.  The only action that can be taken is to
+		refresh the watchdog to prevent restarts.
+
 	#File Information
 		File:	GPIO_NucleoL412KB.h
 		Author:	J. Beighel
@@ -21,9 +25,19 @@
 	#define __GPIONUCLEO
 
 /***** Includes		*****/
+	/**	@brief		Setting to use FreeRTOS as the basis of time functions
+	 *	@ingroup	gpionucleo
+	 */
 	#define NUCLEO_TIMESRC_RTOS	1
+
+	/**	@brief		Setting to use the HAL as the basis of time functions
+	 *	@ingroup	gpionucleo
+	 */
 	#define NUCLEO_TIMESRC_HAL	2
 
+	/**	@brief		Defines which timer source will be used
+	 *	@ingroup	gpionucleo
+	 */
 	#define NUCLEO_TIMESRC		NUCLEO_TIMESRC_RTOS
 
 	#include "CommonUtils.h"
@@ -34,6 +48,7 @@
 	#include "stm32l4xx.h"
 	#include "i2c.h"
 	#include "usart.h"
+	#include "iwdg.h"
 
 	#if NUCLEO_TIMESRC == NUCLEO_TIMESRC_RTOS
 		#include "FreeRTOS.h"
@@ -44,7 +59,7 @@
 
 
 /***** Constants	*****/
-	#define GPIO_CAPS		((eGPIOCapabilities_t)GPIOCap_DigitalWrite | GPIOCap_DigitalRead)
+	#define GPIO_CAPS		(GPIOCap_DigitalWrite | GPIOCap_DigitalRead)
 
 	#define GPIO_INIT		NucleoGPIOPortInitialize
 
@@ -71,7 +86,7 @@
 
 	#define TIME_INIT			NucleoTimeInitialize
 
-	#define TIME_CAPS			((eTimeCapabilities_t)TimeCap_GetTicks | TimeCap_DelaySec | TimeCap_DelayMilliSec)
+	#define TIME_CAPS			(TimeCap_GetTicks | TimeCap_DelaySec | TimeCap_DelayMilliSec | TimeCap_WatchdogRefresh)
 
 /***** Constants	*****/
 
@@ -95,6 +110,8 @@
 	eReturn_t NucleoTimeDelaySeconds(uint32_t nDelayAmount);
 
 	eReturn_t NucleoTimeDelayMilliSeconds(uint32_t nDelayAmount);
+
+	eReturn_t NucleoWatchdogRefresh(void);
 
 /***** Functions	*****/
 

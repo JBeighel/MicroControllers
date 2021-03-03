@@ -19,7 +19,7 @@
 	#include "SPIGeneralInterface.h"
 
 /*****	Defines		*****/
-	
+	#define APA102_SPICAPS		(SPI_BiDir1Byte)
 	
 /*****	Definitions	*****/
 	typedef eReturn_t	eAPA102Return_t;

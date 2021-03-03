@@ -17,7 +17,6 @@
 	#include "task.h"
 	#include "main.h"
 	#include "cmsis_os.h"
-	#include "iwdg.h"
 
 	#include "PinSupport.h"
 	#include "BoardSupport.h"

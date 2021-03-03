@@ -137,3 +137,8 @@ eReturn_t NucleoTimeDelayMilliSeconds(uint32_t nDelayAmount) {
 
 	return Success;
 }
+
+eReturn_t NucleoWatchdogRefresh(void) {
+	HAL_IWDG_Refresh(&hiwdg);
+	return Success;
+}

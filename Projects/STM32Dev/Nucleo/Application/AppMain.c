@@ -59,13 +59,13 @@ void BootstrapTask(void const * argument) {
 		//Toggle the single LED
 		gGpioB.pfDigitalWriteByPin(&gGpioB, GPO_B03_2_Pin, true);
 
-		HAL_IWDG_Refresh(&hiwdg);
+		gTime.pfWatchdogRefresh();
 		osDelay(200);
 
 		gGpioB.pfDigitalWriteByPin(&gGpioB, GPO_B03_2_Pin, false);
 
 		//Feed the watchdog
-		HAL_IWDG_Refresh(&hiwdg);
+		gTime.pfWatchdogRefresh();
 		osDelay(200);
 	}
 

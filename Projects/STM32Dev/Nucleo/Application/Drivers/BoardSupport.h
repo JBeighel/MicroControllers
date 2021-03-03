@@ -18,7 +18,9 @@
 	#include "APA102Driver.h"
 
 /*****	Defines		*****/
-
+	#if (APA102_SPICAPS & SPI_CAPS) != APA102_SPICAPS
+		#error "APA102 driver SPI capabilities are not met by current implementation"
+	#endif
 
 /*****	Definitions	*****/
 
