@@ -31,14 +31,16 @@
 	sTimeIface_t gTime;
 
 /*****	Prototypes 	*****/
-
+	void GPIA03IntHandler(sGPIOIface_t *pIface, GPIOID_t nPin, void *pParam);
 
 /*****	Functions	*****/
 eReturn_t PinSetup() {
+	//Set up all IO pins
 	GPIO_INIT(&gGpioA, GPIO_A_HWINFO);
 	GPIO_INIT(&gGpioB, GPIO_B_HWINFO);
 	GPIO_INIT(&gGpioH, GPIO_H_HWINFO);
 
+	//Set up all buses
 	I2C_INIT(&gI2C1, true, 100000, I2C_1_HWINFO);
 	I2C_INIT(&gI2C3, true, 100000, I2C_3_HWINFO);
 
@@ -49,5 +51,17 @@ eReturn_t PinSetup() {
 
 	TIME_INIT(&gTime);
 
+	//Arrange interrupts
+	gGpioA.pfSetInterrupt(&gGpioA, GPI_A03_1_Pin, &GPIA03IntHandler, true, NULL);
+
 	return Success;
+}
+
+void GPIA03IntHandler(sGPIOIface_t *pIface, GPIOID_t nPin, void *pParam) {
+	int nCtr;
+
+	nCtr = 0;
+	nCtr += 1;
+
+	return;
 }

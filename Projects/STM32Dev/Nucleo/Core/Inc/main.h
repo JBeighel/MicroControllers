@@ -60,6 +60,7 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 #define GPI_A03_1_Pin GPIO_PIN_3
 #define GPI_A03_1_GPIO_Port GPIOA
+#define GPI_A03_1_EXTI_IRQn EXTI3_IRQn
 #define GPI_A04_2_Pin GPIO_PIN_4
 #define GPI_A04_2_GPIO_Port GPIOA
 #define GPI_A05_3_Pin GPIO_PIN_5

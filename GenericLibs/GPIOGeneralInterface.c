@@ -1,6 +1,6 @@
 /*	File:	GPIOGeneralInterface.c
 	Author:	J. Beighel
-	Date:	28-02-2021
+	Date:	2021-03-04
 */
 
 /***** Includes		*****/
@@ -32,6 +32,7 @@
 	
 	eGPIOReturn_t GPIOAnalogReadByPin(sGPIOIface_t *pIface, uint16_t nGPIOPin, uint32_t *nAnaValue);
 
+	eGPIOReturn_t GPIOSetInterruptNotImplem(sGPIOIface_t *pIface, GPIOID_t nGPIOPin, pfGPIOInterrupt_t pHandler, bool bEnable, void *pParam);
 
 /***** Functions	*****/
 
@@ -44,6 +45,7 @@ eGPIOReturn_t GPIOInterfaceInitialize(sGPIOIface_t *pIface) {
 	pIface->pfPWMWriteByPin = &GPIOPWMWriteByPin;
 	pIface->pfAnalogWriteByPin = &GPIOAnalogWriteByPin;
 	pIface->pfAnalogReadByPin = &GPIOAnalogReadByPin;
+	pIface->pfSetInterrupt = &GPIOSetInterruptNotImplem;
 
 	memset(pIface->aGPIO, 0, sizeof(sGPIOInfo_t) * GPIO_IOCNT);
 
@@ -88,5 +90,9 @@ eGPIOReturn_t GPIOAnalogWriteByPin(sGPIOIface_t *pIface, GPIOID_t nGPIOPin, uint
 }
 
 eGPIOReturn_t GPIOAnalogReadByPin(sGPIOIface_t *pIface, GPIOID_t nGPIOPin, uint32_t *nAnaValue) {
+	return GPIOFail_Unsupported;
+}
+
+eGPIOReturn_t GPIOSetInterruptNotImplem(sGPIOIface_t *pIface, GPIOID_t nGPIOPin, pfGPIOInterrupt_t pHandler, bool bEnable, void *pParam) {
 	return GPIOFail_Unsupported;
 }

@@ -1,12 +1,12 @@
 /**	@defgroup	gpioiface
 	@brief		General interface for using GPIO pins
-	@details	v0.5
+	@details	v0.6
 	#Description
 	
 	#File Information
 		File:	GPIOGeneralInterface.h
 		Author:	J. Beighel
-		Date:	28-02-2021
+		Date:	2021-03-04
 */
 
 #ifndef __gpioiface
@@ -47,6 +47,7 @@
 		GPIOCap_PWMWrite		= 0x0010,
 		GPIOCap_AnalogWrite		= 0x0020,
 		GPIOCap_AnalogRead		= 0x0040,
+		GPIOCap_SetInterrupt	= 0x0080,
 	} eGPIOCapabilities_t;
 	
 	/**	@brief		Enumeration of all GPIO interface return values
@@ -75,6 +76,8 @@
 		GPIO_AnalogOutput		= 0x20,
 	} eGPIOModes_t;
 
+	typedef void (*pfGPIOInterrupt_t)(sGPIOIface_t *pIface, GPIOID_t nPin, void *pParam);
+
 	typedef eGPIOReturn_t (*pfGPIOPortInitialize_t)(sGPIOIface_t *pIface, void *pHWInfo);
 	
 	typedef eGPIOReturn_t (*pfGPIOSetModeByPin_t)(sGPIOIface_t *pIface, GPIOID_t nGPIOPin, eGPIOModes_t eMode);
@@ -90,6 +93,8 @@
 	typedef eGPIOReturn_t (*pfGPIOAnalogWriteByPin_t)(sGPIOIface_t *pIface, GPIOID_t nGPIOPin, uint32_t nAnaValue);
 	
 	typedef eGPIOReturn_t (*pfGPIOAnalogReadByPin_t)(sGPIOIface_t *pIface, GPIOID_t nGPIOPin, uint32_t *nAnaValue);
+
+	typedef eGPIOReturn_t (*pfGPIOSetInterrupt_t)(sGPIOIface_t *pIface, GPIOID_t nGPIOPin, pfGPIOInterrupt_t pHandler, bool bEnable, void *pParam);
 
 	typedef struct sGPIOInfo_t {
 		eGPIOModes_t eCapabilities;
@@ -109,6 +114,7 @@
 		pfGPIOPWMWriteByPin_t pfPWMWriteByPin;
 		pfGPIOAnalogWriteByPin_t pfAnalogWriteByPin;
 		pfGPIOAnalogReadByPin_t pfAnalogReadByPin;
+		pfGPIOSetInterrupt_t pfSetInterrupt;
 		
 		sGPIOInfo_t aGPIO[GPIO_IOCNT];
 		

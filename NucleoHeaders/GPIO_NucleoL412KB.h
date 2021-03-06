@@ -11,19 +11,45 @@
 		With the PH3 pin set to output I could not get it to change state.
 			Unsure if this is a settings issue or code problem.
 
+		The watchdog interface is initialized and started during the boot up
+		functions the Cube generates.  The only action that can be taken is to
+		refresh the watchdog to prevent restarts.
+
+		In the STM Cube IDE the watchdog will cause a restart when a breakpoint
+		is hit.  It must be disabled during debugging sessions.
+
+		The interrupt function replaces the _weak function declared to handle it
+		by the STM Cube.  The Cube generated code clears the interrupt so only
+		the application code needs included.
+
+		Macros are provided to start and stop the interrupt from being sent:
+		HAL_NVIC_DisableIRQ(EXTI3_IRQn);
+		HAL_NVIC_EnableIRQ(EXTI3_IRQn);
+		These shut down all interrupts in the EXTI3 section.
+
 	#File Information
 		File:	GPIO_NucleoL412KB.h
 		Author:	J. Beighel
-		Date:	2021-03-01
+		Date:	2021-03-05
 */
 
 #ifndef __GPIONUCLEO
 	#define __GPIONUCLEO
 
 /***** Includes		*****/
+	/**	@brief		Setting to use FreeRTOS as the basis of time functions
+	 *	@ingroup	gpionucleo
+	 */
 	#define NUCLEO_TIMESRC_RTOS	1
+
+	/**	@brief		Setting to use the HAL as the basis of time functions
+	 *	@ingroup	gpionucleo
+	 */
 	#define NUCLEO_TIMESRC_HAL	2
 
+	/**	@brief		Defines which timer source will be used
+	 *	@ingroup	gpionucleo
+	 */
 	#define NUCLEO_TIMESRC		NUCLEO_TIMESRC_RTOS
 
 	#include "CommonUtils.h"
@@ -32,26 +58,45 @@
 
 	#include "main.h"
 	#include "stm32l4xx.h"
+	#include "stm32l4xx_it.h"
 	#include "i2c.h"
 	#include "usart.h"
+	#include "iwdg.h"
 
 	#if NUCLEO_TIMESRC == NUCLEO_TIMESRC_RTOS
 		#include "FreeRTOS.h"
 		#include "task.h"
 	#endif
 
-/***** Definitions	*****/
-
-
 /***** Constants	*****/
-	#define GPIO_CAPS		((eGPIOCapabilities_t)GPIOCap_DigitalWrite | GPIOCap_DigitalRead)
+	/**	@brief		Specifies the capabilities provided by this implementation of the GPIO interface
+	 *	@ingroup	gpionucleo
+	 */
+	#define GPIO_CAPS		(GPIOCap_DigitalWrite | GPIOCap_DigitalRead | GPIOCap_SetInterrupt)
 
+	/**	@brief		Function to call to initialize this implementation of the GPIO interface
+	 *	@ingroup	gpionucleo
+	 */
 	#define GPIO_INIT		NucleoGPIOPortInitialize
 
-	#define GPIO_A_HWINFO	((void *)GPIOA)
-	#define GPIO_B_HWINFO	((void *)GPIOB)
-	#define GPIO_H_HWINFO	((void *)GPIOH)
+	/**	@brief		Hawrdware information for GPIO Port A
+	 *	@ingroup	gpionucleo
+	 */
+	#define GPIO_A_HWINFO	((void *)&gGPIOPortA)
 
+	/**	@brief		Hawrdware information for GPIO Port B
+	 *	@ingroup	gpionucleo
+	 */
+	#define GPIO_B_HWINFO	((void *)&gGPIOPortB)
+
+	/**	@brief		Hawrdware information for GPIO Port H
+	 *	@ingroup	gpionucleo
+	 */
+	#define GPIO_H_HWINFO	((void *)&gGPIOPortH)
+
+	/**	@brief		Number of GPIO in each port
+	 *	@ingroup	gpionucleo
+	 */
 	#define NUCLEO_GPIOCNT		16
 
 	/**	@brief		Available bit depth for Analog Inputs
@@ -69,14 +114,40 @@
 	*/
 	#define NUCLEO_PWMBITDEPTH	10
 
+	/**	@brief		Function to call to initialize this implementation of the time interface
+	 *	@ingroup	gpionucleo
+	 */
 	#define TIME_INIT			NucleoTimeInitialize
 
-	#define TIME_CAPS			((eTimeCapabilities_t)TimeCap_GetTicks | TimeCap_DelaySec | TimeCap_DelayMilliSec)
+	/**	@brief		Specifies the capabilities provided by this implementation of the time interface
+	 *	@ingroup	gpionucleo
+	 */
+	#define TIME_CAPS			(TimeCap_GetTicks | TimeCap_DelaySec | TimeCap_DelayMilliSec | TimeCap_WatchdogRefresh)
 
-/***** Constants	*****/
+/***** Definitions	*****/
+	/**	@brief		Hardware information for a GPIO interrupt
+	 *	@ingroup	gpionucleo
+	 */
+	typedef struct sNucleoGPIOIntInfo_t {
+		bool bIntEnable;
+		pfGPIOInterrupt_t pfIntFunc;
+		void *pParam;
+	} sNucleoGPIOIntInfo_t;
+
+	/**	@brief		Hardware information for a GPIO port
+	 *	@ingroup	gpionucleo
+	 */
+	typedef struct sNucleoGPIOPortInfo_t {
+		GPIO_TypeDef *pPort;
+		sNucleoGPIOIntInfo_t aIntInfo[NUCLEO_GPIOCNT];
+		sGPIOIface_t *pIface;
+	} sNucleoGPIOPortInfo_t;
 
 
 /***** Globals		*****/
+	extern sNucleoGPIOPortInfo_t gGPIOPortA;
+	extern sNucleoGPIOPortInfo_t gGPIOPortB;
+	extern sNucleoGPIOPortInfo_t gGPIOPortH;
 
 
 /***** Prototypes 	*****/
@@ -88,6 +159,8 @@
 	
 	eGPIOReturn_t NucleoGPIODigitalReadByPin(sGPIOIface_t *pIface, uint16_t nGPIOPin, bool *bState);
 
+	eGPIOReturn_t NucleoGPIOSetInterrupt(sGPIOIface_t *pIface, GPIOID_t nGPIOPin, pfGPIOInterrupt_t pHandler, bool bEnable, void *pParam);
+
 	eReturn_t NucleoTimeInitialize(sTimeIface_t *pIface);
 
 	uint32_t NucleoGetCurrentTicks(void);
@@ -95,6 +168,8 @@
 	eReturn_t NucleoTimeDelaySeconds(uint32_t nDelayAmount);
 
 	eReturn_t NucleoTimeDelayMilliSeconds(uint32_t nDelayAmount);
+
+	eReturn_t NucleoWatchdogRefresh(void);
 
 /***** Functions	*****/
 
