@@ -1,6 +1,6 @@
 /**	@defgroup	w5500driver
 	@brief		Driver for the Wizner W5500 Ethernet device
-	@details	v0.2
+	@details	v0.3
 	# Description #
 		This is an ethernet device that includes buffers for transmit/receive as well as includes
 		the entire Ethernet stack.  It will allow 8 sockets to be used for Ethernet communication
@@ -21,7 +21,7 @@
 	# File Info #
 		File:	W5500Driver.c
 		Author:	J. Beighel
-		Date:	08-27-2020
+		Date:	2021-03-06
 */
 
 #ifndef __W5500DRIVER
