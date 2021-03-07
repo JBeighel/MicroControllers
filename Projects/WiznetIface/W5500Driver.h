@@ -568,6 +568,8 @@
 	*/
 	eW5500Return_t W5500CreateTCPServer(sW5500Obj_t *pDev, sTCPServ_t *pTCPServ);
 	
+	eW5500Return_t W5500CreateTCPClient(sW5500Obj_t *pDev, sTCPClient_t *pTCPClient);
+	
 /***** Functions	*****/
 
 #endif
