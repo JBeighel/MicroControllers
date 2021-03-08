@@ -39,7 +39,7 @@
 	#File Information
 		File:	TimeGeneralInterface.h
 		Author:	J. Beighel
-		Date:	2021-03-03
+		Date:	2021-03-08
 */
 
 #ifndef __TIMEIFACE
@@ -56,8 +56,6 @@
 
 /*****	Definitions	*****/
 	typedef struct sTimeIface_t sTimeIface_t;
-
-	typedef void (*pfTimerInterrupt_t)(sTimeIface_t *pTime);
 
 	/**	@brief		Enumeration of time interface capabilities
 		@ingroup	timeiface
@@ -76,10 +74,11 @@
 
 		TimeCap_TimerStart		= 0x0080,
 		TimeCap_TimerStop		= 0x0100,
-		TimeCap_TimerInterrupt	= 0x0200,
-		TimeCap_TimerSetCount	= 0x0400,
+		TimeCap_TimerSetMillisec= 0x0200,
 	} eTimeCapabilities_t;
 	
+	typedef void (*pfTimerInterruptHandler_t)(void *pTimerHW, void *pParam);
+
 	/**	@brief		Function type to use in order to get the current system tick count
 		@return		The current cound of system ticks, this number will overflow and wrap 
 						at some point
@@ -102,11 +101,13 @@
 	 */
 	typedef eReturn_t (*pfWatchdogControl_t)(void);
 
-	typedef eReturn_t (*pfTimerStart_t)(void *pTimerHW);
+	typedef eReturn_t (*pfIntSetHandler_t)(void *pTimerHW, pfTimerInterruptHandler_t pfHandler);
 
-	typedef eReturn_t (*pfTimerStop_t)(void *pTimerHW);
+	typedef eReturn_t (*pfIntStart_t)(void *pTimerHW);
 
-	typedef eReturn_t (*pfTimerSetCount_t)(uint32_t nCountVal);
+	typedef eReturn_t (*pfIntStop_t)(void *pTimerHW);
+
+	typedef eReturn_t (*pfIntSetDuration_t)(void *pTimerHW, uint32_t nCountVal);
 
 	/**	@brief		Interface object for time methods
 		@ingroup	timeiface
@@ -122,10 +123,10 @@
 		pfWatchdogControl_t pfWatchdogStop;		/**< Function pointer to stop watchdog timer */
 		pfWatchdogControl_t pfWatchdogRefresh;	/**< Function pointer for watchdog timer refresh */
 
-		pfTimerInterrupt_t pfTimerInterrupt;
-		pfTimerStart_t pfTImerStart;
-		pfTimerStop_t pfTimerStop;
-		pfTimerSetCount_t pfTimerSetInterruptCount;
+		pfIntSetHandler_t pfInterruptSetHandler;
+		pfIntStart_t pfInterruptStart;
+		pfIntStop_t pfInterruptStop;
+		pfIntSetDuration_t pfInterruptSetMilliseconds;
 
 		eTimeCapabilities_t eCapabilities;	/**< Capabilities of this implementation */
 	} sTimeIface_t;

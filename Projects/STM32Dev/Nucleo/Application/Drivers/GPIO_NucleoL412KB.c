@@ -188,7 +188,12 @@ eReturn_t NucleoTimeInitialize(sTimeIface_t *pIface) {
 	pIface->pfGetTicks = &NucleoGetCurrentTicks;
 	pIface->pfDelaySeconds = &NucleoTimeDelaySeconds;
 	pIface->pfDelayMilliSeconds = &NucleoTimeDelayMilliSeconds;
+
 	pIface->pfWatchdogRefresh = &NucleoWatchdogRefresh;
+
+	pIface->pfInterruptStart = &NucleoTimerStart;
+	pIface->pfInterruptStop = &NucleoTimerStop;
+	pIface->pfInterruptSetMilliseconds = &NucleoTimerSetMilliseconds;
 
 	pIface->eCapabilities = TIME_CAPS;
 
@@ -302,4 +307,35 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 	}
 
 	return;
+}
+
+eReturn_t NucleoTimerStart(void *pTimerHW) {
+	sNucleoTimerInfo_t *pTimer = (sNucleoTimerInfo_t *)pTimerHW;
+	HAL_TIM_OC_Start_IT(pTimer->pHWTimer, pTimer->nChannel);
+
+	return Success;
+}
+
+eReturn_t NucleoTimerStop(void *pTimerHW) {
+	sNucleoTimerInfo_t *pTimer = (sNucleoTimerInfo_t *)pTimerHW;
+	HAL_TIM_OC_Stop_IT(pTimer->pHWTimer, pTimer->nChannel);
+
+	return Success;
+}
+
+eReturn_t NucleoTimerSetMilliseconds(void *pTimerHW, uint32_t nCountVal) {
+	float nClockCnt;
+	sNucleoTimerInfo_t *pTimer = (sNucleoTimerInfo_t *)pTimerHW;
+
+	//TimerPeriod = ((ARR + 1) * (PSC + 1)) / ClkFreq
+	//So ARR = ((ClkFreq * TimerPeriod) / (PSC + 1)) - 1
+	nClockCnt = TIME_TIMERCLKFREQ * ((float)nCountVal / 1000);
+	nClockCnt /= pTimer->pHWTimer->Instance->PSC + 1;
+	nClockCnt -= 1;
+
+	//Calculate how many clocks to reach that
+	pTimer->pHWTimer->Init.Period = (uint32_t)nClockCnt;
+	pTimer->pHWTimer->Instance->ARR = pTimer->pHWTimer->Init.Period;
+
+	return Success;
 }

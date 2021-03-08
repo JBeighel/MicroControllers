@@ -125,6 +125,10 @@
 	 */
 	#define TIME_CAPS			(TimeCap_GetTicks | TimeCap_DelaySec | TimeCap_DelayMilliSec | TimeCap_WatchdogRefresh)
 
+	#define TIME_HWTIMER		((void *)&gTimer2Ch1)
+
+	#define TIME_TIMERCLKFREQ	32000000
+
 /***** Definitions	*****/
 	/**	@brief		Hardware information for a GPIO interrupt
 	 *	@ingroup	gpionucleo
@@ -176,6 +180,12 @@
 	eReturn_t NucleoTimeDelayMilliSeconds(uint32_t nDelayAmount);
 
 	eReturn_t NucleoWatchdogRefresh(void);
+
+	eReturn_t NucleoTimerStart(void *pTimerHW);
+
+	eReturn_t NucleoTimerStop(void *pTimerHW);
+
+	eReturn_t NucleoTimerSetMilliseconds(void *pTimerHW, uint32_t nCountVal);
 
 /***** Functions	*****/
 
