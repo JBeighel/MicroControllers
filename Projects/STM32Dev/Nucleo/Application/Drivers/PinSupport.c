@@ -33,6 +33,8 @@
 /*****	Prototypes 	*****/
 	void GPIA03IntHandler(sGPIOIface_t *pIface, GPIOID_t nPin, void *pParam);
 
+	void TimerCallback(void *pTimerHW, void *pParam);
+
 /*****	Functions	*****/
 eReturn_t PinSetup() {
 	//Set up all IO pins
@@ -53,6 +55,7 @@ eReturn_t PinSetup() {
 
 	//Arrange interrupts
 	gGpioA.pfSetInterrupt(&gGpioA, GPI_A03_1_Pin, &GPIA03IntHandler, true, NULL);
+	gTime.pfInterruptSetHandler(TIMEINT_2_HWINFO, &TimerCallback, NULL);
 
 	return Success;
 }
@@ -62,6 +65,23 @@ void GPIA03IntHandler(sGPIOIface_t *pIface, GPIOID_t nPin, void *pParam) {
 
 	nCtr = 0;
 	nCtr += 1;
+
+	return;
+}
+
+//Timer 2 Channel 1 counter call back (auto resets to trigger again)
+void TimerCallback(void *pTimerHW, void *pParam) {
+	static bool gbLightOn = false;
+
+	if (gbLightOn == false) {
+		gGpioB.pfDigitalWriteByPin(&gGpioB, GPO_B03_2_Pin, true);
+		gbLightOn = true;
+		gTime.pfInterruptSetMilliseconds(pTimerHW, 1000);
+	} else {
+		gGpioB.pfDigitalWriteByPin(&gGpioB, GPO_B03_2_Pin, false);
+		gbLightOn = false;
+		gTime.pfInterruptSetMilliseconds(pTimerHW, 2000);
+	}
 
 	return;
 }

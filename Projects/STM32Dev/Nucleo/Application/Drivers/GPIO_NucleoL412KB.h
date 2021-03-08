@@ -123,9 +123,9 @@
 	/**	@brief		Specifies the capabilities provided by this implementation of the time interface
 	 *	@ingroup	gpionucleo
 	 */
-	#define TIME_CAPS			(TimeCap_GetTicks | TimeCap_DelaySec | TimeCap_DelayMilliSec | TimeCap_WatchdogRefresh)
+	#define TIME_CAPS			(TimeCap_GetTicks | TimeCap_DelaySec | TimeCap_DelayMilliSec | TimeCap_WatchdogRefresh | TimeCap_IntStart | TimeCap_IntStop | TimeCap_IntSetMillisec)
 
-	#define TIME_HWTIMER		((void *)&gTimer2Ch1)
+	#define TIMEINT_2_HWINFO	((void *)&gTimer2Ch1)
 
 	#define TIME_TIMERCLKFREQ	32000000
 
@@ -151,6 +151,8 @@
 	typedef struct sNucleoTimerInfo_t {
 		TIM_HandleTypeDef *pHWTimer;
 		uint32_t nChannel;
+		pfTimerInterruptHandler_t pfHandler;
+		void *pParam;
 	} sNucleoTimerInfo_t;
 
 /***** Globals		*****/
@@ -158,7 +160,7 @@
 	extern sNucleoGPIOPortInfo_t gGPIOPortB;
 	extern sNucleoGPIOPortInfo_t gGPIOPortH;
 
-	extern const sNucleoTimerInfo_t gTimer2Ch1;
+	extern sNucleoTimerInfo_t gTimer2Ch1;
 
 /***** Prototypes 	*****/
 	eGPIOReturn_t NucleoGPIOPortInitialize(sGPIOIface_t *pIface, void *pHWInfo);
@@ -186,6 +188,8 @@
 	eReturn_t NucleoTimerStop(void *pTimerHW);
 
 	eReturn_t NucleoTimerSetMilliseconds(void *pTimerHW, uint32_t nCountVal);
+
+	eReturn_t NucleoIntSetHandler(void *pTimerHW, pfTimerInterruptHandler_t pfHandler, void *pParam);
 
 /***** Functions	*****/
 

@@ -40,7 +40,7 @@
 
 	eReturn_t TimerSetMillisecondsNotImplemented(void *pTimerHW, uint32_t nCountVal);
 
-	eReturn_t TimerInterruptNotImplemented(void *pTimerHW, pfTimerInterruptHandler_t pfHandler);
+	eReturn_t TimerInterruptNotImplemented(void *pTimerHW, pfTimerInterruptHandler_t pfHandler, void *pParam);
 
 /*****	Functions	*****/
 
@@ -89,6 +89,6 @@ eReturn_t TimerSetMillisecondsNotImplemented(void *pTimerHW, uint32_t nCountVal)
 	return Fail_NotImplem;
 }
 
-eReturn_t TimerInterruptNotImplemented(void *pTimerHW, pfTimerInterruptHandler_t pfHandler) {
+eReturn_t TimerInterruptNotImplemented(void *pTimerHW, pfTimerInterruptHandler_t pfHandler, void *pParam) {
 	return Fail_NotImplem;
 }

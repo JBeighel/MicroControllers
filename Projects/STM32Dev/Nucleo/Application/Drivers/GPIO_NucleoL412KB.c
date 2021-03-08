@@ -21,7 +21,7 @@
 	sNucleoGPIOPortInfo_t gGPIOPortB = { .pPort = GPIOB };
 	sNucleoGPIOPortInfo_t gGPIOPortH = { .pPort = GPIOH };
 
-	const sNucleoTimerInfo_t gTimer2Ch1 = { .pHWTimer = &htim2, .nChannel = TIM_CHANNEL_1};
+	sNucleoTimerInfo_t gTimer2Ch1 = { .pHWTimer = &htim2, .nChannel = TIM_CHANNEL_1, .pfHandler = NULL, .pParam = NULL };
 
 /***** Prototypes 	*****/
 	void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin);
@@ -194,6 +194,7 @@ eReturn_t NucleoTimeInitialize(sTimeIface_t *pIface) {
 	pIface->pfInterruptStart = &NucleoTimerStart;
 	pIface->pfInterruptStop = &NucleoTimerStop;
 	pIface->pfInterruptSetMilliseconds = &NucleoTimerSetMilliseconds;
+	pIface->pfInterruptSetHandler = &NucleoIntSetHandler;
 
 	pIface->eCapabilities = TIME_CAPS;
 
@@ -338,4 +339,22 @@ eReturn_t NucleoTimerSetMilliseconds(void *pTimerHW, uint32_t nCountVal) {
 	pTimer->pHWTimer->Instance->ARR = pTimer->pHWTimer->Init.Period;
 
 	return Success;
+}
+
+eReturn_t NucleoIntSetHandler(void *pTimerHW, pfTimerInterruptHandler_t pfHandler, void *pParam) {
+	sNucleoTimerInfo_t *pTimer = (sNucleoTimerInfo_t *)pTimerHW;
+
+	pTimer->pfHandler = pfHandler;
+	pTimer->pParam = pParam;
+
+	return Success;
+}
+
+//Timer 2 Channel 1 counter call back (auto resets to trigger again)
+void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef *htim) {
+	if (gTimer2Ch1.pHWTimer == htim) {
+		gTimer2Ch1.pfHandler((void *)&gTimer2Ch1, gTimer2Ch1.pParam);
+	}
+
+	return;
 }

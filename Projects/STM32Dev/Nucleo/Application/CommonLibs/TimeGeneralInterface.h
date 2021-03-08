@@ -72,9 +72,9 @@
 		TimeCap_WatchdogStop	= 0x0020,	/**< Can stop the watchdog timer during runtime */
 		TimeCap_WatchdogRefresh	= 0x0040,	/**< Can refresh the watchdog timer */
 
-		TimeCap_TimerStart		= 0x0080,
-		TimeCap_TimerStop		= 0x0100,
-		TimeCap_TimerSetMillisec= 0x0200,
+		TimeCap_IntStart		= 0x0080,
+		TimeCap_IntStop			= 0x0100,
+		TimeCap_IntSetMillisec	= 0x0200,
 	} eTimeCapabilities_t;
 	
 	typedef void (*pfTimerInterruptHandler_t)(void *pTimerHW, void *pParam);
@@ -101,7 +101,7 @@
 	 */
 	typedef eReturn_t (*pfWatchdogControl_t)(void);
 
-	typedef eReturn_t (*pfIntSetHandler_t)(void *pTimerHW, pfTimerInterruptHandler_t pfHandler);
+	typedef eReturn_t (*pfIntSetHandler_t)(void *pTimerHW, pfTimerInterruptHandler_t pfHandler, void *pParam);
 
 	typedef eReturn_t (*pfIntStart_t)(void *pTimerHW);
 
