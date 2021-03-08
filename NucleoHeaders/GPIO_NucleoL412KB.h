@@ -1,6 +1,6 @@
 /**	@defgroup	gpionucleo
 	@brief		Implementation of the GPIO General Interface for STM32 Nucleo32 L412KB
-	@details	v0.1
+	@details	v0.2
 		All of the GPIO pins are configured by the ST Cube MX tool.  This will
 		define their functionality.  This interface will allow interactions
 		with all of the IO pins regardless of this configuration.  It is left
@@ -30,7 +30,7 @@
 	#File Information
 		File:	GPIO_NucleoL412KB.h
 		Author:	J. Beighel
-		Date:	2021-03-05
+		Date:	2021-03-07
 */
 
 #ifndef __GPIONUCLEO
@@ -62,6 +62,7 @@
 	#include "i2c.h"
 	#include "usart.h"
 	#include "iwdg.h"
+	#include "tim.h"
 
 	#if NUCLEO_TIMESRC == NUCLEO_TIMESRC_RTOS
 		#include "FreeRTOS.h"
@@ -72,7 +73,7 @@
 	/**	@brief		Specifies the capabilities provided by this implementation of the GPIO interface
 	 *	@ingroup	gpionucleo
 	 */
-	#define GPIO_CAPS		(GPIOCap_DigitalWrite | GPIOCap_DigitalRead | GPIOCap_SetInterrupt)
+	#define GPIO_CAPS		(GPIOCap_DigitalWrite | GPIOCap_DigitalRead | GPIOCap_SetInterrupt | TimeCap_WatchdogRefresh)
 
 	/**	@brief		Function to call to initialize this implementation of the GPIO interface
 	 *	@ingroup	gpionucleo
@@ -122,7 +123,21 @@
 	/**	@brief		Specifies the capabilities provided by this implementation of the time interface
 	 *	@ingroup	gpionucleo
 	 */
-	#define TIME_CAPS			(TimeCap_GetTicks | TimeCap_DelaySec | TimeCap_DelayMilliSec | TimeCap_WatchdogRefresh)
+	#define TIME_CAPS			(TimeCap_GetTicks | TimeCap_DelaySec | TimeCap_DelayMilliSec | TimeCap_WatchdogRefresh | TimeCap_IntStart | TimeCap_IntStop | TimeCap_IntSetMillisec)
+
+	/**	@brief		Hardware information for Timer 2
+	 *	@details	Uses Timer 2 channel 1
+	 *	@ingroup	gpionucleo
+	 */
+	#define TIMEINT_2_HWINFO	((void *)&gTimer2Ch1)
+
+	/**	@brief		Clock frequency set for the timers in the processor
+	 *	@details	Shuld be set based on the processor configuration
+	 *	@ingroup	gpionucleo
+	 */
+	#ifndef TIME_TIMERCLKFREQ
+		#define TIME_TIMERCLKFREQ	32000000\
+	#endif
 
 /***** Definitions	*****/
 	/**	@brief		Hardware information for a GPIO interrupt
@@ -138,17 +153,24 @@
 	 *	@ingroup	gpionucleo
 	 */
 	typedef struct sNucleoGPIOPortInfo_t {
-		GPIO_TypeDef *pPort;
-		sNucleoGPIOIntInfo_t aIntInfo[NUCLEO_GPIOCNT];
-		sGPIOIface_t *pIface;
+		GPIO_TypeDef *pPort;		/**< GPIO Port on the processor */
+		sNucleoGPIOIntInfo_t aIntInfo[NUCLEO_GPIOCNT];	/**< Interrupt information for each GPIO pin */
+		sGPIOIface_t *pIface;		/**< Copy of interface object pointer for use in interrupt handler */
 	} sNucleoGPIOPortInfo_t;
 
+	typedef struct sNucleoTimerInfo_t {
+		TIM_HandleTypeDef *pHWTimer;			/**< Hardware timer object */
+		uint32_t nChannel;						/**< Channel in the hardware timer being used */
+		pfTimerInterruptHandler_t pfHandler;	/**< Interrupt handling function */
+		void *pParam;							/**< User specified parameter for handler */
+	} sNucleoTimerInfo_t;
 
 /***** Globals		*****/
 	extern sNucleoGPIOPortInfo_t gGPIOPortA;
 	extern sNucleoGPIOPortInfo_t gGPIOPortB;
 	extern sNucleoGPIOPortInfo_t gGPIOPortH;
 
+	extern sNucleoTimerInfo_t gTimer2Ch1;
 
 /***** Prototypes 	*****/
 	eGPIOReturn_t NucleoGPIOPortInitialize(sGPIOIface_t *pIface, void *pHWInfo);
@@ -170,6 +192,14 @@
 	eReturn_t NucleoTimeDelayMilliSeconds(uint32_t nDelayAmount);
 
 	eReturn_t NucleoWatchdogRefresh(void);
+
+	eReturn_t NucleoTimerStart(void *pTimerHW);
+
+	eReturn_t NucleoTimerStop(void *pTimerHW);
+
+	eReturn_t NucleoTimerSetMilliseconds(void *pTimerHW, uint32_t nCountVal);
+
+	eReturn_t NucleoIntSetHandler(void *pTimerHW, pfTimerInterruptHandler_t pfHandler, void *pParam);
 
 /***** Functions	*****/
 

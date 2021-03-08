@@ -1,7 +1,7 @@
 /* #File Information
 		File:	GPIO_NucleoL412KB.c
 		Author:	J. Beighel
-		Date:	2021-03-05
+		Date:	2021-03-07
 */
 
 /***** Includes		*****/
@@ -20,6 +20,8 @@
 	sNucleoGPIOPortInfo_t gGPIOPortA = { .pPort = GPIOA };
 	sNucleoGPIOPortInfo_t gGPIOPortB = { .pPort = GPIOB };
 	sNucleoGPIOPortInfo_t gGPIOPortH = { .pPort = GPIOH };
+
+	sNucleoTimerInfo_t gTimer2Ch1 = { .pHWTimer = &htim2, .nChannel = TIM_CHANNEL_1, .pfHandler = NULL, .pParam = NULL };
 
 /***** Prototypes 	*****/
 	void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin);
@@ -187,6 +189,13 @@ eReturn_t NucleoTimeInitialize(sTimeIface_t *pIface) {
 	pIface->pfDelaySeconds = &NucleoTimeDelaySeconds;
 	pIface->pfDelayMilliSeconds = &NucleoTimeDelayMilliSeconds;
 
+	pIface->pfWatchdogRefresh = &NucleoWatchdogRefresh;
+
+	pIface->pfInterruptStart = &NucleoTimerStart;
+	pIface->pfInterruptStop = &NucleoTimerStop;
+	pIface->pfInterruptSetMilliseconds = &NucleoTimerSetMilliseconds;
+	pIface->pfInterruptSetHandler = &NucleoIntSetHandler;
+
 	pIface->eCapabilities = TIME_CAPS;
 
 	return Success;
@@ -296,6 +305,55 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 	if ((gGPIOPortH.aIntInfo[nIdx].bIntEnable == true) && (gGPIOPortH.aIntInfo[nIdx].pfIntFunc != NULL)) {
 		gGPIOPortH.aIntInfo[nIdx].pfIntFunc(gGPIOPortH.pIface, GPIO_Pin, gGPIOPortH.aIntInfo[nIdx].pParam);
 		return;
+	}
+
+	return;
+}
+
+eReturn_t NucleoTimerStart(void *pTimerHW) {
+	sNucleoTimerInfo_t *pTimer = (sNucleoTimerInfo_t *)pTimerHW;
+	HAL_TIM_OC_Start_IT(pTimer->pHWTimer, pTimer->nChannel);
+
+	return Success;
+}
+
+eReturn_t NucleoTimerStop(void *pTimerHW) {
+	sNucleoTimerInfo_t *pTimer = (sNucleoTimerInfo_t *)pTimerHW;
+	HAL_TIM_OC_Stop_IT(pTimer->pHWTimer, pTimer->nChannel);
+
+	return Success;
+}
+
+eReturn_t NucleoTimerSetMilliseconds(void *pTimerHW, uint32_t nCountVal) {
+	float nClockCnt;
+	sNucleoTimerInfo_t *pTimer = (sNucleoTimerInfo_t *)pTimerHW;
+
+	//TimerPeriod = ((ARR + 1) * (PSC + 1)) / ClkFreq
+	//So ARR = ((ClkFreq * TimerPeriod) / (PSC + 1)) - 1
+	nClockCnt = TIME_TIMERCLKFREQ * ((float)nCountVal / 1000);
+	nClockCnt /= pTimer->pHWTimer->Instance->PSC + 1;
+	nClockCnt -= 1;
+
+	//Calculate how many clocks to reach that
+	pTimer->pHWTimer->Init.Period = (uint32_t)nClockCnt;
+	pTimer->pHWTimer->Instance->ARR = pTimer->pHWTimer->Init.Period;
+
+	return Success;
+}
+
+eReturn_t NucleoIntSetHandler(void *pTimerHW, pfTimerInterruptHandler_t pfHandler, void *pParam) {
+	sNucleoTimerInfo_t *pTimer = (sNucleoTimerInfo_t *)pTimerHW;
+
+	pTimer->pfHandler = pfHandler;
+	pTimer->pParam = pParam;
+
+	return Success;
+}
+
+//Timer 2 Channel 1 counter call back (auto resets to trigger again)
+void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef *htim) {
+	if (gTimer2Ch1.pHWTimer == htim) {
+		gTimer2Ch1.pfHandler((void *)&gTimer2Ch1, gTimer2Ch1.pParam);
 	}
 
 	return;

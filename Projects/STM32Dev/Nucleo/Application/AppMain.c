@@ -17,6 +17,8 @@
 		APA102_DimRed,
 		APA102_DimGreen,
 		APA102_DimBlue,
+		APA102_DimWhite,
+		APA102_Black,
 	};
 
 /*****	Globals		*****/
@@ -35,6 +37,9 @@ void BootstrapTask(void const * argument) {
 
 	//Initialize the peripherals
 	BoardSetup();
+
+	//Starts the output compare timer in interrupt mode
+	gTime.pfInterruptStart(TIMEINT_2_HWINFO);
 
 	//Begin the application
 	nPatternStart = 0;
@@ -57,16 +62,16 @@ void BootstrapTask(void const * argument) {
 		}
 
 		//Toggle the single LED
-		gGpioB.pfDigitalWriteByPin(&gGpioB, GPO_B03_2_Pin, true);
+		gGpioB.pfDigitalWriteByPin(&gGpioB, GPO_B00_0_Pin, true);
 
 		gTime.pfWatchdogRefresh();
-		osDelay(200);
+		osDelay(500);
 
-		gGpioB.pfDigitalWriteByPin(&gGpioB, GPO_B03_2_Pin, false);
+		gGpioB.pfDigitalWriteByPin(&gGpioB, GPO_B00_0_Pin, false);
 
 		//Feed the watchdog
 		gTime.pfWatchdogRefresh();
-		osDelay(200);
+		osDelay(500);
 	}
 
 	return;
