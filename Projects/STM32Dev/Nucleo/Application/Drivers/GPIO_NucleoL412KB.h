@@ -1,6 +1,6 @@
 /**	@defgroup	gpionucleo
 	@brief		Implementation of the GPIO General Interface for STM32 Nucleo32 L412KB
-	@details	v0.1
+	@details	v0.2
 		All of the GPIO pins are configured by the ST Cube MX tool.  This will
 		define their functionality.  This interface will allow interactions
 		with all of the IO pins regardless of this configuration.  It is left
@@ -30,7 +30,7 @@
 	#File Information
 		File:	GPIO_NucleoL412KB.h
 		Author:	J. Beighel
-		Date:	2021-03-05
+		Date:	2021-03-07
 */
 
 #ifndef __GPIONUCLEO
@@ -62,6 +62,7 @@
 	#include "i2c.h"
 	#include "usart.h"
 	#include "iwdg.h"
+	#include "tim.h"
 
 	#if NUCLEO_TIMESRC == NUCLEO_TIMESRC_RTOS
 		#include "FreeRTOS.h"
@@ -72,7 +73,7 @@
 	/**	@brief		Specifies the capabilities provided by this implementation of the GPIO interface
 	 *	@ingroup	gpionucleo
 	 */
-	#define GPIO_CAPS		(GPIOCap_DigitalWrite | GPIOCap_DigitalRead | GPIOCap_SetInterrupt)
+	#define GPIO_CAPS		(GPIOCap_DigitalWrite | GPIOCap_DigitalRead | GPIOCap_SetInterrupt | TimeCap_WatchdogRefresh)
 
 	/**	@brief		Function to call to initialize this implementation of the GPIO interface
 	 *	@ingroup	gpionucleo
@@ -143,12 +144,17 @@
 		sGPIOIface_t *pIface;		/**< Copy of interface object pointer for use in interrupt handler */
 	} sNucleoGPIOPortInfo_t;
 
+	typedef struct sNucleoTimerInfo_t {
+		TIM_HandleTypeDef *pHWTimer;
+		uint32_t nChannel;
+	} sNucleoTimerInfo_t;
 
 /***** Globals		*****/
 	extern sNucleoGPIOPortInfo_t gGPIOPortA;
 	extern sNucleoGPIOPortInfo_t gGPIOPortB;
 	extern sNucleoGPIOPortInfo_t gGPIOPortH;
 
+	extern const sNucleoTimerInfo_t gTimer2Ch1;
 
 /***** Prototypes 	*****/
 	eGPIOReturn_t NucleoGPIOPortInitialize(sGPIOIface_t *pIface, void *pHWInfo);

@@ -1,7 +1,7 @@
 /* #File Information
 		File:	GPIO_NucleoL412KB.c
 		Author:	J. Beighel
-		Date:	2021-03-05
+		Date:	2021-03-07
 */
 
 /***** Includes		*****/
@@ -20,6 +20,8 @@
 	sNucleoGPIOPortInfo_t gGPIOPortA = { .pPort = GPIOA };
 	sNucleoGPIOPortInfo_t gGPIOPortB = { .pPort = GPIOB };
 	sNucleoGPIOPortInfo_t gGPIOPortH = { .pPort = GPIOH };
+
+	const sNucleoTimerInfo_t gTimer2Ch1 = { .pHWTimer = &htim2, .nChannel = TIM_CHANNEL_1};
 
 /***** Prototypes 	*****/
 	void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin);
@@ -186,6 +188,7 @@ eReturn_t NucleoTimeInitialize(sTimeIface_t *pIface) {
 	pIface->pfGetTicks = &NucleoGetCurrentTicks;
 	pIface->pfDelaySeconds = &NucleoTimeDelaySeconds;
 	pIface->pfDelayMilliSeconds = &NucleoTimeDelayMilliSeconds;
+	pIface->pfWatchdogRefresh = &NucleoWatchdogRefresh;
 
 	pIface->eCapabilities = TIME_CAPS;
 

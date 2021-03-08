@@ -57,6 +57,8 @@
 /*****	Definitions	*****/
 	typedef struct sTimeIface_t sTimeIface_t;
 
+	typedef void (*pfTimerInterrupt_t)(sTimeIface_t *pTime);
+
 	/**	@brief		Enumeration of time interface capabilities
 		@ingroup	timeiface
 	*/
@@ -71,6 +73,11 @@
 		TimeCap_WatchdogStart	= 0x0020,	/**< Can start the watchdog timer after initialization */
 		TimeCap_WatchdogStop	= 0x0020,	/**< Can stop the watchdog timer during runtime */
 		TimeCap_WatchdogRefresh	= 0x0040,	/**< Can refresh the watchdog timer */
+
+		TimeCap_TimerStart		= 0x0080,
+		TimeCap_TimerStop		= 0x0100,
+		TimeCap_TimerInterrupt	= 0x0200,
+		TimeCap_TimerSetCount	= 0x0400,
 	} eTimeCapabilities_t;
 	
 	/**	@brief		Function type to use in order to get the current system tick count
@@ -95,6 +102,12 @@
 	 */
 	typedef eReturn_t (*pfWatchdogControl_t)(void);
 
+	typedef eReturn_t (*pfTimerStart_t)(void *pTimerHW);
+
+	typedef eReturn_t (*pfTimerStop_t)(void *pTimerHW);
+
+	typedef eReturn_t (*pfTimerSetCount_t)(uint32_t nCountVal);
+
 	/**	@brief		Interface object for time methods
 		@ingroup	timeiface
 	*/
@@ -108,6 +121,11 @@
 		pfWatchdogControl_t pfWatchdogStart;	/**< Function pointer to start watchdog timer */
 		pfWatchdogControl_t pfWatchdogStop;		/**< Function pointer to stop watchdog timer */
 		pfWatchdogControl_t pfWatchdogRefresh;	/**< Function pointer for watchdog timer refresh */
+
+		pfTimerInterrupt_t pfTimerInterrupt;
+		pfTimerStart_t pfTImerStart;
+		pfTimerStop_t pfTimerStop;
+		pfTimerSetCount_t pfTimerSetInterruptCount;
 
 		eTimeCapabilities_t eCapabilities;	/**< Capabilities of this implementation */
 	} sTimeIface_t;
