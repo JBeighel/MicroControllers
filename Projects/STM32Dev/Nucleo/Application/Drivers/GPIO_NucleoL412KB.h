@@ -125,9 +125,19 @@
 	 */
 	#define TIME_CAPS			(TimeCap_GetTicks | TimeCap_DelaySec | TimeCap_DelayMilliSec | TimeCap_WatchdogRefresh | TimeCap_IntStart | TimeCap_IntStop | TimeCap_IntSetMillisec)
 
+	/**	@brief		Hardware information for Timer 2
+	 *	@details	Uses Timer 2 channel 1
+	 *	@ingroup	gpionucleo
+	 */
 	#define TIMEINT_2_HWINFO	((void *)&gTimer2Ch1)
 
-	#define TIME_TIMERCLKFREQ	32000000
+	/**	@brief		Clock frequency set for the timers in the processor
+	 *	@details	Shuld be set based on the processor configuration
+	 *	@ingroup	gpionucleo
+	 */
+	#ifndef TIME_TIMERCLKFREQ
+		#define TIME_TIMERCLKFREQ	32000000\
+	#endif
 
 /***** Definitions	*****/
 	/**	@brief		Hardware information for a GPIO interrupt
@@ -149,10 +159,10 @@
 	} sNucleoGPIOPortInfo_t;
 
 	typedef struct sNucleoTimerInfo_t {
-		TIM_HandleTypeDef *pHWTimer;
-		uint32_t nChannel;
-		pfTimerInterruptHandler_t pfHandler;
-		void *pParam;
+		TIM_HandleTypeDef *pHWTimer;			/**< Hardware timer object */
+		uint32_t nChannel;						/**< Channel in the hardware timer being used */
+		pfTimerInterruptHandler_t pfHandler;	/**< Interrupt handling function */
+		void *pParam;							/**< User specified parameter for handler */
 	} sNucleoTimerInfo_t;
 
 /***** Globals		*****/

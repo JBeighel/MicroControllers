@@ -72,11 +72,16 @@
 		TimeCap_WatchdogStop	= 0x0020,	/**< Can stop the watchdog timer during runtime */
 		TimeCap_WatchdogRefresh	= 0x0040,	/**< Can refresh the watchdog timer */
 
-		TimeCap_IntStart		= 0x0080,
-		TimeCap_IntStop			= 0x0100,
-		TimeCap_IntSetMillisec	= 0x0200,
+		TimeCap_IntStart		= 0x0080,	/**< Can start a timer based interrupt */
+		TimeCap_IntStop			= 0x0100,	/**< Can stop a timer based interrupt */
+		TimeCap_IntSetMillisec	= 0x0200,	/**< Can set the interrupt timer to millisecond periods */
 	} eTimeCapabilities_t;
 	
+	/**	@brief		Format for the timer interrupt handler functions
+	 *	@param		pTimerHW	Pointer to the timer hardware that triggered this interupt
+	 *	@param		pParam		User specified parameter passed to this interrupt
+	 *	@ingroup	timeiface
+	 */
 	typedef void (*pfTimerInterruptHandler_t)(void *pTimerHW, void *pParam);
 
 	/**	@brief		Function type to use in order to get the current system tick count
@@ -101,32 +106,51 @@
 	 */
 	typedef eReturn_t (*pfWatchdogControl_t)(void);
 
+	/**	@brief		Function to call to specify a interrupt handler for the timer interrupt
+	 *	@param		pTimerHW		Hardware to configure
+	 *	@param		pfHandler		Function to call as the handler
+	 *	@param		pParam			User speicifed parameter to pass to the handler
+	 *	@ingroup	timeiface
+	 */
 	typedef eReturn_t (*pfIntSetHandler_t)(void *pTimerHW, pfTimerInterruptHandler_t pfHandler, void *pParam);
 
+	/**	@brief		Function to call to start a timer interrupt
+	 *	@param		pTimerHW		Hardware to configure
+	 *	@ingroup	timeiface
+	 */
 	typedef eReturn_t (*pfIntStart_t)(void *pTimerHW);
 
+	/**	@brief		Function to call to start a timer interrupt
+	 *	@param		pTimerHW		Hardware to configure
+	 *	@ingroup	timeiface
+	 */
 	typedef eReturn_t (*pfIntStop_t)(void *pTimerHW);
 
+	/**	@brief		Function to call to start a timer interrupt
+	 *	@param		pTimerHW		Hardware to configure
+	 *	@param		nCountVal		Number of milliseconds between interrupt calls
+	 *	@ingroup	timeiface
+	 */
 	typedef eReturn_t (*pfIntSetDuration_t)(void *pTimerHW, uint32_t nCountVal);
 
 	/**	@brief		Interface object for time methods
 		@ingroup	timeiface
 	*/
 	typedef struct sTimeIface_t {
-		pfGetCurrentTicks_t pfGetTicks;		/**< Function pointer for getting tick count */
-		pfTimeDelay_t pfDelaySeconds;		/**< Function pointer for delay by seconds */
-		pfTimeDelay_t pfDelayMilliSeconds;	/**< Function pointer for delay by milliseconds */
-		pfTimeDelay_t pfDelayMicroSeconds;	/**< Function pointer for delay by microseconds */
+		pfGetCurrentTicks_t pfGetTicks;			/**< Function pointer for getting tick count */
+		pfTimeDelay_t pfDelaySeconds;			/**< Function pointer for delay by seconds */
+		pfTimeDelay_t pfDelayMilliSeconds;		/**< Function pointer for delay by milliseconds */
+		pfTimeDelay_t pfDelayMicroSeconds;		/**< Function pointer for delay by microseconds */
 		pfTimeDelay_t pfDelay100NanoSeconds;	/**< Function pointer for delay by 100s nanoseconds */
 		
 		pfWatchdogControl_t pfWatchdogStart;	/**< Function pointer to start watchdog timer */
 		pfWatchdogControl_t pfWatchdogStop;		/**< Function pointer to stop watchdog timer */
 		pfWatchdogControl_t pfWatchdogRefresh;	/**< Function pointer for watchdog timer refresh */
 
-		pfIntSetHandler_t pfInterruptSetHandler;
-		pfIntStart_t pfInterruptStart;
-		pfIntStop_t pfInterruptStop;
-		pfIntSetDuration_t pfInterruptSetMilliseconds;
+		pfIntSetHandler_t pfInterruptSetHandler;/**< Function pointer to set timer interrupt handers */
+		pfIntStart_t pfInterruptStart;			/**< Function pointer to start an interrupt timer */
+		pfIntStop_t pfInterruptStop;			/**< Function pointer to stop an interrupt timer */
+		pfIntSetDuration_t pfInterruptSetMilliseconds;/**< Function point to specify interrupt period in milliseconds */
 
 		eTimeCapabilities_t eCapabilities;	/**< Capabilities of this implementation */
 	} sTimeIface_t;

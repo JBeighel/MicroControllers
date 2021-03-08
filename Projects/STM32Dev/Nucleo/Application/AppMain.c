@@ -17,6 +17,8 @@
 		APA102_DimRed,
 		APA102_DimGreen,
 		APA102_DimBlue,
+		APA102_DimWhite,
+		APA102_Black,
 	};
 
 /*****	Globals		*****/

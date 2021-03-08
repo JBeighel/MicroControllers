@@ -6,7 +6,7 @@
 	#File Information
 		File:	APA102Driver.h
 		Author:	J. Beighel
-		Date:	2021-03-02
+		Date:	2021-03-08
 */
 
 #ifndef __APA102Driver_H
@@ -48,12 +48,15 @@
 		APA102_BlueMask			= 0x000000FF,
 		APA102_BlueShift		= 0,
 
+		APA102_Black			= 0x00000000,
+		APA102_BrightWhite		= 0x00FFFFFF,
 		APA102_BrightRed		= 0x00FF0000,
 		APA102_BrightGreen		= 0x0000FF00,
 		APA102_BrightBlue		= 0x000000FF,
 		APA102_DimRed			= 0x00440000,
 		APA102_DimGreen			= 0x00004400,
 		APA102_DimBlue			= 0x00000044,
+		APA102_DimWhite			= 0x00444444,
 	} eAPA102Color_t;
 
 	typedef struct sAPA102Info_t {

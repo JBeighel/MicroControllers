@@ -1,6 +1,6 @@
 /**	File:	TimeGeneralInterface.c
 	Author:	J. Beighel
-	Date:	2021-03-03
+	Date:	2021-03-08
 */
 
 /*****	Includes	*****/
@@ -34,6 +34,14 @@
 	 */
 	eReturn_t WatchdogNotImplemented(void);
 
+	eReturn_t TimerStartNotImplemented(void *pTimerHW);
+
+	eReturn_t TimerStopNotImplemented(void *pTimerHW);
+
+	eReturn_t TimerSetMillisecondsNotImplemented(void *pTimerHW, uint32_t nCountVal);
+
+	eReturn_t TimerInterruptNotImplemented(void *pTimerHW, pfTimerInterruptHandler_t pfHandler, void *pParam);
+
 /*****	Functions	*****/
 
 eReturn_t TimeInterfaceInitialize(sTimeIface_t *pIface) {
@@ -46,6 +54,11 @@ eReturn_t TimeInterfaceInitialize(sTimeIface_t *pIface) {
 	pIface->pfWatchdogStart = &WatchdogNotImplemented;
 	pIface->pfWatchdogStop = &WatchdogNotImplemented;
 	pIface->pfWatchdogRefresh = &WatchdogNotImplemented;
+
+	pIface->pfInterruptStart = &TimerStartNotImplemented;
+	pIface->pfInterruptStop = &TimerStopNotImplemented;
+	pIface->pfInterruptSetMilliseconds = &TimerSetMillisecondsNotImplemented;
+	pIface->pfInterruptSetHandler = &TimerInterruptNotImplemented;
 
 	pIface->eCapabilities = TimeCap_None;
 	
@@ -61,5 +74,21 @@ eReturn_t TimeDelayNotImplemented(uint32_t nDelayAmount) {
 }
 
 eReturn_t WatchdogNotImplemented(void) {
+	return Fail_NotImplem;
+}
+
+eReturn_t TimerStartNotImplemented(void *pTimerHW) {
+	return Fail_NotImplem;
+}
+
+eReturn_t TimerStopNotImplemented(void *pTimerHW) {
+	return Fail_NotImplem;
+}
+
+eReturn_t TimerSetMillisecondsNotImplemented(void *pTimerHW, uint32_t nCountVal) {
+	return Fail_NotImplem;
+}
+
+eReturn_t TimerInterruptNotImplemented(void *pTimerHW, pfTimerInterruptHandler_t pfHandler, void *pParam) {
 	return Fail_NotImplem;
 }
