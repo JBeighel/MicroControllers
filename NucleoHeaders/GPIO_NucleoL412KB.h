@@ -136,7 +136,7 @@
 	 *	@ingroup	gpionucleo
 	 */
 	#ifndef TIME_TIMERCLKFREQ
-		#define TIME_TIMERCLKFREQ	32000000\
+		#define TIME_TIMERCLKFREQ	32000000
 	#endif
 
 /***** Definitions	*****/

@@ -90,6 +90,11 @@
 	 */
 	#define GPIO_B_HWINFO	((void *)&gGPIOPortB)
 
+	/**	@brief		Hawrdware information for GPIO Port C
+	 *	@ingroup	gpionucleo
+	 */
+	#define GPIO_C_HWINFO	((void *)&gGPIOPortC)
+
 	/**	@brief		Hawrdware information for GPIO Port H
 	 *	@ingroup	gpionucleo
 	 */
@@ -136,7 +141,7 @@
 	 *	@ingroup	gpionucleo
 	 */
 	#ifndef TIME_TIMERCLKFREQ
-		#define TIME_TIMERCLKFREQ	32000000\
+		#define TIME_TIMERCLKFREQ	32000000
 	#endif
 
 /***** Definitions	*****/
@@ -168,6 +173,7 @@
 /***** Globals		*****/
 	extern sNucleoGPIOPortInfo_t gGPIOPortA;
 	extern sNucleoGPIOPortInfo_t gGPIOPortB;
+	extern sNucleoGPIOPortInfo_t gGPIOPortC;
 	extern sNucleoGPIOPortInfo_t gGPIOPortH;
 
 	extern sNucleoTimerInfo_t gTimer2Ch1;

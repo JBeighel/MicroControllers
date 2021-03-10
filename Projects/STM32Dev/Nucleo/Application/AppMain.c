@@ -1,6 +1,6 @@
-/**	File:	???.c
+/**	File:	AppMain.c
 	Author:	J. Beighel
-	Date:	MM-DD-YYYY
+	Date:	2021-03-10
 */
 
 /*****	Includes	*****/
@@ -14,10 +14,26 @@
 
 /*****	Constants	*****/
 	const uint32_t manPattern[] = {
-		APA102_DimRed,
-		APA102_DimGreen,
 		APA102_DimBlue,
 		APA102_DimWhite,
+		APA102_DimBlue,
+		APA102_Black,
+		APA102_Black,
+		APA102_Black,
+		APA102_Black,
+		APA102_DimGreen,
+		APA102_DimWhite,
+		APA102_DimGreen,
+		APA102_Black,
+		APA102_Black,
+		APA102_Black,
+		APA102_Black,
+		APA102_DimRed,
+		APA102_DimWhite,
+		APA102_DimRed,
+		APA102_Black,
+		APA102_Black,
+		APA102_Black,
 		APA102_Black,
 	};
 
@@ -25,13 +41,11 @@
 
 
 /*****	Prototypes 	*****/
-
+void CycleLEDColors(void);
 
 /*****	Functions	*****/
 
 void BootstrapTask(void const * argument) {
-	uint8_t nLightCtr, nPatternCtr, nPatternStart;
-
 	//Initialize the processor
 	PinSetup();
 
@@ -42,36 +56,48 @@ void BootstrapTask(void const * argument) {
 	gTime.pfInterruptStart(TIMEINT_2_HWINFO);
 
 	//Begin the application
-	nPatternStart = 0;
 	while (1) {
-		//Cycle the colored LEDs
-		nPatternCtr = nPatternStart;
-		for (nLightCtr = 0; nLightCtr < 5; nLightCtr++) {
-			APA102SetLightColor(&gLEDString, nLightCtr, manPattern[nPatternCtr]);
-
-			nPatternCtr += 1;
-			if (nPatternCtr >= PATTERN_LEN) {
-				nPatternCtr = 0;
-			}
-		}
-		APA102UpdateLights(&gLEDString);
-
-		nPatternStart += 1;
-		if (nPatternStart >= PATTERN_LEN) {
-			nPatternStart = 0;
-		}
-
 		//Toggle the single LED
 		gGpioB.pfDigitalWriteByPin(&gGpioB, GPO_B00_0_Pin, true);
 
 		gTime.pfWatchdogRefresh();
-		osDelay(500);
+		CycleLEDColors();
+		osDelay(250);
+		CycleLEDColors();
+		osDelay(250);
 
 		gGpioB.pfDigitalWriteByPin(&gGpioB, GPO_B00_0_Pin, false);
 
 		//Feed the watchdog
 		gTime.pfWatchdogRefresh();
-		osDelay(500);
+		CycleLEDColors();
+		osDelay(250);
+		CycleLEDColors();
+		osDelay(250);
+	}
+
+	return;
+}
+
+void CycleLEDColors(void) {
+	static uint8_t nPatternStart = 0;
+	uint8_t nLightCtr, nPatternCtr;
+
+	//Cycle the colored LEDs
+	nPatternCtr = nPatternStart;
+	for (nLightCtr = 0; nLightCtr < 5; nLightCtr++) {
+		APA102SetLightColor(&gLEDString, nLightCtr, manPattern[nPatternCtr]);
+
+		nPatternCtr += 1;
+		if (nPatternCtr >= PATTERN_LEN) {
+			nPatternCtr = 0;
+		}
+	}
+	APA102UpdateLights(&gLEDString);
+
+	nPatternStart += 1;
+	if (nPatternStart >= PATTERN_LEN) {
+		nPatternStart = 0;
 	}
 
 	return;

@@ -1,29 +1,22 @@
-/**	@defgroup	appmain
-	@brief
+/**	@defgroup	boardsupport
+	@brief		Support for peripherals attached to processor
 	@details	v0.1
 	#Description
 
 	#File Information
-		File:	AppMain.c
+		File:	BoardSupport.h
 		Author:	J. Beighel
 		Date:	2021-03-10
 */
 
-#ifndef __APPMAIN_H
-	#define __APPMAIN_H
+#ifndef __BOARDSUPPORT_H
+	#define __BOARDSUPPORT_H
 
 /*****	Includes	*****/
-	#include "FreeRTOS.h"
-	#include "task.h"
-	#include "main.h"
-	#include "cmsis_os.h"
-	#include "tim.h"
-
 	#include "PinSupport.h"
-	#include "BoardSupport.h"
+
 
 /*****	Defines		*****/
-
 
 /*****	Definitions	*****/
 
@@ -38,7 +31,7 @@
 
 
 /*****	Functions	*****/
-
+	eReturn_t BoardSetup();
 
 #endif
 

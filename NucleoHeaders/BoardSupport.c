@@ -16,14 +16,14 @@
 
 
 /*****	Globals		*****/
-	sAPA102Info_t gLEDString;
+
 
 /*****	Prototypes 	*****/
 
 
 /*****	Functions	*****/
 eReturn_t BoardSetup() {
-	APA102Initialize(&gLEDString, &gSpi1);
+	
 
 	return Success;
 }
