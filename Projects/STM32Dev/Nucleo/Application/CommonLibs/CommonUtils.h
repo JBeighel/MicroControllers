@@ -1,6 +1,6 @@
 /**	@defgroup	commonutils
 	@brief		Common utilities and objects
-	@details	v 0.8
+	@details	v 0.9
 	# Description #
 		This is a collection of commonly used utilities.
 		This includes variable types, macros, and constants.
@@ -10,7 +10,7 @@
 	# File Info #
 		File:	CommonUtils.h
 		Author:	J. Beighel
-		Date:	2021-01-26
+		Date:	2021-03-11
 */
 
 #ifndef __COMMONUTILS
@@ -196,6 +196,16 @@
 		@ingroup	commonutils
 	*/
 	uint8_t ReverseBitsInUInt8(uint8_t nVal);
+
+	/**	@brief		Reverses the order of the bytes in a 16 bit value
+		@details	The high byte becomes the low byte, the order of the bits in each of these bytes is unchanged.
+		@param		nValue		The 2 byte value to operate on
+		@return		The value with the bytes in reversed order
+		@ingroup	commonutils
+	*/
+	static inline uint16_t FlipBytesUInt16(uint16_t nValue) {
+		return ((nValue & 0x00FF) << 8) | ((nValue & 0xFF00) >> 8);
+	}
 
 /***** Functions	*****/
 
