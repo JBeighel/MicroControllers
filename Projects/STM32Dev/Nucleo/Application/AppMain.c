@@ -38,7 +38,7 @@
 	};
 
 /*****	Globals		*****/
-
+	sDNPMsgBuild_t gDNPBuild;
 
 /*****	Prototypes 	*****/
 void CycleLEDColors(void);
@@ -60,20 +60,33 @@ void BootstrapTask(void const * argument) {
 		//Toggle the single LED
 		gGpioB.pfDigitalWriteByPin(&gGpioB, GPO_B00_0_Pin, true);
 
-		gTime.pfWatchdogRefresh();
 		CycleLEDColors();
+		gTime.pfWatchdogRefresh();
 		osDelay(250);
 		CycleLEDColors();
+		gTime.pfWatchdogRefresh();
 		osDelay(250);
 
 		gGpioB.pfDigitalWriteByPin(&gGpioB, GPO_B00_0_Pin, false);
 
-		//Feed the watchdog
+		CycleLEDColors();
 		gTime.pfWatchdogRefresh();
-		CycleLEDColors();
 		osDelay(250);
 		CycleLEDColors();
+		gTime.pfWatchdogRefresh();
 		osDelay(250);
+
+		//DNP Testing stuff
+		DNPBuilderNewMessage(&gDNPBuild);
+		gDNPBuild.nDestAddr = 0xFFFC;
+		gDNPBuild.nSourceAddr = 0x1234;
+		gDNPBuild.eControlCode = DNPCtrl_Read;
+		gDNPBuild.eDataControl = DNPData_Direction | DNPData_Primary | DNPData_UnconfirmData;
+		DNPBuilderAddDataObjectRequest(&gDNPBuild, DNPGrp_BinaryInput, 2, 0, 0);
+		DNPBuilderGenerateDNP(&gDNPBuild);
+		gTime.pfWatchdogRefresh();
+
+		gUart1.pfUARTWriteData(&gUart1, 4, "12\r\n");
 	}
 
 	return;

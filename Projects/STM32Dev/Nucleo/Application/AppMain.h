@@ -22,6 +22,8 @@
 	#include "PinSupport.h"
 	#include "BoardSupport.h"
 
+#include "DNPMessageBuilder.h"
+
 /*****	Defines		*****/
 
 

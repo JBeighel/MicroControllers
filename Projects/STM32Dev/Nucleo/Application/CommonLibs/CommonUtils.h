@@ -10,7 +10,7 @@
 	# File Info #
 		File:	CommonUtils.h
 		Author:	J. Beighel
-		Date:	2021-03-11
+		Date:	2021-03-12
 */
 
 #ifndef __COMMONUTILS
@@ -43,7 +43,8 @@
 		Fail_Unknown	= -1,	/**< An unknown and unrecoverable error happened during the operation */
 		Fail_NotImplem	= -2,	/**< Function not implemented */
 		Fail_CommError	= -3,	/**< Communications layer failure */
-		Fail_Invalid	= -4,	/**< Some value provided was invalid for this operaion */
+		Fail_Invalid	= -4,	/**< Some value provided was invalid for this operation */
+		Fail_BufferSize = -5,	/**< A data buffer is too small to fit the requested information */
 	} eReturn_t;
 
 /***** Globals		*****/

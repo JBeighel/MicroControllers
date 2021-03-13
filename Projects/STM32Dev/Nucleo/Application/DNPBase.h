@@ -6,7 +6,7 @@
 	#File Information
 		File:	DNPBase.h
 		Author:	J. Beighel
-		Date:	2021-03-11
+		Date:	2021-03-12
 */
 
 #ifndef __DNPBASE_H
@@ -19,6 +19,15 @@
 
 
 /*****	Definitions	*****/
+	typedef enum eDNPHeaderIndexes_t {
+		DNPHdrIdx_StartBytes	= 0,
+		DNPHdrIdx_DataLength	= 2,
+		DNPHdrIdx_DataControl	= 3,
+		DNPHdrIdx_DestAddr		= 4,
+		DNPHdrIdx_SourceAddr	= 6,
+		DNPHdrIdx_CRC			= 8,
+	} eDNPHeaderIndexes_t;
+
 	typedef enum eDNPAddresses_t {
 		DNPAddr_AllStations		= 0xFFFF,
 		DNPAddr_SelfAddress		= 0xFFFC,
@@ -91,6 +100,7 @@
 	} eDNPQualifier_t;
 
 	typedef enum eDNPInternalIndicators_t {
+		DNPIntInd_None					= 0x0000,
 		DNPIntInd_AllStationRecv		= 0x0001,
 		DNPIntInd_Class1Data			= 0x0002,
 		DNPIntInd_Class2Data			= 0x0004,
@@ -128,19 +138,51 @@
 		DNPGrp_VirtualTerminalEvent		= 0x71
 	} eDNPGroup_t;
 
-/*****	Constants	*****/
+	typedef enum eDNPBinOutControlCode_t {
+		DNPBinOutCtrl_None				= 0x00,
+		DNPBinOutCtrl_PulseOn			= 0x01,
+		DNPBinOutCtrl_PulseOff			= 0x02,
+		DNPBinOutCtrl_LatchOn			= 0x03,
+		DNPBinOutCtrl_LatchOff			= 0x04,
+		DNPBinOutCtrl_Close				= 0x40,
+		DNPBinOutCtrl_Trip				= 0x80,
+	} eDNPBinOutControlCode_t;
 
+/*****	Constants	*****/
+	#define DNP_MSGSTARTBYTES		0x0564
 
 /*****	Globals		*****/
 
 
 /*****	Prototypes 	*****/
+	/**	@brief		Convert a 16 bit integer into 2 bytes an an array
+	 *	@param		nValue		The integer value to convert
+	 *	@param		bLSBFirst	True to put the low byte first in the array,
+	 *		false to have the high byte first
+	 *	@param		pBuffer		Pointer to the buffer to store the byte values
+	 *	@param		nBuffOffset	Index in the array to put the first byte value
+	 *	@ingroup	dnp
+	 */
 	eReturn_t UInt16ToBytes(uint16_t nValue, bool bLSBFirst, uint8_t *pBuffer, uint32_t nBuffOffset);
 
+	/**	@brief		Convert a 32 bit integer into 4 bytes an an array
+	 *	@param		nValue		The integer value to convert
+	 *	@param		bLSBFirst	True to put the low byte first in the array,
+	 *		false to have the high byte first
+	 *	@param		pBuffer		Pointer to the buffer to store the byte values
+	 *	@param		nBuffOffset	Index in the array to put the first byte value
+	 *	@ingroup	dnp
+	 */
 	eReturn_t UInt32ToBytes(uint32_t nValue, bool bLSBFirst, uint8_t *pBuffer, uint32_t nBuffOffset);
 
+	/**	@brief		Convert a byte array to a 16 bit integer
+	 *	@ingroup	dnp
+	 */
 	uint16_t BytesToUInt16(uint8_t *pBuffer, bool bLSBFirst, uint32_t nBuffOffset);
 
+	/**	@brief		Convert a byte array to a 32 bit integer
+	 *	@ingroup	dnp
+	 */
 	uint32_t BytesToUInt32(uint8_t *pBuffer, bool bLSBFirst, uint32_t nBuffOffset, uint32_t nLength);
 
 /*****	Functions	*****/

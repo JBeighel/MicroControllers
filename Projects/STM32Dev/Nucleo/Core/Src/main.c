@@ -97,7 +97,7 @@ int main(void)
   MX_SPI1_Init();
   MX_USART1_UART_Init();
   MX_USART2_UART_Init();
-  MX_IWDG_Init();
+  //MX_IWDG_Init();
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
 
@@ -151,7 +151,9 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.MSICalibrationValue = 0;
   RCC_OscInitStruct.MSIClockRange = RCC_MSIRANGE_10;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
-  if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
+
+  HAL_StatusTypeDef RCCResult = HAL_RCC_OscConfig(&RCC_OscInitStruct);
+  if ((RCCResult != HAL_OK) && (RCCResult != HAL_TIMEOUT))
   {
     Error_Handler();
   }
