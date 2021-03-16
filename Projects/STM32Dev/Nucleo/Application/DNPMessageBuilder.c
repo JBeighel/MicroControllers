@@ -1,6 +1,6 @@
 /**	File:	DNPMessageBuilder.c
 	Author:	J. Beighel
-	Date:	2021-03-12
+	Date:	2021-03-15
 */
 
 /*****	Includes	*****/
@@ -19,12 +19,12 @@
 
 
 /*****	Prototypes 	*****/
-	eReturn_t DNPBuilderAddByte(sDNPMsgBuild_t *pMsg, uint8_t nData);
-	eReturn_t DNPBuilderAddData(sDNPMsgBuild_t *pMsg, uint8_t *pData, uint32_t nDataLen);
+	eReturn_t DNPBuilderAddByte(sDNPMsgBuffer_t *pMsg, uint8_t nData);
+	eReturn_t DNPBuilderAddData(sDNPMsgBuffer_t *pMsg, uint8_t *pData, uint32_t nDataLen);
 
 /*****	Functions	*****/
 
-eReturn_t DNPBuilderAddByte(sDNPMsgBuild_t *pMsg, uint8_t nData) {
+eReturn_t DNPBuilderAddByte(sDNPMsgBuffer_t *pMsg, uint8_t nData) {
 	if (pMsg->nUserDataLen + 1 >= DNP_USERDATAMAX) {
 		return Fail_BufferSize;
 	}
@@ -35,7 +35,7 @@ eReturn_t DNPBuilderAddByte(sDNPMsgBuild_t *pMsg, uint8_t nData) {
 	return Success;
 }
 
-eReturn_t DNPBuilderAddData(sDNPMsgBuild_t *pMsg, uint8_t *pData, uint32_t nDataLen) {
+eReturn_t DNPBuilderAddData(sDNPMsgBuffer_t *pMsg, uint8_t *pData, uint32_t nDataLen) {
 	uint32_t nCtr;
 
 	if (pMsg->nUserDataLen + nDataLen >= DNP_USERDATAMAX) {
@@ -50,24 +50,7 @@ eReturn_t DNPBuilderAddData(sDNPMsgBuild_t *pMsg, uint8_t *pData, uint32_t nData
 	return Success;
 }
 
-eReturn_t DNPBuilderNewMessage(sDNPMsgBuild_t *pMsg) {
-	pMsg->nDNPMsgLen = 0;
-	pMsg->nUserDataLen = 0;
-	pMsg->nDestAddr = 0;
-	pMsg->nSourceAddr = 0;
-
-	pMsg->eIntIndicators = DNPIntInd_None;
-	pMsg->eControlCode = DNPCtrl_Response;
-	pMsg->eDataControl = DNPData_Direction | DNPData_Primary | DNPData_UnconfirmData;
-
-	//Each message should get a new sequence number, where they start isn't important
-	pMsg->nTransportSequence += 1;
-	pMsg->nApplicationSequence += 1;
-
-	return Success;
-}
-
-eReturn_t DNPBuilderGenerateDNP(sDNPMsgBuild_t *pMsg) {
+eReturn_t DNPBuilderGenerateDNP(sDNPMsgBuffer_t *pMsg) {
 	uint32_t nUserDataCnt, nFragDataCnt, nChunkCnt, nFragCnt, nChunkStartIdx;
 	uint32_t nMsgSizeIndex, nMsgHdrStartIdx;
 	crc16_t nCRCVal;
@@ -124,7 +107,7 @@ eReturn_t DNPBuilderGenerateDNP(sDNPMsgBuild_t *pMsg) {
 			nFragDataCnt += 1;
 			nChunkCnt += 1;
 
-			//Control type
+			//Control type (part of application layer)
 			pMsg->aDNPMessage[pMsg->nDNPMsgLen] = pMsg->eControlCode;
 			pMsg->nDNPMsgLen += 1;
 			nFragDataCnt += 1;
@@ -199,7 +182,7 @@ eReturn_t DNPBuilderGenerateDNP(sDNPMsgBuild_t *pMsg) {
 	return Success;
 }
 
-eReturn_t DNPBuilderAddDataObjectRequest(sDNPMsgBuild_t *pMsg, eDNPGroup_t eGroup, uint8_t nVariation, uint16_t nCountStart, uint16_t nCountStop) {
+eReturn_t DNPBuilderAddDataObjectRequest(sDNPMsgBuffer_t *pMsg, eDNPGroup_t eGroup, uint8_t nVariation, uint16_t nCountStart, uint16_t nCountStop) {
 	unsigned char aCntBytes[4];
 	eDNPQualifier_t eQualifier;
 
@@ -224,7 +207,7 @@ eReturn_t DNPBuilderAddDataObjectRequest(sDNPMsgBuild_t *pMsg, eDNPGroup_t eGrou
 	return Success;
 }
 
-eReturn_t DNPBuilderAddBinaryOutputCommandDataObject(sDNPMsgBuild_t *pMsg, uint8_t nVariation, uint16_t nPrefixIdx, eDNPBinOutControlCode_t eCtrlCode, uint8_t nOpCount, uint32_t nOnTime, uint32_t nOffTime, uint8_t nStatus) {
+eReturn_t DNPBuilderAddBinaryOutputCommandDataObject(sDNPMsgBuffer_t *pMsg, uint8_t nVariation, uint16_t nPrefixIdx, eDNPBinOutControlCode_t eCtrlCode, uint8_t nOpCount, uint32_t nOnTime, uint32_t nOffTime, uint8_t nStatus) {
 	unsigned char aBytes[4];
 
 	switch (nVariation) {

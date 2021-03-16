@@ -6,7 +6,7 @@
 	#File Information
 		File:	DNPBase.h
 		Author:	J. Beighel
-		Date:	2021-03-12
+		Date:	2021-03-15
 */
 
 #ifndef __DNPBASE_H
@@ -16,7 +16,56 @@
 	#include "CommonUtils.h"
 
 /*****	Defines		*****/
+	/**	@brief		Maximum number of data bytes a message fragment can contain
+	 *	@details	This excludes any framing a CRC checks, just a count of payload
+	 *		bytes that a message fragment can have
+	 *	@ingroup	dnpmsgbuild
+	 */
+	#define DNP_MAXDATABYTES		255
 
+	/**	@brief		Number of data bytes that fit in a single DNP message fragment
+	 *	@details	Each DNP message can have 255 data bytes in them.  Every 16 data
+	 *		bytes will get 2 CRC bytes.
+	 *	@ingroup	dnpmsgbuild
+	 */
+	#define DNP_MSGFRAGMENTDATASIZE	287
+
+	/**	@brief		Total number of bytes in each DNP message fragment
+	 *	@details	Each fragment will have 10 bytes for the transport function.
+	 *		Then 255 data bytes with 2 CRC bytes for every 16 data bytes.  This
+	 *		means there will be 16 data chunks each with 2 CRC bytes.
+	 *		In total there is 255 data bytes + 32 CRC bytes + 10 transport bytes
+	 *	@ingroup	dnpmsgbuild
+	 */
+	#define DNP_MSGFRAGMENTTOTSIZE	(DNP_MSGFRAGMENTDATASIZE + 10)
+
+	/**	@brief		Maximum number of message fragments that will be allowed
+	 *	@details	The builder will be unable to build messages that exceed this
+	 *		number of message fragments.
+	 *	@ingroup	dnpmsgbuild
+	 */
+	#define	DNP_MAXFRAGMENTMAX		4
+
+	/**	@breif		Maximum size that a full DNP message can be
+	 *	@ingroup	dnpmsgbuild
+	 */
+	#define DNP_MESSAGESIZEMAX		(DNP_MSGFRAGMENTTOTSIZE * DNP_MAXFRAGMENTMAX)
+
+	/**	@brief		Maximum number of user data bytes that a message can hold
+	 *	@details	The first fragment will have 5 bytes of application and transport
+	 *		headers.  All remaining fragments will only have 1 transport header byte
+	 *	@ingroup	dnpmsgbuild
+	 */
+	#define DNP_USERDATAMAX			(250 + ((DNP_MAXFRAGMENTMAX - 1) * 254))
+
+	/**	@brief		Every 16 data bytes will get a 2 byte CRC value
+	 *	@ingroup	dnpmsgbuild
+	 */
+	#define DNP_DATACRCCHUNKSIZE	16
+
+	#define DNP_MSGSTARTBYTES		0x0564
+
+	#define DNP_MSGHEADERLEN		10
 
 /*****	Definitions	*****/
 	typedef enum eDNPHeaderIndexes_t {
@@ -26,6 +75,8 @@
 		DNPHdrIdx_DestAddr		= 4,
 		DNPHdrIdx_SourceAddr	= 6,
 		DNPHdrIdx_CRC			= 8,
+		DNPHdrIdx_TransportHdr	= 11,
+		DNPHdrIdx_AppHdr		= 12,
 	} eDNPHeaderIndexes_t;
 
 	typedef enum eDNPAddresses_t {
@@ -148,8 +199,27 @@
 		DNPBinOutCtrl_Trip				= 0x80,
 	} eDNPBinOutControlCode_t;
 
+	/**	@brief		Structure to hold a DNP message during creation and parsing
+	 *	@details	All fields should be treated as read only to ensure the module
+	 *		operating on the message keeps the contents sane.
+	 *	@ingroup	dnp
+	 */
+	typedef struct sDNPMsgBuffer_t {
+		uint8_t aDNPMessage[DNP_MESSAGESIZEMAX];	/**< Buffer to hold the full DNP message */
+		uint32_t nDNPMsgLen;						/**< Index of last byte of the DNP Message */
+		uint8_t aUserData[DNP_USERDATAMAX];			/**< Buffer to hold all user data in the message */
+		uint32_t nUserDataLen;						/**< Index of last byte of user data */
+		uint32_t nUserDataIdx;						/**< Index of last processed byte in the user data */
+		uint16_t nDestAddr;							/**< Destination address for this message */
+		uint16_t nSourceAddr;						/**< Source address for this message */
+		uint8_t nTransportSequence;					/**< Sequence number for the Transport layer */
+		uint8_t nApplicationSequence;				/**< Sequence number for the application layer */
+		eDNPControlCodes_t eControlCode;			/**< Control code used in this message */
+		eDNPInternalIndicators_t eIntIndicators;	/**< Internal indicators to set in this message */
+		eDNPDataControl_t eDataControl;				/**< Data Control code for this message */
+	} sDNPMsgBuffer_t;
+
 /*****	Constants	*****/
-	#define DNP_MSGSTARTBYTES		0x0564
 
 /*****	Globals		*****/
 
@@ -184,6 +254,8 @@
 	 *	@ingroup	dnp
 	 */
 	uint32_t BytesToUInt32(uint8_t *pBuffer, bool bLSBFirst, uint32_t nBuffOffset, uint32_t nLength);
+
+	eReturn_t DNPBufferNewMessage(sDNPMsgBuffer_t *pMsg);
 
 /*****	Functions	*****/
 

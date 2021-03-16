@@ -10,7 +10,7 @@
 	# File Info #
 		File:	CommonUtils.h
 		Author:	J. Beighel
-		Date:	2021-03-12
+		Date:	2021-03-15
 */
 
 #ifndef __COMMONUTILS
@@ -19,6 +19,7 @@
 /***** Includes		*****/
 	#include <stdint.h>
 	#include <stdbool.h>
+	#include <stddef.h>
 	
 /***** Constants	*****/
 	/**	The maximum integer value that will fit in a uint8_t data type
@@ -38,6 +39,7 @@
 
 /***** Definitions	*****/
 	typedef enum eReturn_t {
+		Warn_Incomplete	= 2,	/**< Data provided was incomplete or partial processing occurred */
 		Warn_Unknown	= 1,	/**< An unknown but recoverable error happened during the operation */
 		Success			= 0,	/**< The operation completed successfully */
 		Fail_Unknown	= -1,	/**< An unknown and unrecoverable error happened during the operation */

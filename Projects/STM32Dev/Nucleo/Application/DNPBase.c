@@ -1,6 +1,6 @@
 /**	File:	DNPBase.c
 	Author:	J. Beighel
-	Date:	2021-03-11
+	Date:	2021-03-15
 */
 
 /*****	Includes	*****/
@@ -87,4 +87,22 @@ uint32_t BytesToUInt32(uint8_t *pBuffer, bool bLSBFirst, uint32_t nBuffOffset, u
 	}
 
 	return nValue;
+}
+
+eReturn_t DNPBufferNewMessage(sDNPMsgBuffer_t *pMsg) {
+	pMsg->nDNPMsgLen = 0;
+	pMsg->nUserDataLen = 0;
+	pMsg->nDestAddr = 0;
+	pMsg->nSourceAddr = 0;
+	pMsg->nUserDataIdx = 0;
+
+	pMsg->eIntIndicators = DNPIntInd_None;
+	pMsg->eControlCode = DNPCtrl_Response;
+	pMsg->eDataControl = DNPData_Direction | DNPData_Primary | DNPData_UnconfirmData;
+
+	//Each message should get a new sequence number, where they start isn't important
+	pMsg->nTransportSequence += 1;
+	pMsg->nApplicationSequence += 1;
+
+	return Success;
 }

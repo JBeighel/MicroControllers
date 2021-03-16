@@ -38,7 +38,7 @@
 	};
 
 /*****	Globals		*****/
-	sDNPMsgBuild_t gDNPBuild;
+	sDNPMsgBuffer_t gDNPBuild, gDNPParse;
 
 /*****	Prototypes 	*****/
 void CycleLEDColors(void);
@@ -46,6 +46,9 @@ void CycleLEDColors(void);
 /*****	Functions	*****/
 
 void BootstrapTask(void const * argument) {
+	eReturn_t eResult;
+	uint32_t nUsed;
+
 	//Initialize the processor
 	PinSetup();
 
@@ -77,7 +80,7 @@ void BootstrapTask(void const * argument) {
 		osDelay(250);
 
 		//DNP Testing stuff
-		DNPBuilderNewMessage(&gDNPBuild);
+		DNPBufferNewMessage(&gDNPBuild);
 		gDNPBuild.nDestAddr = 0xFFFC;
 		gDNPBuild.nSourceAddr = 0x1234;
 		gDNPBuild.eControlCode = DNPCtrl_Read;
@@ -85,6 +88,9 @@ void BootstrapTask(void const * argument) {
 		DNPBuilderAddDataObjectRequest(&gDNPBuild, DNPGrp_BinaryInput, 2, 0, 0);
 		DNPBuilderGenerateDNP(&gDNPBuild);
 		gTime.pfWatchdogRefresh();
+
+		DNPBufferNewMessage(&gDNPParse);
+		eResult = DNPParserReceivedData(&gDNPParse, gDNPBuild.aDNPMessage, 0, gDNPBuild.nDNPMsgLen, &nUsed);
 
 		gUart1.pfUARTWriteData(&gUart1, 4, "12\r\n");
 	}
