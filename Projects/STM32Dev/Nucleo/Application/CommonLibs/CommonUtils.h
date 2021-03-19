@@ -39,6 +39,7 @@
 
 /***** Definitions	*****/
 	typedef enum eReturn_t {
+		Warn_EndOfData	= 3,	/**< Incomplete read request returned, reached end of data */
 		Warn_Incomplete	= 2,	/**< Data provided was incomplete or partial processing occurred */
 		Warn_Unknown	= 1,	/**< An unknown but recoverable error happened during the operation */
 		Success			= 0,	/**< The operation completed successfully */

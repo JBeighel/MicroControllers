@@ -46,7 +46,8 @@ void CycleLEDColors(void);
 /*****	Functions	*****/
 
 void BootstrapTask(void const * argument) {
-	eReturn_t eResult;
+	sIOConnect_t IOObject;
+	sTerminal_t Terminal;
 	uint32_t nUsed;
 
 	//Initialize the processor
@@ -57,6 +58,9 @@ void BootstrapTask(void const * argument) {
 
 	//Starts the output compare timer in interrupt mode
 	gTime.pfInterruptStart(TIMEINT_2_HWINFO);
+
+	IOCnctCreateFromUART(&gUart1, &IOObject);
+	TerminalInitialize(&Terminal, &IOObject);
 
 	//Begin the application
 	while (1) {
@@ -90,9 +94,10 @@ void BootstrapTask(void const * argument) {
 		gTime.pfWatchdogRefresh();
 
 		DNPBufferNewMessage(&gDNPParse);
-		eResult = DNPParserReceivedData(&gDNPParse, gDNPBuild.aDNPMessage, 0, gDNPBuild.nDNPMsgLen, &nUsed);
+		DNPParserReceivedData(&gDNPParse, gDNPBuild.aDNPMessage, 0, gDNPBuild.nDNPMsgLen, &nUsed);
 
-		gUart1.pfUARTWriteData(&gUart1, 4, "12\r\n");
+		Terminal.pfWriteTextLine(&Terminal, "56");
+		Terminal.pfReadInput(&Terminal);
 	}
 
 	return;

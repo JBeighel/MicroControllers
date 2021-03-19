@@ -105,7 +105,7 @@
 		eUARTReturn_t	(*pfUARTWriteData)		(sUARTIface_t *pUARTIface, uint16_t nBuffSize, const void *pDataBuff);
 		eUARTReturn_t	(*pfUARTDataAvailable)	(sUARTIface_t *pUARTIface, uint16_t *pnBytesAvailable);
 		eUARTReturn_t	(*pfUARTWaitDataSend)	(sUARTIface_t *pUARTIface);
-		
+
 		uint32_t		nBaudRate;
 		eUARTModes_t	eMode;
 		void			*pHWInfo;

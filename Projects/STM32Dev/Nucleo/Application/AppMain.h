@@ -25,6 +25,8 @@
 	#include "DNPMessageBuilder.h"
 	#include "DNPMessageParser.h"
 
+	#include "Terminal.h"
+
 /*****	Defines		*****/
 
 
