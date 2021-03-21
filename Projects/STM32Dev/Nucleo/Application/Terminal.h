@@ -19,7 +19,9 @@
 	#include "UARTGeneralInterface.h"
 
 /*****	Defines		*****/
-#define TERMINAL_BUFFERSIZE	512
+	#define TERMINAL_BUFFERSIZE		512
+
+	#define TERMINAL_MAXHANDLERS	5
 
 /*****	Definitions	*****/
 	typedef struct sIOConnect_t sIOConnect_t;
@@ -47,12 +49,30 @@
 	} sIOConnect_t;
 
 	typedef eReturn_t (*pfTerminalWriteTextLine_t)(sTerminal_t *pTerminal, char *pText);
-
 	typedef eReturn_t (*pfTerminalReadInput_t)(sTerminal_t *pTerminal);
+	typedef eReturn_t (*pfTerminalSetHandler_t)(sTerminal_t *pTerminal, const char *pKey, const char *pValue);
+	typedef eReturn_t (*pfTerminalGetHandler_t)(sTerminal_t *pTerminal, const char *pKey);
+	typedef eReturn_t (*pfTerminalCommandHandler_t)(sTerminal_t *pTerminal, const char *pCmd);
+	typedef eReturn_t (*pfTerminalUpdateSetHandler_t)(sTerminal_t *pTerminal, pfTerminalSetHandler_t pFunc);
+	typedef eReturn_t (*pfTerminalUpdateGetHandler_t)(sTerminal_t *pTerminal, pfTerminalGetHandler_t pFunc);
+	typedef eReturn_t (*pfTerminalUpdateCmdHandler_t)(sTerminal_t *pTerminal, pfTerminalCommandHandler_t pFunc);
 
 	typedef struct sTerminal_t {
 		pfTerminalWriteTextLine_t pfWriteTextLine;
 		pfTerminalReadInput_t pfReadInput;
+
+		pfTerminalUpdateSetHandler_t pfAddSetHandler;
+		pfTerminalUpdateSetHandler_t pfRemoveSetHandler;
+
+		pfTerminalUpdateGetHandler_t pfAddGetHandler;
+		pfTerminalUpdateGetHandler_t pfRemoveGetHandler;
+
+		pfTerminalUpdateCmdHandler_t pfAddCmdHandler;
+		pfTerminalUpdateCmdHandler_t pfRemoveCmdHandler;
+
+		pfTerminalSetHandler_t pafSetHandlers[TERMINAL_MAXHANDLERS];
+		pfTerminalGetHandler_t pafGetHandlers[TERMINAL_MAXHANDLERS];
+		pfTerminalCommandHandler_t pafCmdHandlers[TERMINAL_MAXHANDLERS];
 
 		char aInputBuffer[TERMINAL_BUFFERSIZE];
 		uint32_t nBufferUsed;

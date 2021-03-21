@@ -151,9 +151,7 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.MSICalibrationValue = 0;
   RCC_OscInitStruct.MSIClockRange = RCC_MSIRANGE_10;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
-
-  HAL_StatusTypeDef RCCResult = HAL_RCC_OscConfig(&RCC_OscInitStruct);
-  if ((RCCResult != HAL_OK) && (RCCResult != HAL_TIMEOUT))
+  if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
     Error_Handler();
   }
