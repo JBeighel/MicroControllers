@@ -39,15 +39,16 @@
 
 /*****	Globals		*****/
 	sDNPMsgBuffer_t gDNPBuild, gDNPParse;
+	sTerminal_t gTerminal;
 
 /*****	Prototypes 	*****/
+void TerminalTask(void *pParams);
 void CycleLEDColors(void);
 
 /*****	Functions	*****/
 
 void BootstrapTask(void const * argument) {
 	sIOConnect_t IOObject;
-	sTerminal_t Terminal;
 	uint32_t nUsed;
 
 	//Initialize the processor
@@ -60,7 +61,9 @@ void BootstrapTask(void const * argument) {
 	gTime.pfInterruptStart(TIMEINT_2_HWINFO);
 
 	IOCnctCreateFromUART(&gUart1, &IOObject);
-	TerminalInitialize(&Terminal, &IOObject);
+	TerminalInitialize(&gTerminal, &IOObject);
+
+	xTaskCreate(&TerminalTask, "UART Terminal", 512, NULL, osPriorityAboveNormal, NULL);
 
 	//Begin the application
 	while (1) {
@@ -96,11 +99,21 @@ void BootstrapTask(void const * argument) {
 		DNPBufferNewMessage(&gDNPParse);
 		DNPParserReceivedData(&gDNPParse, gDNPBuild.aDNPMessage, 0, gDNPBuild.nDNPMsgLen, &nUsed);
 
-		Terminal.pfWriteTextLine(&Terminal, "56");
-		Terminal.pfReadInput(&Terminal);
+		//gTerminal.pfWriteTextLine(&gTerminal, "56");
 	}
 
 	return;
+}
+
+void TerminalTask(void *pParams) {
+	gTerminal.pfWriteTextLine(&gTerminal, "Hello");
+
+	while (1) {
+		gTerminal.pfReadInput(&gTerminal);
+		gTime.pfDelayMilliSeconds(1);
+	}
+
+	return; //Shouldn't reach here
 }
 
 void CycleLEDColors(void) {

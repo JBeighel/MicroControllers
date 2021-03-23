@@ -250,11 +250,19 @@ eReturn_t TerminalReadInput(sTerminal_t *pTerminal) {
 		return Fail_CommError;
 	}
 
+	if (nReadBytes > 0) {
+		nCtr = nReadBytes;
+	}
+
+	if (pTerminal->aInputBuffer[pTerminal->nBufferUsed] == '\r') {
+		nCtr = nReadBytes;
+	}
+
 	pTerminal->nBufferUsed += nReadBytes; //Update how much of the buffer is used
 
 	//Look through the buffer for new line characters
 	for (nCtr = 0; nCtr < pTerminal->nBufferUsed; nCtr++) {
-		if (pTerminal->aInputBuffer[nCtr] == '\n') {
+		if ((pTerminal->aInputBuffer[nCtr] == '\n') || (pTerminal->aInputBuffer[nCtr] == '\r')) {
 			eResult = TerminalProcessCommand(pTerminal, nCtr);
 
 			if (eResult == Warn_Incomplete) { //Command spans multiple lines?
@@ -308,6 +316,11 @@ eReturn_t TerminalProcessCommand(sTerminal_t *pTerminal, uint32_t nCmdLen) {
 
 			if (bFoundHandler == true) { //Only end here if something accepted the command
 				return Success;
+			}else {
+				pTerminal->pfWriteTextLine(pTerminal, "Get Value Unrecognized: ");
+				pTerminal->pfWriteTextLine(pTerminal, &(pTerminal->aInputBuffer[nKeyIdx]));
+
+				return Fail_Invalid;
 			}
 		} else if ((pTerminal->aInputBuffer[nIdx] == 'S') || (pTerminal->aInputBuffer[nIdx] == 's')) {
 			//Found a Set command, find the value start
@@ -337,6 +350,11 @@ eReturn_t TerminalProcessCommand(sTerminal_t *pTerminal, uint32_t nCmdLen) {
 
 			if (bFoundHandler == true) { //Only end here if something accepted the command
 				return Success;
+			} else {
+				pTerminal->pfWriteTextLine(pTerminal, "Set Value Unrecognized: ");
+				pTerminal->pfWriteTextLine(pTerminal, &(pTerminal->aInputBuffer[nKeyIdx]));
+
+				return Fail_Invalid;
 			}
 		}
 	}
@@ -455,6 +473,10 @@ uint32_t CountStringWhiteSpace(char *aText, uint32_t nStartIdx, uint32_t nString
 			continue;
 		}
 
+		if (aText[nCtr] == '\n') {
+			continue;
+		}
+
 		//On non-white space stop counting
 		break;
 	}
@@ -476,6 +498,10 @@ uint32_t CountStringNonWhiteSpace(char *aText, uint32_t nStartIdx, uint32_t nStr
 			}
 
 			if (aText[nCtr] == '\r') {
+				continue;
+			}
+
+			if (aText[nCtr] == '\n') {
 				continue;
 			}
 		}
