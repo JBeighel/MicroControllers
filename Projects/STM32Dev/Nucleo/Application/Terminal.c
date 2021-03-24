@@ -304,6 +304,13 @@ eReturn_t TerminalProcessCommand(sTerminal_t *pTerminal, uint32_t nCmdLen) {
 			nIdx = CountStringNonWhiteSpace(pTerminal->aInputBuffer, nKeyIdx, nCmdLen);
 			pTerminal->aInputBuffer[nIdx] = '\0';
 
+			if (nKeyIdx == nIdx) { //No value characters?
+				pTerminal->pfWriteTextLine(pTerminal, "Get command uses the format");
+				pTerminal->pfWriteTextLine(pTerminal, "GET <Key>");
+				pTerminal->pfWriteTextLine(pTerminal, "Where <Key> is the value to look up");
+				return Fail_Invalid;
+			}
+
 			for (nIdx = 0; nIdx < TERMINAL_MAXHANDLERS; nIdx++) {
 				if (pTerminal->pafGetHandlers[nIdx] != NULL) {
 					eResult = pTerminal->pafGetHandlers[nIdx](pTerminal, &(pTerminal->aInputBuffer[nKeyIdx]));

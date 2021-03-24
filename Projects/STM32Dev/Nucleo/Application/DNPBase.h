@@ -65,9 +65,25 @@
 
 	#define DNP_MSGSTARTBYTES		0x0564
 
+	/**	@brief		Number of bytes in the data link layer header, including CRC
+	 *	@ingroup	dnpmsgparse
+	 */
 	#define DNP_MSGHEADERLEN		10
 
+	/**	@brief		Number of bytes for the data object prefix buffer
+	 *	@ingroup	dnpmsgparse
+	 */
+	#define DNP_OBJECTPREFIXSIZE	4
+
+	/**	@brief		Number of bytes for the data object data buffer
+	 *	@ingroup	dnpmsgparse
+	 */
+	#define DNP_OBJECTDATASIZE		64
+
 /*****	Definitions	*****/
+	/**	@brief		Indexes of values in the Data Link Layer header
+	 *	@ingroup	dnpmsgparse
+	 */
 	typedef enum eDNPHeaderIndexes_t {
 		DNPHdrIdx_StartBytes	= 0,
 		DNPHdrIdx_DataLength	= 2,
@@ -77,8 +93,13 @@
 		DNPHdrIdx_CRC			= 8,
 		DNPHdrIdx_TransportHdr	= 11,
 		DNPHdrIdx_AppHdr		= 12,
+		DNPHdrIdx_ControlCode	= 13,
+		DNPHdrIdx_IntIndicators	= 14,
 	} eDNPHeaderIndexes_t;
 
+	/**	@brief		Addressed reserved by the DNP specification
+	 *	@ingroup	dnpmsgparse
+	 */
 	typedef enum eDNPAddresses_t {
 		DNPAddr_AllStations		= 0xFFFF,
 		DNPAddr_SelfAddress		= 0xFFFC,
@@ -169,7 +190,7 @@
 	} eDNPInternalIndicators_t;
 
 	typedef enum eDNPGroup_t {
-		DNPGrp_Unknown					= 0x00,
+		DNPGrp_Unknown					= 0xFF,
 		DNPGrp_DeviceAttrib				= 0x00,
 		DNPGrp_BinaryInput				= 0x01,
 		DNPGrp_BinaryInputEvent			= 0x02,
@@ -199,6 +220,39 @@
 		DNPBinOutCtrl_Trip				= 0x80,
 	} eDNPBinOutControlCode_t;
 
+	/**	@brief		Details of the current data object being parsed from the message
+	 *	@ingroup	dnpmsgparse
+	 */
+	typedef struct sDNPDataObject_t {
+		eDNPQualifier_t eQualifier;		/**< Qualifier used by this data object */
+		eDNPGroup_t eGroup;				/**< Group type of this data object */
+		uint8_t nVariation;				/**< Variation type of this data object */
+		uint32_t nAddressStart;			/**< Starting address of the values in this data object */
+		uint32_t nAddressEnd;			/**< Ending address of the values in this data object */
+		uint32_t nIdxStart;				/**< Index in the user buffer where this data object began */
+		uint32_t nDataBytes;			/**< Number of bytes of data in this object */
+		uint32_t nTotalBytes;			/**< Number of user data bytes comprising this data object */
+	} sDNPDataObject_t;
+
+	/**	@brief		Union to parse the values from the data in a data object
+	 *	@ingroup	dnpmsgparse
+	 */
+	typedef union uDNPDataBlock_t {
+		uint8_t aBytes[DNP_OBJECTDATASIZE];	/**< Raw bytes in this data point */
+	} uDNPDataBlock_t;
+
+	/**	@brief		Details of a single data point in a data object
+	 *	@ingroup	dnpmsgparse
+	 */
+	typedef struct sDNPDataValue_t {
+		eDNPControlCodes_t eControl;	/**< Control code for this DNP message */
+		eDNPGroup_t eGroup;				/**< Group type of this data object */
+		uint8_t nVariation;				/**< Variation type of this data object */
+		uint32_t nAddress;				/**< Address of this data point */
+		uint8_t nPrefix[DNP_OBJECTPREFIXSIZE];	/**< Prefix bytes of this data point */
+		uDNPDataBlock_t Data;			/**< Data included in this data point */
+	} sDNPDataValue_t;
+
 	/**	@brief		Structure to hold a DNP message during creation and parsing
 	 *	@details	All fields should be treated as read only to ensure the module
 	 *		operating on the message keeps the contents sane.
@@ -207,6 +261,7 @@
 	typedef struct sDNPMsgBuffer_t {
 		uint8_t aDNPMessage[DNP_MESSAGESIZEMAX];	/**< Buffer to hold the full DNP message */
 		uint32_t nDNPMsgLen;						/**< Index of last byte of the DNP Message */
+		uint32_t nFramgentIdx;						/**< Index in the message buffer the current fragment began */
 		uint8_t aUserData[DNP_USERDATAMAX];			/**< Buffer to hold all user data in the message */
 		uint32_t nUserDataLen;						/**< Index of last byte of user data */
 		uint32_t nUserDataIdx;						/**< Index of last processed byte in the user data */
@@ -217,9 +272,17 @@
 		eDNPControlCodes_t eControlCode;			/**< Control code used in this message */
 		eDNPInternalIndicators_t eIntIndicators;	/**< Internal indicators to set in this message */
 		eDNPDataControl_t eDataControl;				/**< Data Control code for this message */
+		sDNPDataObject_t sDataObj;					/**< Storage space for data object manipulation */
 	} sDNPMsgBuffer_t;
 
+	typedef struct sDNPDataObjBitSize_t {
+		eDNPGroup_t eGroup;
+		uint8_t nVariation;
+		uint16_t nBits;
+	} sDNPDataObjBitSize_t;
+
 /*****	Constants	*****/
+
 
 /*****	Globals		*****/
 
@@ -255,7 +318,20 @@
 	 */
 	uint32_t BytesToUInt32(uint8_t *pBuffer, bool bLSBFirst, uint32_t nBuffOffset, uint32_t nLength);
 
+	/**	@brief		Prepare a DNP message buffer object to begin a new message
+	 *	@param		pMsg	Pointer to the message object to modify
+	 *	@ingroup	dnp
+	 */
 	eReturn_t DNPBufferNewMessage(sDNPMsgBuffer_t *pMsg);
+
+	/**	@brief		Determine the number of data bytes contained in a particular data object
+	 *	@param		eGroup		Data object group number
+	 *	@param		nVariation	Data object variation type
+	 *	@return		The number of bits in the data field for this object, or
+	 *		zero if the object type is not recognized
+	 *	@ingroup	dnp
+	 */
+	uint16_t DNPGetDataObjectBitSize(eDNPGroup_t eGroup, uint8_t nVariation);
 
 /*****	Functions	*****/
 

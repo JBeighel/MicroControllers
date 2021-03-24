@@ -13,7 +13,23 @@
 
 
 /*****	Constants	*****/
+	/**	@brief		Constant array holding the size in bits of recognized DNP data objects
+	 *	@ingroup	dnp
+	 */
+	const sDNPDataObjBitSize_t gDNPObjSize[] = {
+		{ .eGroup = DNPGrp_BinaryInput,			.nVariation = 1,	.nBits = 1, },	//Packed format
+		{ .eGroup = DNPGrp_BinaryInput,			.nVariation = 2,	.nBits = 8, },	//With flags
 
+		{ .eGroup = DNPGrp_BinaryInputEvent,	.nVariation = 1,	.nBits = 8, },	//Without time
+		{ .eGroup = DNPGrp_BinaryInputEvent,	.nVariation = 2,	.nBits = 56, },	//Absolute time
+		{ .eGroup = DNPGrp_BinaryInputEvent,	.nVariation = 3,	.nBits = 24, },	//Relative time
+
+		{ .eGroup = DNPGrp_BinaryOutput,		.nVariation = 1,	.nBits = 1, },	//Packed format
+		{ .eGroup = DNPGrp_BinaryOutput,		.nVariation = 2,	.nBits = 8, },	//With flags
+
+		{ .eGroup = DNPGrp_BinaryOutputCmd,		.nVariation = 1,	.nBits = 88, },	//Control relay output block (CROB)
+		{ .eGroup = DNPGrp_BinaryOutputCmd,		.nVariation = 2,	.nBits = 88, },	//Pattern control block (PCB)
+	};
 
 /*****	Globals		*****/
 
@@ -104,5 +120,28 @@ eReturn_t DNPBufferNewMessage(sDNPMsgBuffer_t *pMsg) {
 	pMsg->nTransportSequence += 1;
 	pMsg->nApplicationSequence += 1;
 
+	//Clear out the data object space
+	pMsg->sDataObj.eQualifier = DNPQual_IndexPrefixNone | DNPQual_CodeNoRange;
+	pMsg->sDataObj.eGroup = DNPGrp_Unknown;
+	pMsg->sDataObj.nVariation = 0;
+	pMsg->sDataObj.nAddressStart = 0;
+	pMsg->sDataObj.nAddressEnd = 0;
+	pMsg->sDataObj.nDataBytes = 0;
+	pMsg->sDataObj.nIdxStart = 0;
+	pMsg->sDataObj.nTotalBytes = 0;
+
 	return Success;
+}
+
+uint16_t DNPGetDataObjectBitSize(eDNPGroup_t eGroup, uint8_t nVariation) {
+	uint32_t nCtr;
+
+	for (nCtr = 0; nCtr < sizeof(gDNPObjSize) / sizeof(sDNPDataObjBitSize_t); nCtr++) {
+		if ((gDNPObjSize[nCtr].eGroup == eGroup) && (gDNPObjSize[nCtr].nVariation == nVariation)) {
+			//Found the requested data object
+			return gDNPObjSize[nCtr].nBits;
+		}
+	}
+
+	return 0; //Couldn't find the requested object type
 }

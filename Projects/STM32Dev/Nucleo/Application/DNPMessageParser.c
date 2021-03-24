@@ -23,7 +23,7 @@
 
 /*****	Functions	*****/
 eReturn_t DNPParserReceivedData(sDNPMsgBuffer_t *pMsg, uint8_t *pData, uint32_t nDataStart, uint32_t nDataLen, uint32_t *pnDataUsed) {
-	uint32_t nCtr, nChunkStartIdx, nCurrIndex = nDataStart;
+	uint32_t nCtr, nShiftCtr, nChunkStartIdx, nCurrIndex = nDataStart;
 	uint16_t nU16Val, nExpMsgSize;
 	crc16_t nCRCVal;
 
@@ -41,7 +41,8 @@ eReturn_t DNPParserReceivedData(sDNPMsgBuffer_t *pMsg, uint8_t *pData, uint32_t 
 
 			if (nU16Val == DNP_MSGSTARTBYTES) { //Found the start of the message in nCtr - 1
 				UInt16ToBytes(DNP_MSGSTARTBYTES, false, pMsg->aDNPMessage, DNPHdrIdx_StartBytes);
-				pMsg->nDNPMsgLen = 2;
+				pMsg->nFramgentIdx = pMsg->nDNPMsgLen;
+				pMsg->nDNPMsgLen += 2;
 				*pnDataUsed += 2;
 				nCurrIndex = nCtr + 1; //Set the index to right after the start bytes
 
@@ -55,7 +56,7 @@ eReturn_t DNPParserReceivedData(sDNPMsgBuffer_t *pMsg, uint8_t *pData, uint32_t 
 		}
 	}
 
-	if ((pMsg->nDNPMsgLen < DNP_MSGHEADERLEN) && (nCurrIndex < nDataLen)) { //Need to get the rest of the header
+	if ((pMsg->nDNPMsgLen - pMsg->nFramgentIdx < DNP_MSGHEADERLEN) && (nCurrIndex < nDataLen)) { //Need to get the rest of the header
 		//Loop until we fill the header or run out of data
 		for (nCtr = 0; (pMsg->nDNPMsgLen + nCtr < DNP_MSGHEADERLEN) && (nCurrIndex + nCtr < nDataLen); nCtr++) {
 			pMsg->aDNPMessage[nCtr + pMsg->nDNPMsgLen] = pData[nCtr + nCurrIndex];
@@ -126,6 +127,18 @@ eReturn_t DNPParserReceivedData(sDNPMsgBuffer_t *pMsg, uint8_t *pData, uint32_t 
 					DNPBufferNewMessage(pMsg); //This message is invalid, start over
 					return Warn_Incomplete;
 				}
+
+				//First byte of data section is the transport header, don't put that into user data
+				if (pMsg->nDNPMsgLen - pMsg->nFramgentIdx == DNP_MSGHEADERLEN + DNP_DATACRCCHUNKSIZE) {
+					pMsg->nTransportSequence = pMsg->aUserData[pMsg->nUserDataLen - 16];
+
+					//Shift the chunk bytes down by 1 to squeeze out the transport header
+					for (nShiftCtr = pMsg->nUserDataLen - 16; nShiftCtr < pMsg->nUserDataLen; nShiftCtr++) {
+						pMsg->aUserData[nShiftCtr] = pMsg->aUserData[nShiftCtr + 1];
+					}
+
+					pMsg->nUserDataLen -= 1; //Remove 1 byte for the discard transport header
+				}
 			}
 		}
 
@@ -147,16 +160,42 @@ eReturn_t DNPParserReceivedData(sDNPMsgBuffer_t *pMsg, uint8_t *pData, uint32_t 
 				pMsg->nUserDataLen -= 2; //The CRC value was copied into the user data, overwrite it
 			}
 
-			//First byte in the data section should be the transport header
-			nU16Val = pMsg->aDNPMessage[DNPHdrIdx_TransportHdr];
+			//Transport header indicates if this is the last fragment, make sure we have it
+			if (pMsg->nDNPMsgLen - pMsg->nFramgentIdx <= DNP_MSGHEADERLEN + DNP_DATACRCCHUNKSIZE) {
+				//Message didn't have a full chunk, so transport header wasn't extracted yet
+				pMsg->nTransportSequence = pMsg->aDNPMessage[pMsg->nFramgentIdx + DNPHdrIdx_TransportHdr];
+				pMsg->nTransportSequence &= DNPTransHdr_SequenceMask;
 
-			if (CheckAllBitsInMask(nU16Val, DNPTransHdr_LastMsg) == true) {
-				//This fragment ends the message
+				//Shift the chunk bytes down by 1 to squeeze out the transport header
+				nChunkStartIdx = pMsg->nDNPMsgLen - (nChunkStartIdx + 2); //Calculate the bytes in this chunk
+				for (nShiftCtr = pMsg->nUserDataLen - nChunkStartIdx; nShiftCtr < pMsg->nUserDataLen; nShiftCtr++) {
+					pMsg->aUserData[nShiftCtr] = pMsg->aUserData[nShiftCtr + 1];
+				}
+
+				pMsg->nUserDataLen -= 1; //Remove 1 byte for the discard transport header
+			}
+
+			if (CheckAllBitsInMask(pMsg->nTransportSequence, DNPTransHdr_LastMsg) == true) {
+				//This fragment ends the message, get the application sequence
+				pMsg->nApplicationSequence = pMsg->aDNPMessage[DNPHdrIdx_AppHdr] & DNPAppHdr_SequenceMask;
+				pMsg->eControlCode = pMsg->aDNPMessage[DNPHdrIdx_ControlCode];
+
+				pMsg->nUserDataIdx = 2; //The application header bytes are processed
+
+				//If the message includes internal indicators, pull those out
+				if ((pMsg->eControlCode == DNPCtrl_Response) || (pMsg->eControlCode == DNPCtrl_Unsolicited)) {
+					pMsg->eIntIndicators = BytesToUInt16(pMsg->aDNPMessage, true, DNPHdrIdx_IntIndicators);
+					pMsg->nUserDataIdx += 2; //The internal indicators bytes are processed
+				} else {
+					pMsg->eIntIndicators = DNPIntInd_None;
+				}
+
 				return Success;
 			} else { //This fragment is complete, but the message isn't
 				return Warn_Incomplete;
 			}
 		} else if (pMsg->nDNPMsgLen < nExpMsgSize) { //Still missing some
+			pMsg->nFramgentIdx = pMsg->nDNPMsgLen + 1; //Next bytes should be a new fragment
 			return Warn_Incomplete; //Current fragment is incomplete
 		} else { //We have too much data in this message?
 			DNPBufferNewMessage(pMsg); //This message is screwed, start over
@@ -166,4 +205,102 @@ eReturn_t DNPParserReceivedData(sDNPMsgBuffer_t *pMsg, uint8_t *pData, uint32_t 
 
 	//Only should get here if we run out of data in the buffer
 	return Warn_Incomplete; //Message is still incomplete and we're out of data
+}
+
+eReturn_t DNPParserNextDataObject(sDNPMsgBuffer_t *pMsg) {
+	uint8_t nStartBytes, nStopBytes;
+	uint32_t nCtr;
+	eDNPQualifier_t eQualCode;
+
+	if (pMsg->sDataObj.eGroup != DNPGrp_Unknown) {
+		//Advance to the end of the current object
+		pMsg->nUserDataIdx = pMsg->sDataObj.nIdxStart + pMsg->sDataObj.nTotalBytes;
+	}
+
+	//Save off the starting point of the data object
+	pMsg->sDataObj.nIdxStart = pMsg->nUserDataIdx;
+
+	//Start pulling out data description values
+	pMsg->sDataObj.eGroup = pMsg->aUserData[pMsg->nUserDataIdx];
+	pMsg->nUserDataIdx += 1;
+
+	if ((pMsg->sDataObj.eGroup == DNPGrp_VirtualTerminalOut) || (pMsg->sDataObj.eGroup == DNPGrp_VirtualTerminalEvent)) {
+		//Virtual terminal stuff doesn't have qualifier or variation, next byte is data length
+		pMsg->sDataObj.nVariation = 0;
+		pMsg->sDataObj.eQualifier = DNPQual_IndexPrefixNone | DNPQual_CodeSingleVal1Bytes;
+	} else {
+		//All other types have variation and qualifier bytes
+		pMsg->sDataObj.nVariation = pMsg->aUserData[pMsg->nUserDataIdx];
+		pMsg->nUserDataIdx += 1;
+
+		pMsg->sDataObj.eQualifier = pMsg->aUserData[pMsg->nUserDataIdx];
+		pMsg->nUserDataIdx += 1;
+	}
+
+	//The qualifier tells us what the range bytes look like
+	eQualCode = pMsg->sDataObj.eQualifier & DNPQual_CodeMask;
+	switch (eQualCode) {
+		case DNPQual_CodeCountStopAndStart1Bytes:
+		case DNPQual_CodeAddrStopAndStart1Bytes:
+			nStartBytes = 1;
+			nStopBytes = 1;
+			break;
+		case DNPQual_CodeCountStopAndStart2Bytes:
+		case DNPQual_CodeAddrStopAndStart2Bytes:
+			nStartBytes = 2;
+			nStopBytes = 2;
+			break;
+		case DNPQual_CodeCountStopAndStart4Bytes:
+		case DNPQual_CodeAddrStopAndStart4Bytes:
+			nStartBytes = 4;
+			nStopBytes = 4;
+			break;
+		case DNPQual_CodeFreeFormat:
+		case DNPQual_CodeSingleVal1Bytes:
+			nStartBytes = 0;
+			nStopBytes = 1;
+			break;
+		case DNPQual_CodeSingleVal2Bytes:
+			nStartBytes = 0;
+			nStopBytes = 2;
+			break;
+		case DNPQual_CodeSingleVal4Bytes:
+			nStartBytes = 0;
+			nStopBytes = 4;
+			break;
+		case DNPQual_CodeNoRange:
+			nStartBytes = 0;
+			nStopBytes = 0;
+			break;
+		default:
+			//Unrecognized Qualifier code
+			return Fail_Invalid;
+	}
+
+	//Extract the start and stop addresses
+	pMsg->sDataObj.nAddressStart = 0;
+	for (nCtr = 0; nCtr < nStartBytes; nCtr++) {
+		pMsg->sDataObj.nAddressStart = pMsg->aUserData[pMsg->nUserDataIdx];
+		pMsg->nUserDataIdx += 1;
+	}
+
+
+	if ((eQualCode == DNPQual_CodeSingleVal1Bytes) || (eQualCode == DNPQual_CodeSingleVal2Bytes) || (eQualCode == DNPQual_CodeSingleVal4Bytes)) {
+		//Single count values must start at 1 to avoid overrun
+		pMsg->sDataObj.nAddressStart = 1;
+	}
+
+	pMsg->sDataObj.nAddressEnd = 0;
+	for (nCtr = 0; nCtr < nStopBytes; nCtr++) {
+		pMsg->sDataObj.nAddressEnd = pMsg->aUserData[pMsg->nUserDataIdx];
+		pMsg->nUserDataIdx += 1;
+	}
+
+	//Get the number of bits in each value
+
+	//Each value will also have a prefix
+	//((value bits / 8) + (value bits % 8 != 0) + prefix bytes) * data values = total bytes for data
+	//Add the bytes previously handled and store it in pMsg->sDataObj.nTotalBytes
+
+	return Success;
 }

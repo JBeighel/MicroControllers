@@ -34,6 +34,8 @@
 /*****	Prototypes 	*****/
 	eReturn_t DNPParserReceivedData(sDNPMsgBuffer_t *pMsg, uint8_t *pData, uint32_t nDataStart, uint32_t nDataLen, uint32_t *pnDataUsed);
 
+	eReturn_t DNPParserNextDataObject(sDNPMsgBuffer_t *pMsg);
+
 /*****	Functions	*****/
 
 
