@@ -164,7 +164,6 @@ eReturn_t DNPParserReceivedData(sDNPMsgBuffer_t *pMsg, uint8_t *pData, uint32_t 
 			if (pMsg->nDNPMsgLen - pMsg->nFramgentIdx <= DNP_MSGHEADERLEN + DNP_DATACRCCHUNKSIZE) {
 				//Message didn't have a full chunk, so transport header wasn't extracted yet
 				pMsg->nTransportSequence = pMsg->aDNPMessage[pMsg->nFramgentIdx + DNPHdrIdx_TransportHdr];
-				pMsg->nTransportSequence &= DNPTransHdr_SequenceMask;
 
 				//Shift the chunk bytes down by 1 to squeeze out the transport header
 				nChunkStartIdx = pMsg->nDNPMsgLen - (nChunkStartIdx + 2); //Calculate the bytes in this chunk
@@ -176,6 +175,8 @@ eReturn_t DNPParserReceivedData(sDNPMsgBuffer_t *pMsg, uint8_t *pData, uint32_t 
 			}
 
 			if (CheckAllBitsInMask(pMsg->nTransportSequence, DNPTransHdr_LastMsg) == true) {
+				pMsg->nTransportSequence &= DNPTransHdr_SequenceMask; //Now filter to just get the sequence
+
 				//This fragment ends the message, get the application sequence
 				pMsg->nApplicationSequence = pMsg->aDNPMessage[DNPHdrIdx_AppHdr] & DNPAppHdr_SequenceMask;
 				pMsg->eControlCode = pMsg->aDNPMessage[DNPHdrIdx_ControlCode];
@@ -210,11 +211,16 @@ eReturn_t DNPParserReceivedData(sDNPMsgBuffer_t *pMsg, uint8_t *pData, uint32_t 
 eReturn_t DNPParserNextDataObject(sDNPMsgBuffer_t *pMsg) {
 	uint8_t nStartBytes, nStopBytes;
 	uint32_t nCtr;
-	eDNPQualifier_t eQualCode;
+	eDNPQualifier_t eQualPart;
 
 	if (pMsg->sDataObj.eGroup != DNPGrp_Unknown) {
 		//Advance to the end of the current object
 		pMsg->nUserDataIdx = pMsg->sDataObj.nIdxStart + pMsg->sDataObj.nTotalBytes;
+	}
+
+	if (pMsg->nUserDataIdx >= pMsg->nUserDataLen) {
+		memset(&(pMsg->sDataObj), 0, sizeof(sDNPDataObject_t));
+		return Warn_EndOfData;
 	}
 
 	//Save off the starting point of the data object
@@ -238,8 +244,8 @@ eReturn_t DNPParserNextDataObject(sDNPMsgBuffer_t *pMsg) {
 	}
 
 	//The qualifier tells us what the range bytes look like
-	eQualCode = pMsg->sDataObj.eQualifier & DNPQual_CodeMask;
-	switch (eQualCode) {
+	eQualPart = pMsg->sDataObj.eQualifier & DNPQual_CodeMask;
+	switch (eQualPart) {
 		case DNPQual_CodeCountStopAndStart1Bytes:
 		case DNPQual_CodeAddrStopAndStart1Bytes:
 			nStartBytes = 1;
@@ -284,8 +290,7 @@ eReturn_t DNPParserNextDataObject(sDNPMsgBuffer_t *pMsg) {
 		pMsg->nUserDataIdx += 1;
 	}
 
-
-	if ((eQualCode == DNPQual_CodeSingleVal1Bytes) || (eQualCode == DNPQual_CodeSingleVal2Bytes) || (eQualCode == DNPQual_CodeSingleVal4Bytes)) {
+	if ((eQualPart == DNPQual_CodeSingleVal1Bytes) || (eQualPart == DNPQual_CodeSingleVal2Bytes) || (eQualPart == DNPQual_CodeSingleVal4Bytes)) {
 		//Single count values must start at 1 to avoid overrun
 		pMsg->sDataObj.nAddressStart = 1;
 	}
@@ -297,10 +302,90 @@ eReturn_t DNPParserNextDataObject(sDNPMsgBuffer_t *pMsg) {
 	}
 
 	//Get the number of bits in each value
+	nCtr = pMsg->sDataObj.nAddressEnd - pMsg->sDataObj.nAddressStart; //Number of values
+	pMsg->sDataObj.nDataBytes = DNPGetDataObjectBitSize(pMsg->sDataObj.eGroup, pMsg->sDataObj.nVariation);
 
-	//Each value will also have a prefix
-	//((value bits / 8) + (value bits % 8 != 0) + prefix bytes) * data values = total bytes for data
-	//Add the bytes previously handled and store it in pMsg->sDataObj.nTotalBytes
+	if (pMsg->sDataObj.nDataBytes == 1) { //Packed bits should not have a prefix
+		pMsg->sDataObj.nTotalBytes = pMsg->sDataObj.nDataBytes / 8;
+
+		if (pMsg->sDataObj.nDataBytes % 8 != 0) {
+			pMsg->sDataObj.nTotalBytes += 1;
+		}
+
+		pMsg->sDataObj.nDataBytes = pMsg->sDataObj.nTotalBytes;
+	} else { //Regular data is in even bytes
+		pMsg->sDataObj.nDataBytes /= 8; //Convert from bits to byte
+
+		pMsg->sDataObj.nTotalBytes = pMsg->sDataObj.nDataBytes * nCtr;
+	}
+
+	//Add in any prefix data
+	eQualPart = pMsg->sDataObj.eQualifier & DNPQual_IndexMask;
+	switch(eQualPart) {
+		case DNPQual_IndexPrefixNone:
+			pMsg->sDataObj.nPrefixBytes = 0;
+			break;
+		case DNPQual_IndexPrefix1Bytes:
+			pMsg->sDataObj.nPrefixBytes = 1;
+			break;
+		case DNPQual_IndexPrefix2Bytes:
+			pMsg->sDataObj.nPrefixBytes = 2;
+			break;
+		case DNPQual_IndexPrefix4Bytes:
+			pMsg->sDataObj.nPrefixBytes = 4;
+			break;
+		default :
+			return Fail_Invalid;
+	}
+
+	pMsg->sDataObj.nTotalBytes = pMsg->sDataObj.nPrefixBytes * nCtr;
+
+	pMsg->sDataObj.nCurrPoint = 0; //Reset to get first point
+	return Success;
+}
+
+eReturn_t DNPParserNextDataValue(sDNPMsgBuffer_t * pMsg, sDNPDataValue_t *pValue) {
+	uint32_t nCtr;
+
+	if (pMsg->sDataObj.eGroup == DNPGrp_Unknown) {
+		//No data object was prepared
+		return Fail_Invalid;
+	}
+
+	if (pMsg->sDataObj.nCurrPoint >= pMsg->sDataObj.nAddressEnd - pMsg->sDataObj.nAddressStart) {
+		//Out of points in this data object
+		return Warn_EndOfData;
+	}
+
+	if (pMsg->nUserDataIdx + pMsg->sDataObj.nDataBytes >= pMsg->nUserDataLen) {
+		//Not enough user data left to read this point
+		return Fail_BufferSize;
+	}
+
+	if ((pMsg->eControlCode == DNPCtrl_Read) || (pMsg->eControlCode == DNPCtrl_FreezeAndClear)) {
+		//Read and freeze and clear requests do not have any data in the object
+		return Warn_EndOfData;
+	}
+
+	//Everything seems to be in order, pull out the point: prefix first
+	for (nCtr = 0; nCtr < pMsg->sDataObj.nPrefixBytes; nCtr++) {
+		pValue->nPrefix[nCtr] = pMsg->aUserData[pMsg->nUserDataIdx]; //Prefix is least significant byte first
+		pMsg->nUserDataIdx += 1;
+	}
+
+	//Next is the data
+	for (nCtr = 0; nCtr < pMsg->sDataObj.nPrefixBytes; nCtr++) {
+		pValue->Data.aBytes[nCtr] = pMsg->aUserData[pMsg->nUserDataIdx]; //Data is least significant byte first
+		pMsg->nUserDataIdx += 1;
+	}
+
+	//Copy in all the object details
+	pValue->eControl = pMsg->eControlCode;
+	pValue->eGroup = pMsg->sDataObj.eGroup;
+	pValue->nVariation = pMsg->sDataObj.nVariation;
+	pValue->nAddress = pMsg->sDataObj.nAddressStart + pMsg->sDataObj.nCurrPoint;
+
+	pMsg->sDataObj.nCurrPoint += 1; //update to get the next point
 
 	return Success;
 }

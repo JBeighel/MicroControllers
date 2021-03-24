@@ -129,6 +129,8 @@ eReturn_t DNPBufferNewMessage(sDNPMsgBuffer_t *pMsg) {
 	pMsg->sDataObj.nDataBytes = 0;
 	pMsg->sDataObj.nIdxStart = 0;
 	pMsg->sDataObj.nTotalBytes = 0;
+	pMsg->sDataObj.nPrefixBytes = 0;
+	pMsg->sDataObj.nCurrPoint = 0;
 
 	return Success;
 }

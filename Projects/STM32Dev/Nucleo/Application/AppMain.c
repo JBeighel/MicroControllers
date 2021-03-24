@@ -99,6 +99,8 @@ void BootstrapTask(void const * argument) {
 		DNPBufferNewMessage(&gDNPParse);
 		DNPParserReceivedData(&gDNPParse, gDNPBuild.aDNPMessage, 0, gDNPBuild.nDNPMsgLen, &nUsed);
 
+		DNPParserNextDataObject(&gDNPParse);
+
 		//gTerminal.pfWriteTextLine(&gTerminal, "56");
 	}
 

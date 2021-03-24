@@ -111,6 +111,7 @@
 		DNPCtrl_Select			= 3,
 		DNPCtrl_Operate			= 4,
 		DNPCtrl_DirectOperate	= 5,
+		DNPCtrl_FreezeAndClear	= 9,
 		DNPCtrl_ColdRestart		= 13,
 		DNPCtrl_WarmRestart		= 14,
 		DNPCtrl_FileOpen		= 25,
@@ -230,8 +231,10 @@
 		uint32_t nAddressStart;			/**< Starting address of the values in this data object */
 		uint32_t nAddressEnd;			/**< Ending address of the values in this data object */
 		uint32_t nIdxStart;				/**< Index in the user buffer where this data object began */
+		uint32_t nPrefixBytes;			/**< Number of prefix bytes with each value */
 		uint32_t nDataBytes;			/**< Number of bytes of data in this object */
 		uint32_t nTotalBytes;			/**< Number of user data bytes comprising this data object */
+		uint32_t nCurrPoint;			/**< Last data point number that was read out */
 	} sDNPDataObject_t;
 
 	/**	@brief		Union to parse the values from the data in a data object
