@@ -1,6 +1,6 @@
 /**	File:	PinSupport.c
 	Author:	J. Beighel
-	Date:	2021-03-02
+	Date:	2021-03-10
 */
 
 /*****	Includes	*****/
@@ -18,6 +18,7 @@
 /*****	Globals		*****/
 	sGPIOIface_t gGpioA;
 	sGPIOIface_t gGpioB;
+	sGPIOIface_t gGpioC;
 	sGPIOIface_t gGpioH;
 
 	sI2CIface_t gI2C1;
@@ -37,9 +38,10 @@
 
 /*****	Functions	*****/
 eReturn_t PinSetup() {
-	//Set up all IO pins
+	//Set up all IO ports
 	GPIO_INIT(&gGpioA, GPIO_A_HWINFO);
 	GPIO_INIT(&gGpioB, GPIO_B_HWINFO);
+	GPIO_INIT(&gGpioC, GPIO_C_HWINFO);
 	GPIO_INIT(&gGpioH, GPIO_H_HWINFO);
 
 	//Set up all buses
@@ -56,6 +58,7 @@ eReturn_t PinSetup() {
 	//Arrange interrupts
 	gGpioA.pfSetInterrupt(&gGpioA, GPI_A03_1_Pin, &GPIA03IntHandler, true, NULL);
 	gTime.pfInterruptSetHandler(TIMEINT_2_HWINFO, &TimerCallback, NULL);
+	gTime.pfInterruptStart(TIMEINT_2_HWINFO);
 
 	return Success;
 }
@@ -85,3 +88,4 @@ void TimerCallback(void *pTimerHW, void *pParam) {
 
 	return;
 }
+

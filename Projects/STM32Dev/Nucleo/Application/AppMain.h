@@ -1,16 +1,16 @@
-/**	@defgroup	GROUPNAME
+/**	@defgroup	appmain
 	@brief
-	@details	v
+	@details	v0.1
 	#Description
 
 	#File Information
-		File:	???.c
+		File:	AppMain.c
 		Author:	J. Beighel
-		Date:	MM-DD-YYYY
+		Date:	2021-03-10
 */
 
-#ifndef __NAME_H
-	#define __NAME_H
+#ifndef __APPMAIN_H
+	#define __APPMAIN_H
 
 /*****	Includes	*****/
 	#include "FreeRTOS.h"
@@ -21,6 +21,11 @@
 
 	#include "PinSupport.h"
 	#include "BoardSupport.h"
+
+	#include "DNPMessageBuilder.h"
+	#include "DNPMessageParser.h"
+
+	#include "Terminal.h"
 
 /*****	Defines		*****/
 

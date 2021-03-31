@@ -132,7 +132,7 @@ eW5500Return_t W5500Initialize(sW5500Obj_t *pDev, sSPIIface_t *pSpiBus, sGPIOIfa
 	
 	//Check the SPI Mode
 	if ((pSpiBus->eMode != SPI_Mode0) && (pSpiBus->eMode != SPI_Mode3)) {
-		return SPIFail_Unknown;
+		return W5500Fail_Unknown;
 	}
 	
 	return W5500_Success;
@@ -902,4 +902,3 @@ eNetReturn_t W5500NetTCPServSend(sTCPServ_t *pTCPServ, sSocket_t *pClientSck, ui
 		return Net_Success;
 	}
 }
-

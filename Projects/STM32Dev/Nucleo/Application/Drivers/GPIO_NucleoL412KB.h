@@ -27,10 +27,14 @@
 		HAL_NVIC_EnableIRQ(EXTI3_IRQn);
 		These shut down all interrupts in the EXTI3 section.
 
+		The interrupt timer is based on Output Compare timers.  Each channel
+		can have its own interrupt, they will all be reset when the interrupt
+		goes off.
+
 	#File Information
 		File:	GPIO_NucleoL412KB.h
 		Author:	J. Beighel
-		Date:	2021-03-07
+		Date:	2021-03-31
 */
 
 #ifndef __GPIONUCLEO
@@ -90,6 +94,11 @@
 	 */
 	#define GPIO_B_HWINFO	((void *)&gGPIOPortB)
 
+	/**	@brief		Hawrdware information for GPIO Port C
+	 *	@ingroup	gpionucleo
+	 */
+	#define GPIO_C_HWINFO	((void *)&gGPIOPortC)
+
 	/**	@brief		Hawrdware information for GPIO Port H
 	 *	@ingroup	gpionucleo
 	 */
@@ -136,7 +145,7 @@
 	 *	@ingroup	gpionucleo
 	 */
 	#ifndef TIME_TIMERCLKFREQ
-		#define TIME_TIMERCLKFREQ	32000000\
+		#define TIME_TIMERCLKFREQ	32000000
 	#endif
 
 /***** Definitions	*****/
@@ -168,6 +177,7 @@
 /***** Globals		*****/
 	extern sNucleoGPIOPortInfo_t gGPIOPortA;
 	extern sNucleoGPIOPortInfo_t gGPIOPortB;
+	extern sNucleoGPIOPortInfo_t gGPIOPortC;
 	extern sNucleoGPIOPortInfo_t gGPIOPortH;
 
 	extern sNucleoTimerInfo_t gTimer2Ch1;
