@@ -36,7 +36,7 @@
 	# File Information #
 		File:	UARTGeneralInterface.h
 		Author:	J. Beighel
-		Date:	2021-01-22
+		Date:	2021-03-31
 */
 
 #ifndef __UARTINTERFACE

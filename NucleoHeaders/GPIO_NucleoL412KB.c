@@ -19,6 +19,7 @@
 /***** Globals		*****/
 	sNucleoGPIOPortInfo_t gGPIOPortA = { .pPort = GPIOA };
 	sNucleoGPIOPortInfo_t gGPIOPortB = { .pPort = GPIOB };
+	sNucleoGPIOPortInfo_t gGPIOPortC = { .pPort = GPIOC };
 	sNucleoGPIOPortInfo_t gGPIOPortH = { .pPort = GPIOH };
 
 	sNucleoTimerInfo_t gTimer2Ch1 = { .pHWTimer = &htim2, .nChannel = TIM_CHANNEL_1, .pfHandler = NULL, .pParam = NULL };
