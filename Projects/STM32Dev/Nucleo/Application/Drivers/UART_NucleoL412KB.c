@@ -1,3 +1,10 @@
+/**	#File Information
+		File:	UART_NucleoL412KB.c
+		Author:	J. Beighel
+		Date:	2021-03-31
+*/
+
+
 /***** Includes		*****/
 	#include "UART_NucleoL412KB.h"
 
@@ -18,7 +25,6 @@
 
 eUARTReturn_t NucleoUARTPortInitialize(sUARTIface_t *pUARTIface, uint32_t nBaudRate, eUARTModes_t eReqMode, void *pHWInfo) {
 	UARTInterfaceInitialize(pUARTIface); //Make sure all function pointers are valid
-	sNucleoUART_t *pSTUart = (sNucleoUART_t *)pHWInfo;
 
 	//Hardware settings are made in the Cube, no real way to change them here
 
@@ -34,12 +40,16 @@ eUARTReturn_t NucleoUARTPortInitialize(sUARTIface_t *pUARTIface, uint32_t nBaudR
 	pUARTIface->eMode = eReqMode;
 	pUARTIface->pHWInfo = pHWInfo;
 
-	// Reset buffer indexes (clears the buffer) in pHWInfo as well
-	pSTUart->nIdxStart = 0;
-	pSTUart->nIdxStop = 0;
+	#ifdef UART_STINTERRUPT
+		sNucleoUART_t *pSTUart = (sNucleoUART_t *)pHWInfo;
 
-	//Start interrupt receiving
-	UART_Start_Receive_IT(pSTUart->pHWInfo, &(pSTUart->aRXBuff[pSTUart->nIdxStop]), 1);
+		// Reset buffer indexes (clears the buffer) in pHWInfo as well
+		pSTUart->nIdxStart = 0;
+		pSTUart->nIdxStop = 0;
+
+		//Start interrupt receiving
+		UART_Start_Receive_IT(pSTUart->pHWInfo, &(pSTUart->aRXBuff[pSTUart->nIdxStop]), 1);
+	#endif
 
 	return UART_Success;
 }
@@ -50,44 +60,44 @@ eUARTReturn_t NucleoUARTShutdown(sUARTIface_t *pUARTIface) {
 }
 
 eUARTReturn_t NucleoUARTReadData(sUARTIface_t *pUARTIface, uint16_t nDataSize, void *pDataBuff, uint16_t *pnBytesRead) {
-	/* Direct reads if interrupt filled buffer isn't used
-	HAL_StatusTypeDef eResult;
-	sNucleoUART_t *pSTUart = (sNucleoUART_t *)pUARTIface->pHWInfo;
+	#ifdef UART_STINTERRUPT //Interrupt in use, read from buffer
+		uint8_t *pBuff = pDataBuff; //Casting to a byte buffer
+		sNucleoUART_t *pSTUart = (sNucleoUART_t *)pUARTIface->pHWInfo;
+		uint32_t nCtr, nIdx;
 
-	eResult = HAL_UART_Receive(pSTUart->pHWInfo, (uint8_t *)pDataBuff, nDataSize, UART_TIMEOUT);
+		nIdx = pSTUart->nIdxStart;//start at first data byte
+		for (nCtr = 0; nCtr < nDataSize; nCtr++) {
+			if (nIdx == pSTUart->nIdxStop) { //Ran out of data in the buffer
+				break;
+			}
 
-	if (eResult == HAL_OK) {
-		*pnBytesRead = nDataSize;
+			pBuff[nCtr] = pSTUart->aRXBuff[nIdx];
+
+			nIdx += 1;
+			if (nIdx >= UART_RXBUFFSIZE) {
+				nIdx = 0;
+			}
+		}
+
+		pSTUart->nIdxStart = nIdx; //Set the start to the end of what was read
+		(*pnBytesRead) = nCtr; //Report how many bytes were read
 		return UART_Success;
-	} else if (eResult == HAL_TIMEOUT) {
-		*pnBytesRead = 0; //Don't know how many were actually received
-		return UART_Warn_Timeout;
-	} else {
-		return UART_Fail_Unknown;
-	}
-	*/
+	#else //No interrupt, read direct from port
+		HAL_StatusTypeDef eResult;
+			sNucleoUART_t *pSTUart = (sNucleoUART_t *)pUARTIface->pHWInfo;
 
-	uint8_t *pBuff = pDataBuff; //Casting to a byte buffer
-	sNucleoUART_t *pSTUart = (sNucleoUART_t *)pUARTIface->pHWInfo;
-	uint32_t nCtr, nIdx;
+			eResult = HAL_UART_Receive(pSTUart->pHWInfo, (uint8_t *)pDataBuff, nDataSize, UART_TIMEOUT);
 
-	nIdx = pSTUart->nIdxStart;//start at first data byte
-	for (nCtr = 0; nCtr < nDataSize; nCtr++) {
-		if (nIdx == pSTUart->nIdxStop) { //Ran out of data in the buffer
-			break;
-		}
-
-		pBuff[nCtr] = pSTUart->aRXBuff[nIdx];
-
-		nIdx += 1;
-		if (nIdx >= UART_RXBUFFSIZE) {
-			nIdx = 0;
-		}
-	}
-
-	pSTUart->nIdxStart = nIdx; //Set the start to the end of what was read
-	(*pnBytesRead) = nCtr; //Report how many bytes were read
-	return UART_Success;
+			if (eResult == HAL_OK) {
+				*pnBytesRead = nDataSize;
+				return UART_Success;
+			} else if (eResult == HAL_TIMEOUT) {
+				*pnBytesRead = 0; //Don't know how many were actually received
+				return UART_Warn_Timeout;
+			} else {
+				return UART_Fail_Unknown;
+			}
+	#endif
 }
 
 eUARTReturn_t NucleoUARTWriteData(sUARTIface_t *pUARTIface, uint16_t nDataSize, const void *pDataBuff) {
@@ -104,17 +114,20 @@ eUARTReturn_t NucleoUARTWriteData(sUARTIface_t *pUARTIface, uint16_t nDataSize, 
 }
 
 eUARTReturn_t NucleoUARTDataAvailable(sUARTIface_t *pUARTIface, uint16_t *pnBytesAvailable) {
-	sNucleoUART_t *pSTUart = (sNucleoUART_t *)pUARTIface->pHWInfo;
+	#ifdef UART_STINTERRUPT //Interrupt enabled, report data in buffer
+		sNucleoUART_t *pSTUart = (sNucleoUART_t *)pUARTIface->pHWInfo;
 
-	if (pSTUart->nIdxStop > pSTUart->nIdxStart) {
-		(*pnBytesAvailable) = pSTUart->nIdxStop - pSTUart->nIdxStart;
-	} else {
-		(*pnBytesAvailable) = UART_RXBUFFSIZE - pSTUart->nIdxStop; //Bytes at end of buffer
-		(*pnBytesAvailable) += pSTUart->nIdxStart; //Bytes at start of buffer
-	}
+		if (pSTUart->nIdxStop > pSTUart->nIdxStart) {
+			(*pnBytesAvailable) = pSTUart->nIdxStop - pSTUart->nIdxStart;
+		} else {
+			(*pnBytesAvailable) = UART_RXBUFFSIZE - pSTUart->nIdxStop; //Bytes at end of buffer
+			(*pnBytesAvailable) += pSTUart->nIdxStart; //Bytes at start of buffer
+		}
 
-	return UART_Success;
-	//return UART_Fail_Unsupported; //Only supported with interrupt filled buffer
+		return UART_Success;
+	#else
+		return UART_Fail_Unsupported; //Only supported with interrupt filled buffer
+	#endif
 }
 
 eUARTReturn_t NucleoUARTWaitDataSend(sUARTIface_t *pUARTIface) {
@@ -122,33 +135,35 @@ eUARTReturn_t NucleoUARTWaitDataSend(sUARTIface_t *pUARTIface) {
 	return UART_Fail_Unsupported;
 }
 
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
-	sNucleoUART_t *pSTUart;
+#ifdef UART_STINTERRUPT
+	void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
+		sNucleoUART_t *pSTUart;
 
-	//First determine which UART this event is for
-	if (huart == gSTUart1.pHWInfo) { //Data received on UART 1
-		pSTUart = &gSTUart1;
-	} else if (huart == gSTUart2.pHWInfo) { //Data received on UART 2
-		pSTUart = &gSTUart2;
-	} else { //Unknown UART?
+		//First determine which UART this event is for
+		if (huart == gSTUart1.pHWInfo) { //Data received on UART 1
+			pSTUart = &gSTUart1;
+		} else if (huart == gSTUart2.pHWInfo) { //Data received on UART 2
+			pSTUart = &gSTUart2;
+		} else { //Unknown UART?
+			return;
+		}
+
+		//One character was received and was placed in aRXBuff, update the ring buffer
+		pSTUart->nIdxStop += 1; //Advance the end of the ring buffer
+		if (pSTUart->nIdxStop >= UART_RXBUFFSIZE) {
+			pSTUart->nIdxStop = 0; //Reached the end, wrap to beginning
+		}
+
+		if (pSTUart->nIdxStop == pSTUart->nIdxStart) { //Reached beginning of data, start over writing
+			pSTUart->nIdxStart += 1;
+			if (pSTUart->nIdxStart >= UART_RXBUFFSIZE) {
+				pSTUart->nIdxStart = 0; //Reached the end, wrap to beginning
+			}
+		}
+
+		//Lets collect the next byte
+		UART_Start_Receive_IT(pSTUart->pHWInfo, &(pSTUart->aRXBuff[pSTUart->nIdxStop]), 1);
+
 		return;
 	}
-
-	//One character was received and was placed in aRXBuff, update the ring buffer
-	pSTUart->nIdxStop += 1; //Advance the end of the ring buffer
-	if (pSTUart->nIdxStop >= UART_RXBUFFSIZE) {
-		pSTUart->nIdxStop = 0; //Reached the end, wrap to beginning
-	}
-
-	if (pSTUart->nIdxStop == pSTUart->nIdxStart) { //Reached beginning of data, start over writing
-		pSTUart->nIdxStart += 1;
-		if (pSTUart->nIdxStart >= UART_RXBUFFSIZE) {
-			pSTUart->nIdxStart = 0; //Reached the end, wrap to beginning
-		}
-	}
-
-	//Lets collect the next byte
-	UART_Start_Receive_IT(pSTUart->pHWInfo, &(pSTUart->aRXBuff[pSTUart->nIdxStop]), 1);
-
-	return;
-}
+#endif

@@ -1,12 +1,25 @@
 /**	@defgroup	uartiface_nucleoL412KB
 	@brief		UART General Interface Implementation for ST Nucleo boards
 	@details	v0.3
+	#Description
 		This implementation of it requires that the UART Global Interrupt be
 		enabled.  The data is received by this interrupt and stored in the
 		buffer until read by the application.
 		
 		Without this mechanism in place the data must be read as is is received
 		otherwise the data will be lost.
+
+		Define the value UART_STINTERRUPT to use the UART global interrupt to
+		accept and buffer incoming data.  This will accept UART input one byte
+		at a time and store it in a buffer until read by the application.
+
+		Interrupt support is applied across all UART buses.  The software will
+		not handle some ports with the interrupt and some without.
+
+	#File Information
+		File:	UART_NucleoL412KB.h
+		Author:	J. Beighel
+		Date:	2021-03-31
 */
 
 #ifndef UART_NUCLEO_L412KB
@@ -27,7 +40,11 @@
 	
 	#define UART_2_HWINFO	((void *)&gSTUart2)
 
-	#define UART_CAPS		(UART_ReadData | UART_WriteData | UART_BufferedInput)
+#ifdef UART_STINTERRUPT
+	#define UART_CAPS		(UART_ReadData | UART_WriteData | UART_BufferedInput | UART_DataAvailable)
+#else
+	#define UART_CAPS		(UART_ReadData | UART_WriteData)
+#endif
 	
 	#ifdef UART_INIT
 		#undef UART_INIT
@@ -40,15 +57,20 @@
 
 	#define UART_TIMEOUT	100
 
-	/**	@brief		Number of bytes to have in the received data buffer
-	 *	@ingroup	uartiface_nucleoL412KB
-	 */
-	#define UART_RXBUFFSIZE	64
+	#ifdef UART_STINTERRUPT
+		/**	@brief		Number of bytes to have in the received data buffer
+		 *	@ingroup	uartiface_nucleoL412KB
+		 */
+		#define UART_RXBUFFSIZE	64
+	#endif
 
 	typedef struct sNucleoUART_t {
-		uint8_t aRXBuff[UART_RXBUFFSIZE];
-		uint32_t nIdxStart;
-		uint32_t nIdxStop;
+		#ifdef UART_STINTERRUPT
+			uint8_t aRXBuff[UART_RXBUFFSIZE];
+			uint32_t nIdxStart;
+			uint32_t nIdxStop;
+		#endif
+
 		UART_HandleTypeDef *pHWInfo;
 	} sNucleoUART_t;
 
