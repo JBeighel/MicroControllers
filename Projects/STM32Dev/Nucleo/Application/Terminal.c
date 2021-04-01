@@ -1,6 +1,6 @@
 /**	File:	Terminal.c
 	Author:	J. Beighel
-	Date:	2021-03-17
+	Date:	2021-04-01
 */
 
 /*****	Includes	*****/
@@ -288,88 +288,101 @@ eReturn_t TerminalReadInput(sTerminal_t *pTerminal) {
 }
 
 eReturn_t TerminalProcessCommand(sTerminal_t *pTerminal, uint32_t nCmdLen) {
-	uint32_t nIdx, nKeyIdx, nValIdx;
-	bool bFoundHandler = false; //Will be set true if a handler accepts the command
+
+	eRexExReturn_t eRXResult;
 	eReturn_t eResult;
+	uint32_t nStart, nLen, nKeyIdx, nValIdx, nCtr;
+	bool bFoundHandler = false; //Will be set true if a handler accepts the command
 
-	nIdx = CountStringWhiteSpace(pTerminal->aInputBuffer, 0, nCmdLen);
+	eRXResult = StrRegEx(pTerminal->aInputBuffer, "\\s*get\\s", &nStart, &nLen, RX_IgnoreCase);
+	if (eRXResult == RX_Success) { //Get command
+		//Find the key
+		nKeyIdx = nLen;
+		eRXResult = StrRegEx(&(pTerminal->aInputBuffer[nKeyIdx]), "\\s*\\w+\\s*$", &nStart, &nLen, RX_IgnoreCase);
 
-	if (((pTerminal->aInputBuffer[nIdx + 1] == 'E') || (pTerminal->aInputBuffer[nIdx + 1] == 'e')) && ((pTerminal->aInputBuffer[nIdx + 2] == 'T') || (pTerminal->aInputBuffer[nIdx + 2] == 't'))) {
-		if ((pTerminal->aInputBuffer[nIdx] == 'G') || (pTerminal->aInputBuffer[nIdx] == 'g')) {
-			//Found a Get command, find the value start
-			nIdx += 3; //move past 'get'
+		if (eRXResult == RX_WarnNoMatch) {
+			pTerminal->pfWriteTextLine(pTerminal, "Get command uses the format");
+			pTerminal->pfWriteTextLine(pTerminal, "GET <Key>");
+			pTerminal->pfWriteTextLine(pTerminal, "Where <Key> is the value to look up");
+			return Fail_Invalid;
+		}
 
-			nKeyIdx = CountStringWhiteSpace(pTerminal->aInputBuffer, nIdx, nCmdLen);
+		nKeyIdx += nStart;
+		StrTrimStart(&(pTerminal->aInputBuffer[nKeyIdx]), " \t\r\n");
+		StrTrimEnd(&(pTerminal->aInputBuffer[nKeyIdx]), " \t\r\n");
 
-			nIdx = CountStringNonWhiteSpace(pTerminal->aInputBuffer, nKeyIdx, nCmdLen);
-			pTerminal->aInputBuffer[nIdx] = '\0';
+		for (nCtr = 0; nCtr < TERMINAL_MAXHANDLERS; nCtr++) {
+			if (pTerminal->pafGetHandlers[nCtr] != NULL) {
+				eResult = pTerminal->pafGetHandlers[nCtr](pTerminal, &(pTerminal->aInputBuffer[nKeyIdx]));
 
-			if (nKeyIdx == nIdx) { //No value characters?
-				pTerminal->pfWriteTextLine(pTerminal, "Get command uses the format");
-				pTerminal->pfWriteTextLine(pTerminal, "GET <Key>");
-				pTerminal->pfWriteTextLine(pTerminal, "Where <Key> is the value to look up");
-				return Fail_Invalid;
-			}
-
-			for (nIdx = 0; nIdx < TERMINAL_MAXHANDLERS; nIdx++) {
-				if (pTerminal->pafGetHandlers[nIdx] != NULL) {
-					eResult = pTerminal->pafGetHandlers[nIdx](pTerminal, &(pTerminal->aInputBuffer[nKeyIdx]));
-
-					if (eResult == Success) {
-						bFoundHandler = true;
-					}
+				if (eResult == Success) {
+					bFoundHandler = true;
 				}
 			}
+		}
 
-			if (bFoundHandler == true) { //Only end here if something accepted the command
-				return Success;
-			}else {
-				pTerminal->pfWriteTextLine(pTerminal, "Get Value Unrecognized: ");
-				pTerminal->pfWriteTextLine(pTerminal, &(pTerminal->aInputBuffer[nKeyIdx]));
+		if (bFoundHandler == true) { //Only end here if something accepted the command
+			return Success;
+		}else {
+			pTerminal->pfWriteTextLine(pTerminal, "Get Value Unrecognized: ");
+			pTerminal->pfWriteTextLine(pTerminal, &(pTerminal->aInputBuffer[nKeyIdx]));
 
-				return Fail_Invalid;
-			}
-		} else if ((pTerminal->aInputBuffer[nIdx] == 'S') || (pTerminal->aInputBuffer[nIdx] == 's')) {
-			//Found a Set command, find the value start
-			nIdx += 3; //move past 'set'
-
-			nKeyIdx = CountStringWhiteSpace(pTerminal->aInputBuffer, nIdx, nCmdLen);
-
-			nIdx = CountStringNonWhiteSpace(pTerminal->aInputBuffer, nKeyIdx, nCmdLen);
-			pTerminal->aInputBuffer[nIdx] = '\0';
-			nIdx += 1; //past the string end (which replaced white space)
-
-			nValIdx = CountStringWhiteSpace(pTerminal->aInputBuffer, nIdx, nCmdLen);
-
-			nIdx = CountStringNonWhiteSpace(pTerminal->aInputBuffer, nValIdx, nCmdLen);
-			pTerminal->aInputBuffer[nIdx] = '\0';
-
-			for (nIdx = 0; nIdx < TERMINAL_MAXHANDLERS; nIdx++) {
-				if (pTerminal->pafSetHandlers[nIdx] != NULL) {
-					eResult = pTerminal->pafSetHandlers[nIdx](pTerminal, &(pTerminal->aInputBuffer[nKeyIdx]), &(pTerminal->aInputBuffer[nValIdx]));
-
-					if (eResult == Success) {
-						bFoundHandler = true;
-					}
-				}
-			}
-
-
-			if (bFoundHandler == true) { //Only end here if something accepted the command
-				return Success;
-			} else {
-				pTerminal->pfWriteTextLine(pTerminal, "Set Value Unrecognized: ");
-				pTerminal->pfWriteTextLine(pTerminal, &(pTerminal->aInputBuffer[nKeyIdx]));
-
-				return Fail_Invalid;
-			}
+			return Fail_Invalid;
 		}
 	}
 
-	//All other commands get forwarded to generic handlers
-	for (nIdx = 0; nIdx < TERMINAL_MAXHANDLERS; nIdx++) {
-		if (pTerminal->pafCmdHandlers[nIdx] != NULL) {
-			eResult = pTerminal->pafCmdHandlers[nIdx](pTerminal, pTerminal->aInputBuffer);
+	eRXResult = StrRegEx(pTerminal->aInputBuffer, "\\s*set\\s", &nStart, &nLen, RX_IgnoreCase);
+	if (eRXResult == RX_Success) { //Set command
+		nKeyIdx = nLen;
+		eRXResult = StrRegEx(&(pTerminal->aInputBuffer[nKeyIdx]), "\\s*\\w+\\s", &nStart, &nLen, RX_IgnoreCase);
+		nKeyIdx += nStart;
+		pTerminal->aInputBuffer[nKeyIdx + nLen - 1] = '\0'; //End the key string
+
+		if (eRXResult == RX_WarnNoMatch) {
+			pTerminal->pfWriteTextLine(pTerminal, "Set command uses the format");
+			pTerminal->pfWriteTextLine(pTerminal, "SET <Key> <Value>");
+			pTerminal->pfWriteTextLine(pTerminal, "Where <Key> specifies what to change and <Value> is the value to set");
+			return Fail_Invalid;
+		}
+
+		nValIdx = nKeyIdx + nLen;
+		eRXResult = StrRegEx(&(pTerminal->aInputBuffer[nValIdx]), "\\s*\\S+\\s*$", &nStart, &nLen, RX_IgnoreCase);
+		nValIdx += nStart;
+
+		if (eRXResult == RX_WarnNoMatch) {
+			pTerminal->pfWriteTextLine(pTerminal, "Set command uses the format");
+			pTerminal->pfWriteTextLine(pTerminal, "SET <Key> <Value>");
+			pTerminal->pfWriteTextLine(pTerminal, "Where <Key> specifies what to change and <Value> is the value to set");
+			return Fail_Invalid;
+		}
+
+		StrTrimStart(&(pTerminal->aInputBuffer[nKeyIdx]), " \t\r\n");
+		StrTrimEnd(&(pTerminal->aInputBuffer[nKeyIdx]), " \t\r\n");
+
+		for (nCtr = 0; nCtr < TERMINAL_MAXHANDLERS; nCtr++) {
+			if (pTerminal->pafSetHandlers[nCtr] != NULL) {
+				eResult = pTerminal->pafSetHandlers[nCtr](pTerminal, &(pTerminal->aInputBuffer[nKeyIdx]), &(pTerminal->aInputBuffer[nValIdx]));
+
+				if (eResult == Success) {
+					bFoundHandler = true;
+				}
+			}
+		}
+
+		if (bFoundHandler == true) { //Only end here if something accepted the command
+			return Success;
+		}else {
+			pTerminal->pfWriteTextLine(pTerminal, "Set Value Unrecognized: ");
+			pTerminal->pfWriteTextLine(pTerminal, &(pTerminal->aInputBuffer[nKeyIdx]));
+
+			return Fail_Invalid;
+		}
+	}
+
+	//All other commands go to generic handlers
+	for (nCtr = 0; nCtr < TERMINAL_MAXHANDLERS; nCtr++) {
+		if (pTerminal->pafCmdHandlers[nCtr] != NULL) {
+			eResult = pTerminal->pafCmdHandlers[nCtr](pTerminal, pTerminal->aInputBuffer);
 
 			if (eResult == Success) {
 				bFoundHandler = true;
@@ -377,7 +390,7 @@ eReturn_t TerminalProcessCommand(sTerminal_t *pTerminal, uint32_t nCmdLen) {
 		}
 	}
 
-	if (eResult == true) {
+	if (bFoundHandler == true) {
 		return Success;
 	} else { //Nothing accepted this command, give generic error
 		pTerminal->pfWriteTextLine(pTerminal, "Command Unrecognized: ");

@@ -6,25 +6,44 @@
 	#File Information
 		File:	StringTools.h
 		Author:	J. Beighel
-		Date:	2021-03-31
+		Date:	2021-04-01
 */
 
 #ifndef __STRINGTOOLS_H
 	#define __STRINGTOOLS_H
 
 /*****	Includes	*****/
-	#include<string.h>
+	#include <string.h>
+	#include <stdio.h>
+	#include <ctype.h>
 
 	#include "CommonUtils.h"
 
 /*****	Defines		*****/
-
+	#define REGEX_TOKENBUFFSIZE		10
 
 /*****	Definitions	*****/
+	typedef enum eRexExReturn_t {
+		RX_WarnNoMatch	= 2,
+		RX_WarnUnknown	= 1,
+		RX_Success		= 0,
+		RX_FailUnknown	= -1,
+		RX_FailBadRegEx	= -2,
+		RX_FailTknSize	= -3,
+	} eRexExReturn_t;
+
+	typedef enum eRegExFlags_t {
+		RX_IgnoreCase	= 0x0000,
+		RX_UseCase		= 0x0001,
+	} eRegExFlags_t;
+
 	typedef enum eRegExToken_t {
 		RegEx_Unknown,
 		RegEx_Dot,
-		RegEx_Self,
+		RegEx_WordChar,
+		RegEx_NotWordChar,
+		RegEx_AnyCharSet,
+		RegEx_AnyNotCharSet,
 		RegEx_AnchorBgn,
 		RegEx_AnchorEnd,
 	} eRegExToken_t;
@@ -33,7 +52,7 @@
 		eRegExToken_t eType;
 		uint32_t nMinMatch;
 		uint32_t nMaxMatch;
-		char aToken[10];
+		char aToken[REGEX_TOKENBUFFSIZE];
 	} sRegExPiece_t;
 
 /*****	Constants	*****/
@@ -83,7 +102,8 @@
 
 	eReturn_t StrPiece(const char *strSrc, uint32_t nStartIdx, uint32_t nLen, char *strDest);
 
-	eReturn_t StrRegEx(const char *strSrc, const char *strRegEx);
+	eRexExReturn_t StrRegEx(const char *strSrc, const char *strRegEx, uint32_t *pnMatchStart, uint32_t *pnMatchLen, eRegExFlags_t eFlags);
+
 /*****	Functions	*****/
 
 

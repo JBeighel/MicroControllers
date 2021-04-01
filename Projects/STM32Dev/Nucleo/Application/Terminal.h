@@ -6,7 +6,7 @@
 	#File Information
 		File:	Terminal.h
 		Author:	J. Beighel
-		Date:	2021-03-17
+		Date:	2021-04-01
 */
 
 #ifndef __TERMINAL_H
@@ -17,6 +17,7 @@
 
 	#include "CommonUtils.h"
 	#include "UARTGeneralInterface.h"
+	#include "StringTools.h"
 
 /*****	Defines		*****/
 	#define TERMINAL_BUFFERSIZE		512
