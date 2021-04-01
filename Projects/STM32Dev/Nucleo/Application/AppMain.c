@@ -44,6 +44,7 @@
 /*****	Prototypes 	*****/
 void TerminalTask(void *pParams);
 void CycleLEDColors(void);
+eReturn_t TerminalCommandHandler(sTerminal_t *pTerminal, const char *pCmd);
 
 /*****	Functions	*****/
 
@@ -62,6 +63,8 @@ void BootstrapTask(void const * argument) {
 
 	IOCnctCreateFromUART(&gUart1, &IOObject);
 	TerminalInitialize(&gTerminal, &IOObject);
+
+	gTerminal.pfAddCmdHandler(&gTerminal, &TerminalCommandHandler);
 
 	xTaskCreate(&TerminalTask, "UART Terminal", 512, NULL, osPriorityAboveNormal, NULL);
 
@@ -101,7 +104,7 @@ void BootstrapTask(void const * argument) {
 
 		DNPParserNextDataObject(&gDNPParse);
 
-		//gTerminal.pfWriteTextLine(&gTerminal, "56");
+		TerminalCommandHandler(&gTerminal, " aaabbbccc a*b+ccc? ");
 	}
 
 	return;
@@ -140,4 +143,44 @@ void CycleLEDColors(void) {
 	}
 
 	return;
+}
+
+eReturn_t TerminalCommandHandler(sTerminal_t *pTerminal, const char *pCmd) {
+	char strInput[TERMINAL_BUFFERSIZE];
+	char strCmd[50], strParam[50];
+	char *pStart;
+	uint32_t nIdx;
+
+	//Make a copy to avoid hurting the original
+	strcpy(strInput, pCmd);
+	pStart = strInput;
+
+	StrTrimStart(pStart, " \t\r\n");
+	StrTrimEnd(pStart, " \t\r\n");
+
+	//Pull out the command word
+	nIdx = StrFindFirstChar(pStart, " \t\r\n");
+	if (nIdx == UINT32_MAXVALUE) {
+		nIdx = strlen(pStart);
+	}
+
+	StrPiece(pStart, 0, nIdx, strCmd); //Copy out the word
+
+	pStart = &pStart[nIdx]; //Advance past that word
+	StrTrimStart(pStart, " \t\r\n");
+
+	//Pull out the parameter
+	nIdx = StrFindFirstChar(pStart, " \t\r\n");
+	if (nIdx == UINT32_MAXVALUE) {
+		nIdx = strlen(pStart);
+	}
+
+	StrPiece(pStart, 0, nIdx, strParam); //Copy out the word
+
+	StrRegEx(strCmd, strParam);
+
+	gTerminal.pfWriteTextLine(&gTerminal, "Cmd:");
+	gTerminal.pfWriteTextLine(&gTerminal, strCmd);
+
+	return Success;
 }
