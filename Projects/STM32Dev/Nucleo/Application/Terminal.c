@@ -283,33 +283,33 @@ eReturn_t TerminalReadInput(sTerminal_t *pTerminal) {
 			}
 		}
 	}
-
+sprintf(pTerminal->aInputBuffer, "get key ");
+sprintf(pTerminal->aInputBuffer, "set key value ");
+TerminalProcessCommand(pTerminal, strlen(pTerminal->aInputBuffer));
 	return Success;
 }
 
 eReturn_t TerminalProcessCommand(sTerminal_t *pTerminal, uint32_t nCmdLen) {
-
-	eRexExReturn_t eRXResult;
 	eReturn_t eResult;
-	uint32_t nStart, nLen, nKeyIdx, nValIdx, nCtr;
+	uint32_t nKeyIdx, nValIdx, nCtr;
+	sRegExResult_t RXResult;
 	bool bFoundHandler = false; //Will be set true if a handler accepts the command
 
-	eRXResult = StrRegEx(pTerminal->aInputBuffer, "\\s*get\\s", &nStart, &nLen, RX_IgnoreCase);
-	if (eRXResult == RX_Success) { //Get command
+	StrRegEx(pTerminal->aInputBuffer, "\\s*get\\s", RX_IgnoreCase, &RXResult);
+	if (RXResult.eResult == RX_Success) { //Get command
 		//Find the key
-		nKeyIdx = nLen;
-		eRXResult = StrRegEx(&(pTerminal->aInputBuffer[nKeyIdx]), "\\s*\\w+\\s*$", &nStart, &nLen, RX_IgnoreCase);
+		nKeyIdx = RXResult.nLength;
+		StrRegEx(&(pTerminal->aInputBuffer[nKeyIdx]), "\\s*(\\w+)\\s*$", RX_IgnoreCase, &RXResult);
 
-		if (eRXResult == RX_WarnNoMatch) {
+		if (RXResult.eResult == RX_WarnNoMatch) {
 			pTerminal->pfWriteTextLine(pTerminal, "Get command uses the format");
 			pTerminal->pfWriteTextLine(pTerminal, "GET <Key>");
 			pTerminal->pfWriteTextLine(pTerminal, "Where <Key> is the value to look up");
 			return Fail_Invalid;
 		}
 
-		nKeyIdx += nStart;
-		StrTrimStart(&(pTerminal->aInputBuffer[nKeyIdx]), " \t\r\n");
-		StrTrimEnd(&(pTerminal->aInputBuffer[nKeyIdx]), " \t\r\n");
+		nKeyIdx += RXResult.aGroups[0][0];
+		pTerminal->aInputBuffer[nKeyIdx + RXResult.aGroups[0][1]] = '\0'; //End the key string
 
 		for (nCtr = 0; nCtr < TERMINAL_MAXHANDLERS; nCtr++) {
 			if (pTerminal->pafGetHandlers[nCtr] != NULL) {
@@ -331,33 +331,24 @@ eReturn_t TerminalProcessCommand(sTerminal_t *pTerminal, uint32_t nCmdLen) {
 		}
 	}
 
-	eRXResult = StrRegEx(pTerminal->aInputBuffer, "\\s*set\\s", &nStart, &nLen, RX_IgnoreCase);
-	if (eRXResult == RX_Success) { //Set command
-		nKeyIdx = nLen;
-		eRXResult = StrRegEx(&(pTerminal->aInputBuffer[nKeyIdx]), "\\s*\\w+\\s", &nStart, &nLen, RX_IgnoreCase);
-		nKeyIdx += nStart;
-		pTerminal->aInputBuffer[nKeyIdx + nLen - 1] = '\0'; //End the key string
+	StrRegEx(pTerminal->aInputBuffer, "\\s*set\\s", RX_IgnoreCase, &RXResult);
+	if (RXResult.eResult == RX_Success) { //Set command
+		nKeyIdx = RXResult.nLength; //Don't forget this offset from the first match
+		nValIdx = RXResult.nLength;
+		StrRegEx(&(pTerminal->aInputBuffer[nKeyIdx]), "\\s*(\\w+)\\s+(\\S+)\\s*$", RX_IgnoreCase, &RXResult);
 
-		if (eRXResult == RX_WarnNoMatch) {
+		if (RXResult.eResult == RX_WarnNoMatch) {
 			pTerminal->pfWriteTextLine(pTerminal, "Set command uses the format");
 			pTerminal->pfWriteTextLine(pTerminal, "SET <Key> <Value>");
 			pTerminal->pfWriteTextLine(pTerminal, "Where <Key> specifies what to change and <Value> is the value to set");
 			return Fail_Invalid;
 		}
 
-		nValIdx = nKeyIdx + nLen;
-		eRXResult = StrRegEx(&(pTerminal->aInputBuffer[nValIdx]), "\\s*\\S+\\s*$", &nStart, &nLen, RX_IgnoreCase);
-		nValIdx += nStart;
+		nKeyIdx += RXResult.aGroups[0][0];
+		pTerminal->aInputBuffer[nKeyIdx + RXResult.aGroups[0][1]] = '\0'; //End the key string
 
-		if (eRXResult == RX_WarnNoMatch) {
-			pTerminal->pfWriteTextLine(pTerminal, "Set command uses the format");
-			pTerminal->pfWriteTextLine(pTerminal, "SET <Key> <Value>");
-			pTerminal->pfWriteTextLine(pTerminal, "Where <Key> specifies what to change and <Value> is the value to set");
-			return Fail_Invalid;
-		}
-
-		StrTrimStart(&(pTerminal->aInputBuffer[nKeyIdx]), " \t\r\n");
-		StrTrimEnd(&(pTerminal->aInputBuffer[nKeyIdx]), " \t\r\n");
+		nValIdx += RXResult.aGroups[1][0];
+		pTerminal->aInputBuffer[nValIdx + RXResult.aGroups[1][1]] = '\0'; //End the value string
 
 		for (nCtr = 0; nCtr < TERMINAL_MAXHANDLERS; nCtr++) {
 			if (pTerminal->pafSetHandlers[nCtr] != NULL) {

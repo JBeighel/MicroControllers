@@ -20,7 +20,17 @@
 
 
 /*****	Prototypes 	*****/
-uint32_t StrRegExTokenMatch(const char *strSrc, uint32_t nSrcIdx, uint32_t nSrcLen, sRegExPiece_t *pPiece, eRegExFlags_t eFlags);
+	/**	@brief		Attempt to match a regular expression token against a string
+	 *	@param		strSrc		The source string to match against
+	 *	@param		nSrcIdx		Index in the source to attempt the match
+	 *	@param		nSrcLen		Length of the source string
+	 *	@param		pPiece		Pointer to token regular expression token structure
+	 *	@param		eFlags		Flags to apply in the match attempt
+	 *	@return		UINT32_MAXVALUE if the token does not match.  Zero or
+	 *		positive number to indicate how many characters were successfully
+	 *		matched in the source
+	 */
+	uint32_t StrRegExTokenMatch(const char *strSrc, uint32_t nSrcIdx, uint32_t nSrcLen, sRegExPiece_t *pPiece, eRegExFlags_t eFlags);
 
 /*****	Functions	*****/
 uint32_t StrFind(const char *strSrc, const char *strFind) {
@@ -145,18 +155,20 @@ eReturn_t StrPiece(const char *strSrc, uint32_t nStartIdx, uint32_t nLen, char *
 	return Success;
 }
 
-eRexExReturn_t StrRegEx(const char *strSrc, const char *strRegEx, uint32_t *pnMatchStart, uint32_t *pnMatchLen, eRegExFlags_t eFlags) {
-	uint32_t nRXCtr, nSrcCtr, nMatchCtr, nRXLen, nSrcLen, nMatchCurr, nTknCtr;
+eRexExReturn_t StrRegEx(const char *strSrc, const char *strRegEx, eRegExFlags_t eFlags, sRegExResult_t *pResult) {
+	uint32_t nRXCtr, nSrcCtr, nMatchCtr, nRXLen, nSrcLen, nMatchCurr, nCtr, nGrpCtr;
 	sRegExPiece_t RXPiece;
 	bool bMatchStarted;
 
-	*pnMatchStart = 0;
-	*pnMatchLen = 0;
+	pResult->nStart = 0;
+	pResult->nLength = 0;
+	memset(pResult->aGroups, 0, sizeof(uint32_t) * REGEX_MAXGROUPS * 2);
 
 	nRXLen = strlen(strRegEx);
 	nSrcLen = strlen(strSrc);
 
 	bMatchStarted = false;
+	nGrpCtr = 0;
 	nSrcCtr = 0;
 	for (nRXCtr = 0; nRXCtr < nRXLen; ) {
 		RXPiece.eType = RegEx_Unknown;
@@ -197,42 +209,60 @@ eRexExReturn_t StrRegEx(const char *strSrc, const char *strRegEx, uint32_t *pnMa
 			}
 
 			//Loop through Reg Ex looking for end bracket
-			nTknCtr = 0;
-			while ((nTknCtr < REGEX_TOKENBUFFSIZE) && (nRXCtr < nRXLen) && (strRegEx[nRXCtr] != ']')) {
+			nCtr = 0;
+			while ((nCtr < REGEX_TOKENBUFFSIZE) && (nRXCtr < nRXLen) && (strRegEx[nRXCtr] != ']')) {
 				if (strRegEx[nRXCtr] == '\\') { //Escaped character
 					nRXCtr += 1; //Skip escape
 					switch (strRegEx[nRXCtr]) {
 					case 'n':
-						RXPiece.aToken[nTknCtr] = '\n';
+						RXPiece.aToken[nCtr] = '\n';
 						break;
 					case 'r':
-						RXPiece.aToken[nTknCtr] = '\r';
+						RXPiece.aToken[nCtr] = '\r';
 						break;
 					case 't':
-						RXPiece.aToken[nTknCtr] = '\t';
+						RXPiece.aToken[nCtr] = '\t';
 						break;
 					default:
-						RXPiece.aToken[nTknCtr] = strRegEx[nRXCtr];
+						RXPiece.aToken[nCtr] = strRegEx[nRXCtr];
 						break;
 					}
 				} else { //Normal character
-					RXPiece.aToken[nTknCtr] = strRegEx[nRXCtr];
+					RXPiece.aToken[nCtr] = strRegEx[nRXCtr];
 				}
 
-				nTknCtr += 1;
+				nCtr += 1;
 				nRXCtr += 1;
 			}
 
-			if (nTknCtr >= REGEX_TOKENBUFFSIZE) { //No room for terminator character
-				return RX_FailTknSize;
+			if (nCtr >= REGEX_TOKENBUFFSIZE) { //No room for terminator character
+				pResult->eResult = RX_FailTknSize;
+				return pResult->eResult;
 			}
 
 			if (strRegEx[nRXCtr] != ']') {
-				return RX_FailBadRegEx;
+				pResult->eResult = RX_FailBadRegEx;
+				return pResult->eResult;
 			}
 
 			nRXCtr += 1; //Advance past close bracket
-			RXPiece.aToken[nTknCtr] = '\0';
+			RXPiece.aToken[nCtr] = '\0';
+
+			break;
+		case '(':	/* * * * * * * * * * * * *	Group Begin Expression		* * * * * * * * * * * * */
+			RXPiece.eType = RegEx_GroupBgn;
+			RXPiece.aToken[0] = '\0';
+			RXPiece.nMinMatch = 0;
+			RXPiece.nMaxMatch = 0;
+			nRXCtr++;
+
+			break;
+		case ')':	/* * * * * * * * * * * * *	Group End Expression		* * * * * * * * * * * * */
+			RXPiece.eType = RegEx_GroupEnd;
+			RXPiece.aToken[0] = '\0';
+			RXPiece.nMinMatch = 0;
+			RXPiece.nMaxMatch = 0;
+			nRXCtr++;
 
 			break;
 		case '\\':	/* * * * * * * * * * * * *	Escaped char Expression		* * * * * * * * * * * * */
@@ -343,7 +373,7 @@ eRexExReturn_t StrRegEx(const char *strSrc, const char *strRegEx, uint32_t *pnMa
 		if (bMatchStarted == false) {
 			if (RXPiece.nMinMatch == 0) { //This is an optional piece, we might not find it
 				//Should check for the first non-optional one but we only know 1 piece so hope for the best
-				*pnMatchStart = nSrcCtr;
+				pResult->nStart = nSrcCtr;
 				bMatchStarted= true;
 			} else { //Non-optional, we have to find it
 				//Search through the source until it begins to match
@@ -351,42 +381,81 @@ eRexExReturn_t StrRegEx(const char *strSrc, const char *strRegEx, uint32_t *pnMa
 					nMatchCurr = StrRegExTokenMatch(strSrc, nSrcCtr, nSrcLen, &RXPiece, eFlags);
 
 					if (nMatchCurr != UINT32_MAXVALUE) { //Match has begun, stop looking
-						*pnMatchStart = nSrcCtr;
-						bMatchStarted= true;
+						pResult->nStart = nSrcCtr;
+						bMatchStarted = true;
 						break;
 					}
 				}
 			}
 
 			if (bMatchStarted == false) {
-				return RX_WarnNoMatch;
+				pResult->eResult = RX_WarnNoMatch;
+				return pResult->eResult;
 			}
 		}
 
-		for (nMatchCtr = 0; nMatchCtr < RXPiece.nMinMatch; nMatchCtr++) {
-			nMatchCurr = StrRegExTokenMatch(strSrc, nSrcCtr, nSrcLen, &RXPiece, eFlags);
-
-			if (nMatchCurr == UINT32_MAXVALUE) { //Match failed
-				return RX_WarnNoMatch;
+		if (RXPiece.eType == RegEx_GroupBgn) { //Mark off source index the group began
+			if ((RXPiece.nMinMatch != 0) || (RXPiece.nMaxMatch != 0)) {
+				//Not allowing repeated groups
+				return RX_FailBadRegEx;
 			}
 
-			nSrcCtr += nMatchCurr; //Advance past the matched characters
-		}
+			pResult->aGroups[nGrpCtr][0] = nSrcCtr;
+			nGrpCtr += 1;
+		} else if (RXPiece.eType == RegEx_GroupEnd) { //Mark off source index group ended
+			if ((RXPiece.nMinMatch != 0) || (RXPiece.nMaxMatch != 0)) {
+				//Not allowing repeated groups
+				return RX_FailBadRegEx;
+			}
 
-		for (nMatchCtr = RXPiece.nMinMatch; nMatchCtr < RXPiece.nMaxMatch; nMatchCtr++) {
-			nMatchCurr = StrRegExTokenMatch(strSrc, nSrcCtr, nSrcLen, &RXPiece, eFlags);
-			//Need to see if the next piece matches to do minimal matching
+			//Groups end inner (last) to outer (first)
+			for (nCtr = nGrpCtr - 1; (nCtr < nGrpCtr) && (nGrpCtr >= 0); nCtr--) {
+				if (pResult->aGroups[nCtr][1] == 0) {
+					pResult->aGroups[nCtr][1] = nSrcCtr - pResult->aGroups[nCtr][0];
+					break; //Don't close any more groups
+				}
+			}
 
-			if (nMatchCurr == UINT32_MAXVALUE) { //Match failed
-				nMatchCtr = RXPiece.nMaxMatch - 1; //End this matching loop
-			} else {
+			if (nCtr > nGrpCtr) { //Didn't find an open group, too many closes?
+				pResult->eResult = RX_FailGroupEnd;
+				return pResult->eResult;
+			}
+		} else {
+			for (nMatchCtr = 0; nMatchCtr < RXPiece.nMinMatch; nMatchCtr++) {
+				nMatchCurr = StrRegExTokenMatch(strSrc, nSrcCtr, nSrcLen, &RXPiece, eFlags);
+
+				if (nMatchCurr == UINT32_MAXVALUE) { //Match failed
+					pResult->eResult = RX_WarnNoMatch;
+					return pResult->eResult;
+				}
+
 				nSrcCtr += nMatchCurr; //Advance past the matched characters
+			}
+
+			for (nMatchCtr = RXPiece.nMinMatch; nMatchCtr < RXPiece.nMaxMatch; nMatchCtr++) {
+				nMatchCurr = StrRegExTokenMatch(strSrc, nSrcCtr, nSrcLen, &RXPiece, eFlags);
+				//Need to see if the next piece matches to do minimal matching
+
+				if (nMatchCurr == UINT32_MAXVALUE) { //Match failed
+					nMatchCtr = RXPiece.nMaxMatch - 1; //End this matching loop
+				} else {
+					nSrcCtr += nMatchCurr; //Advance past the matched characters
+				}
 			}
 		}
 	}
 
-	*pnMatchLen = nSrcCtr - (*pnMatchStart);
-	return RX_Success;
+	for (nCtr = 0; nCtr < nGrpCtr; nCtr++) {
+		if (pResult->aGroups[nCtr][1] == 0) {
+			//found a group that wasn't closed
+			pResult->eResult = RX_FailGroupBgn;
+			return pResult->eResult;
+		}
+	}
+
+	pResult->nLength = nSrcCtr - pResult->nStart;\
+	pResult->eResult = RX_Success;
+	return pResult->eResult;
 }
 
 uint32_t StrRegExTokenMatch(const char *strSrc, uint32_t nSrcIdx, uint32_t nSrcLen, sRegExPiece_t *pPiece, eRegExFlags_t eFlags) {

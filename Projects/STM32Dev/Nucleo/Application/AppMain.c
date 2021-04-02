@@ -104,7 +104,7 @@ void BootstrapTask(void const * argument) {
 
 		DNPParserNextDataObject(&gDNPParse);
 
-		//TerminalCommandHandler(&gTerminal, " aaabbbccc a*b+ccc? ");
+		TerminalCommandHandler(&gTerminal, " aaabbbccc a*(b+)(c(c)c?) ");
 	}
 
 	return;
@@ -149,8 +149,8 @@ eReturn_t TerminalCommandHandler(sTerminal_t *pTerminal, const char *pCmd) {
 	char strInput[TERMINAL_BUFFERSIZE];
 	char strCmd[50], strParam[50];
 	char *pStart;
-	uint32_t nIdx, nStart, nEnd;
-	eRexExReturn_t eResult;
+	uint32_t nIdx;
+	sRegExResult_t RXResult;
 
 	//Make a copy to avoid hurting the original
 	strcpy(strInput, pCmd);
@@ -178,13 +178,13 @@ eReturn_t TerminalCommandHandler(sTerminal_t *pTerminal, const char *pCmd) {
 
 	StrPiece(pStart, 0, nIdx, strParam); //Copy out the word
 
-	eResult = StrRegEx(strCmd, strParam, &nStart, &nEnd, RX_IgnoreCase);
+	StrRegEx(strCmd, strParam, RX_IgnoreCase, &RXResult);
 
 	snprintf(strInput, TERMINAL_BUFFERSIZE, "Source: %s", strCmd);
 	gTerminal.pfWriteTextLine(&gTerminal, strInput);
 	snprintf(strInput, TERMINAL_BUFFERSIZE, "Reg Ex: %s", strParam);
 	gTerminal.pfWriteTextLine(&gTerminal, strInput);
-	snprintf(strInput, TERMINAL_BUFFERSIZE, "Result: %u Start: %lu Length: %lu", eResult, nStart, nEnd);
+	snprintf(strInput, TERMINAL_BUFFERSIZE, "Result: %u Start: %lu Length: %lu", RXResult.eResult, RXResult.nStart, RXResult.nLength);
 	gTerminal.pfWriteTextLine(&gTerminal, strInput);
 
 	return Success;
