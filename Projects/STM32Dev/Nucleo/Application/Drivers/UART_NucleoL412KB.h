@@ -66,12 +66,12 @@
 
 	typedef struct sNucleoUART_t {
 		#ifdef UART_STINTERRUPT
-			uint8_t aRXBuff[UART_RXBUFFSIZE];
-			uint32_t nIdxStart;
-			uint32_t nIdxStop;
+			uint8_t aRXBuff[UART_RXBUFFSIZE]; /**< Ring buffer to accumulate received data */
+			uint32_t nIdxStart;	/**< Index in the ring buffer of the first data byte */
+			uint32_t nIdxStop;	/**< Index in the ring buffer to store the next received byte */
 		#endif
 
-		UART_HandleTypeDef *pHWInfo;
+		UART_HandleTypeDef *pHWInfo;	/**< Pointer to the ST hardware object */
 	} sNucleoUART_t;
 
 /***** Constants	*****/

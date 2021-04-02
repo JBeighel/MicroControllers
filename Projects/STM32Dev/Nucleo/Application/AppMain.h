@@ -26,6 +26,7 @@
 	#include "DNPMessageParser.h"
 
 	#include "Terminal.h"
+	#include "StringTools.h"
 
 /*****	Defines		*****/
 
