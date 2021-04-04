@@ -241,7 +241,7 @@
 	*/
 	typedef struct sSocket_t {
 		int32_t nSocket;	/**< Socket the connection is through */
-		sConnInfo_t Conn;	/**< Information for the remote system */
+		sConnInfo_t Conn;	/**< Information on the remote system, unused by interface */
 	} sSocket_t;
 	
 	/**	@brief		TCP Server object
