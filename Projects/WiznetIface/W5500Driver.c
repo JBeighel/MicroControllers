@@ -104,7 +104,7 @@ eW5500Return_t W5500Initialize(sW5500Obj_t *pDev, sSPIIface_t *pSpiBus, sGPIOIfa
 	//Reset the device
 	nModeReg = W5500CmdMode_Reset;
 	W5500WriteData(pDev, W5500SckReg_Mode, W5500BSB_CommonRegister, &nModeReg, 1);
-	DELAYMILLISEC(5);
+	DELAYMILLISEC(50);
 	
 	//Clear ping disable bit
 	W5500ReadData(pDev, W5500SckReg_Mode, W5500BSB_CommonRegister, &nModeReg, 1);
@@ -902,3 +902,4 @@ eNetReturn_t W5500NetTCPServSend(sTCPServ_t *pTCPServ, sSocket_t *pClientSck, ui
 		return Net_Success;
 	}
 }
+

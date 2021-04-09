@@ -1,6 +1,6 @@
 /**	@defgroup	uartiface
 	@brief		Abstracted interface for general purpose UART port
-	@details	v0.3
+	@details	v0.4
 	# Description #
 	
 	# Usage #
@@ -36,7 +36,7 @@
 	# File Information #
 		File:	UARTGeneralInterface.h
 		Author:	J. Beighel
-		Date:	2021-01-22
+		Date:	2021-03-31
 */
 
 #ifndef __UARTINTERFACE
@@ -66,6 +66,7 @@
 		UART_WriteData		= 0x00000008,	/**< UART driver allows writing of data to the port */
 		UART_DataAvailable	= 0x00000010,	/**< UART driver provides a means of checking if data is waiting to be read */
 		UART_DataWaitSend	= 0x00000020,	/**< UART driver has a method for waiting for all data to be sent */
+		UART_BufferedInput	= 0x00000040,	/**< UART has a built in buffer to hold incoming data, otherwise data is lot if not immediately read */
 	} eUARTCapabilities_t;
 	
 	typedef enum eUARTModes_t {
@@ -105,7 +106,7 @@
 		eUARTReturn_t	(*pfUARTWriteData)		(sUARTIface_t *pUARTIface, uint16_t nBuffSize, const void *pDataBuff);
 		eUARTReturn_t	(*pfUARTDataAvailable)	(sUARTIface_t *pUARTIface, uint16_t *pnBytesAvailable);
 		eUARTReturn_t	(*pfUARTWaitDataSend)	(sUARTIface_t *pUARTIface);
-		
+
 		uint32_t		nBaudRate;
 		eUARTModes_t	eMode;
 		void			*pHWInfo;

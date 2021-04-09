@@ -19,6 +19,8 @@
 	#include "UART_RaspberryPi.h"
 	#include "Network_RaspberryPi.h"
 	
+	#include "Terminal.h"
+	
 	//Driver libraries
 	
 /*****	Defines		*****/
@@ -86,11 +88,26 @@ eReturn_t BoardInit(void) {
 }
 
 int main(int nArgCnt, char **aArgVals) {
-	
 	if (BoardInit() != Success) {
 		printf("Board initialization failed.\r\n");
 		return 1;
 	}
+	
+	sTerminal_t Terminal;
+	sIOConnect_t IOObj;
+	sConnInfo_t Conn;
+	
+	Conn.Addr.Octets.b0 = 192;
+	Conn.Addr.Octets.b0 = 168;
+	Conn.Addr.Octets.b0 = 1;
+	Conn.Addr.Octets.b0 = 200;
+	Conn.Port = 23;
+	
+	gTCPServ.pfBind(&gTCPServ, &Conn);
+	IOCnctCreateFromTCPServ(&gTCPServ, &IOObj);
+	TerminalInitialize(&Terminal, &IOObj);
+	
+	Terminal.pfWriteTextLine(&Terminal, "Welcome!");
 	
 	return 0;
 }

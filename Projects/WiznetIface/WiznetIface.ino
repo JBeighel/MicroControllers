@@ -32,6 +32,7 @@
   #define   PIN_SCREENRST   9
 
   #define   PIN_ETHCS       5
+  #define   PIN_ETHRST      6
 
   #define   PIN_TESTPT      4
 
@@ -53,6 +54,8 @@
 
   sTCPServ_t gTCPServ;
 
+  uint16_t gnPortNum;
+
   char gaLastMsg[25];
 
 //----- Arduino Functions -----//
@@ -61,6 +64,8 @@ void setup() {
   char aMessage[25];
   sConnInfo_t ConnInfo;
   eNetReturn_t eResult;
+  eW5500Return_t eWizResult;
+  bool bGoodInit;
   
   //Arduino hardware setup
   Serial.begin(9600);
@@ -74,14 +79,43 @@ void setup() {
 
   gGPIO.pfSetModeByPin(&gGPIO, PIN_TESTPT, GPIO_DigitalOutput);
   gGPIO.pfDigitalWriteByPin(&gGPIO, PIN_TESTPT, true);
+  gGPIO.pfSetModeByPin(&gGPIO, PIN_ETHRST, GPIO_DigitalOutput);
+  gGPIO.pfDigitalWriteByPin(&gGPIO, PIN_ETHRST, true);
 
   //Peripheral setup
   US2066InitSPI(&gScreen, &gTime, &gGPIO, &gSpi, 20, 4, PIN_SCREENCS, PIN_SCREENRST);
   US2066ClearDisplay(&gScreen);
   US2066DisplayOn(&gScreen);
-  
-  W5500Initialize(&gWiznet, &gSpi, &gGPIO, PIN_ETHCS);
 
+  do {
+    bGoodInit = true;
+
+    gGPIO.pfDigitalWriteByPin(&gGPIO, PIN_ETHRST, false);
+    gTime.pfDelayMilliSeconds(5);
+    gGPIO.pfDigitalWriteByPin(&gGPIO, PIN_ETHRST, true);
+    gTime.pfDelayMilliSeconds(1000);
+    
+    eWizResult = W5500Initialize(&gWiznet, &gSpi, &gGPIO, PIN_ETHCS);
+    if (eWizResult != W5500_Success) {
+      ScreenWriteString(0, 3, "Init Fail");
+      bGoodInit = false;
+    }
+    
+    eWizResult = W5500VerifyPart(&gWiznet);
+    if (eWizResult != W5500_Success) {
+      ScreenWriteString(0, 3, "Bad Part");
+      bGoodInit = false;
+    }
+
+    gTime.pfDelayMilliSeconds(100);
+  } while (bGoodInit == false);
+
+/*
+  while(1) {
+    eWizResult = W5500VerifyPart(&gWiznet);
+    gTime.pfDelayMilliSeconds(100);
+  }
+*/
   W5500SetMACAddress(&gWiznet, gaMacAddr);
 
   Addr.S_un.S_un_b.s_b1 = 10;
@@ -101,7 +135,7 @@ void setup() {
   Addr.S_un.S_un_b.s_b1 = 10;
   Addr.S_un.S_un_b.s_b2 = 10;
   Addr.S_un.S_un_b.s_b3 = 0;
-  Addr.S_un.S_un_b.s_b4 = 1;
+  Addr.S_un.S_un_b.s_b4 = 250;
   W5500SetDefaultGateway(&gWiznet, &Addr);
 
   W5500CreateTCPServer(&gWiznet, &gTCPServ);
@@ -111,9 +145,9 @@ void setup() {
   ConnInfo.Port = 23;
   eResult = gTCPServ.pfBind(&gTCPServ, &ConnInfo);
   if (eResult == Net_Success) {
-    ScreenWriteString(0, 3, "Listen 23");
+    gnPortNum = ConnInfo.Port;
   } else {
-    ScreenWriteString(0, 3, "Bind Fail");
+    ConnInfo.Port = -1;
   }
 
   gaLastMsg[0] = '\0';
@@ -125,48 +159,59 @@ void loop() {
   IN_ADDR IPAddr;
   SOCKADDR_IN RemoteIPAddr;
   bool bStatus;
-  char aMessage[25];
+  char aMessage[4][25];
   sSocket_t ClientSck;
   eNetReturn_t eResult;
   eW5500SckProt_t eSckProt;
   eW5500SckStat_t eSckState;
   uint16_t nBytesWaiting;
-  
-  //US2066ClearDisplay(&gScreen);
+
+  memset(aMessage, ' ', sizeof(aMessage));
 
   gGPIO.pfDigitalWriteByPin(&gGPIO, PIN_TESTPT, false);
   W5500ReadIPAddress(&gWiznet, &IPAddr);
   gGPIO.pfDigitalWriteByPin(&gGPIO, PIN_TESTPT, true);
-  sprintf(aMessage, "IP %d.%d.%d.%d", IPAddr.S_un.S_un_b.s_b1, IPAddr.S_un.S_un_b.s_b2, IPAddr.S_un.S_un_b.s_b3, IPAddr.S_un.S_un_b.s_b4);
-  ScreenWriteString(0, 0, aMessage);
-  Serial.println(aMessage);
+  snprintf(aMessage[0], 21, "IP %d.%d.%d.%d", IPAddr.S_un.S_un_b.s_b1, IPAddr.S_un.S_un_b.s_b2, IPAddr.S_un.S_un_b.s_b3, IPAddr.S_un.S_un_b.s_b4);
+  Serial.println(aMessage[0]);
+  aMessage[0][strlen(aMessage[0])] = ' ';
 
   W5500LinkStatus(&gWiznet, &bStatus);
 
   if (bStatus == true) {
-    sprintf(aMessage, "Status: ON");
+    sprintf(aMessage[1], "Status: ON");
   } else {
-    sprintf(aMessage, "Status: OFF");
+    sprintf(aMessage[1], "Status: OFF");
   }
-  ScreenWriteString(0, 1, aMessage);
+  aMessage[1][strlen(aMessage[1])] = ' ';
+
+  if (W5500VerifyPart(&gWiznet) == W5500_Success) {
+    sprintf(&(aMessage[1][12]), "Good");
+  } else {
+    sprintf(&(aMessage[1][12]), "Bad Part");
+  }
+  aMessage[1][strlen(aMessage[1])] = ' ';
+  
 
   eResult = gTCPServ.pfAcceptClient(&gTCPServ, &ClientSck);
   if (eResult == Net_Success) {
-    ScreenWriteString(12, 1, "Client");
-    ScreenWriteString(0, 2, "                    ");
-    sprintf(aMessage, "Client: %d.%d.%d.%d", ClientSck.Conn.Addr.Octets.b3, ClientSck.Conn.Addr.Octets.b2, ClientSck.Conn.Addr.Octets.b1, ClientSck.Conn.Addr.Octets.b0);
-    ScreenWriteString(0, 2, aMessage);
+    snprintf(aMessage[2], 21, "Client: %d.%d.%d.%d", ClientSck.Conn.Addr.Octets.b3, ClientSck.Conn.Addr.Octets.b2, ClientSck.Conn.Addr.Octets.b1, ClientSck.Conn.Addr.Octets.b0);
   } else {
-    ScreenWriteString(12, 1, "      ");
-    sprintf(aMessage, "Fail: %d %d", eResult, millis());
-    ScreenWriteString(0, 2, aMessage);
-
-    W5500SocketStatus(&gWiznet, gTCPServ.HostSck.nSocket, &eSckProt, &eSckState, &nBytesWaiting, &RemoteIPAddr, sizeof(SOCKADDR_IN));
-    sprintf(aMessage, "Sck:%d %02x", gTCPServ.HostSck.nSocket, eSckState); //gTCPServ.HostSck.nSocket
-    ScreenWriteString(10, 3, aMessage);
+    snprintf(aMessage[2], 21, "Fail: %d %d", eResult, millis());
   }
+  aMessage[2][strlen(aMessage[1])] = ' ';
 
-  //ScreenWriteString(0, 2, gaLastMsg);
+  W5500SocketStatus(&gWiznet, gTCPServ.HostSck.nSocket, &eSckProt, &eSckState, &nBytesWaiting, &RemoteIPAddr, sizeof(SOCKADDR_IN));
+  snprintf(aMessage[3], 21, "Port: %d Sck:%d %02x", gnPortNum, gTCPServ.HostSck.nSocket);
+  aMessage[3][strlen(aMessage[1])] = ' ';
+
+  aMessage[0][20] = '\0';
+  aMessage[1][20] = '\0';
+  aMessage[2][20] = '\0';
+  aMessage[3][20] = '\0';
+  ScreenWriteString(0, 0, aMessage[0]);
+  ScreenWriteString(0, 1, aMessage[1]);
+  ScreenWriteString(0, 2, aMessage[2]);
+  ScreenWriteString(0, 3, aMessage[3]);
 
   delay(500);
   
