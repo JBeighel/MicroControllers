@@ -76,16 +76,19 @@ void setup() {
   I2C_INIT(&gI2C, true, 100000, I2C_1_HWINFO);
   SPI_INIT(&gSpi, SPI_1_HWINFO, 5000000, SPI_MSBFirst, SPI_Mode3);
   UART_INIT(&gUart, 38400, UART_8None1, UART_2_HWINFO);
+  Serial.println("Gen Iface init done");
 
   gGPIO.pfSetModeByPin(&gGPIO, PIN_TESTPT, GPIO_DigitalOutput);
   gGPIO.pfDigitalWriteByPin(&gGPIO, PIN_TESTPT, true);
   gGPIO.pfSetModeByPin(&gGPIO, PIN_ETHRST, GPIO_DigitalOutput);
   gGPIO.pfDigitalWriteByPin(&gGPIO, PIN_ETHRST, true);
+  Serial.println("GPIO init done");
 
   //Peripheral setup
   US2066InitSPI(&gScreen, &gTime, &gGPIO, &gSpi, 20, 4, PIN_SCREENCS, PIN_SCREENRST);
   US2066ClearDisplay(&gScreen);
   US2066DisplayOn(&gScreen);
+  Serial.println("Screen init done");
 
   do {
     bGoodInit = true;
@@ -94,12 +97,16 @@ void setup() {
     gTime.pfDelayMilliSeconds(5);
     gGPIO.pfDigitalWriteByPin(&gGPIO, PIN_ETHRST, true);
     gTime.pfDelayMilliSeconds(1000);
+    Serial.println("Eth reset done");
     
     eWizResult = W5500Initialize(&gWiznet, &gSpi, &gGPIO, PIN_ETHCS);
     if (eWizResult != W5500_Success) {
       ScreenWriteString(0, 3, "Init Fail");
       bGoodInit = false;
+    } else {
+      ScreenWriteString(0, 3, "W5500 Init");
     }
+    Serial.println("W5500 init done");
     
     eWizResult = W5500VerifyPart(&gWiznet);
     if (eWizResult != W5500_Success) {
