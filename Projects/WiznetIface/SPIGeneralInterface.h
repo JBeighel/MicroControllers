@@ -1,6 +1,6 @@
 /**	@defgroup	spiiface
 	@brief		General interface for using the SPI bus
-	@details	v0.4
+	@details	v0.5
 	# Intent #
 		This module is to create a common interface for interacting with a SPI bus.  Drivers 
 		for devices that operate over this bus should use this interface to operate the 
@@ -63,7 +63,7 @@
 	*/
 	typedef enum eSPICapabilities_t {
 		SPI_NoCapabilities	= 0x00000000,	/**< Default, SPI bus driver has no capabilities */
-		SPI_Configure		= 0x00000001,	/**< SPI bus driver allows configuration of the port */
+		SPI_Configurable	= 0x00000001,	/**< SPI bus driver allows configuration of the port */
 		SPI_BeginTransfer	= 0x00000002,	/**< SPI bus driver allows user to begin a data transfer */
 		SPI_EndTransfer		= 0x00000004,	/**< SPI bus driver allows user to end a data transfer */
 		SPI_BiDir1Byte		= 0x00000008,	/**< SPI bus driver allows user to bi-directionally transfer 1 byte */

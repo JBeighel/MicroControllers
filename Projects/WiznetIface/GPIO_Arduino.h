@@ -1,6 +1,6 @@
 /**	@defgroup	gpioarduino
 	@brief		Implementation of the GPIO General Interface for Arduino
-	@details	v0.6
+	@details	v0.7
 	
 	# File Info #
 		File:	GPIO_Arduino.h
@@ -49,7 +49,39 @@
 	#ifdef ARDUINO_SAM_DUE	//Compiling for Due
 		#define ARDUINO_MODEL		"Arduino Due"
 		
-		#error "Support for Arduino Due incomplete"
+		#warning "Support for Arduino Due incomplete"
+		
+		#define ARDUINO_GPIOCNT		(sizeof(gArduinoGPIOList) / sizeof(uint8_t))
+		
+		#define ARDUINO_DACCNT		(sizeof(gArduinoDACList) / sizeof(uint8_t))
+		
+		#define ARDUINO_ADCCNT		(sizeof(gArduinoADCList) / sizeof(uint8_t))
+		
+		#define ARDUINO_PWMCNT		(sizeof(gArduinoPWMList) / sizeof(uint8_t))
+		
+		#define ARDUINO_ADCBITDEPTH	12
+		
+		#define ARDUINO_DACBITDEPTH	ARDUINO_PWMBITDEPTH
+		
+		#define ARDUINO_PWMBITDEPTH	10
+		
+		const uint8_t gArduinoGPIOList[] = { 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+		
+		/** @brief		Constant array of all pin numbers that support Analog Input
+			@ingroup	gpioarduino
+		*/
+		const uint8_t gArduinoADCList[] = { 14, 15, 16, 17, 18, 19, 20, 21 }; //14 is A0 through 21 is A7
+		
+		/** @brief		Constant array of all pin numbers that support Analog Ouput
+			@ingroup	gpioarduino
+		*/
+		const uint8_t gArduinoDACList[] = { 66, 67 }; //14 is A0
+		
+		/** @brief		Constant array of all pin numbers that support PWM Output
+			@ingroup	gpioarduino
+		*/
+		const uint8_t gArduinoPWMList[] = { 2, 3, 4, 5, 6, 7, 8, 9, 10 }; //16 is A2, 17 is A3, and 19 is A5
+		
 	#endif
 	
 	#ifdef ARDUINO_SAMD_NANO_33_IOT	//Compiling for Nano IoT
