@@ -6,7 +6,7 @@
 	#File Information
 		File:	Terminal.h
 		Author:	J. Beighel
-		Date:	2021-04-03
+		Date:	2021-04-18
 */
 
 #ifndef __TERMINAL_H

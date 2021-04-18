@@ -1,6 +1,6 @@
 /**	File:	Terminal.c
 	Author:	J. Beighel
-	Date:	2021-04-03
+	Date:	2021-04-18
 */
 
 /*****	Includes	*****/
@@ -78,7 +78,9 @@ eReturn_t IOCnctReadDataNoImplement(sIOConnect_t *pIOObj, uint8_t *pnDataBuff, u
 	for (nCtr = 0; nCtr < nBuffSize; nCtr++) {
 		eResult = pIOObj->pfReadByte(pIOObj, &(pnDataBuff[nCtr]));
 
-		if (eResult != Success) {
+		if (eResult == Warn_EndOfData) {
+			return Warn_EndOfData;
+		} else if (eResult != Success) {
 			return eResult;
 		}
 
@@ -249,15 +251,15 @@ eReturn_t TerminalReadInput(sTerminal_t *pTerminal) {
 	//Read data from the IOConnect to fill the buffer
 	eResult = pTerminal->pIOObj->pfReadData(pTerminal->pIOObj, (void *)&(pTerminal->aInputBuffer[pTerminal->nBufferUsed]), TERMINAL_BUFFERSIZE - pTerminal->nBufferUsed, &nReadBytes);
 
+if (nReadBytes > 0) {
+	char strText[30];
+	
+	sprintf(strText, "Read %d Bytes result %d", nReadBytes, eResult);
+	pTerminal->pfWriteTextLine(pTerminal, strText);
+}
+
 	if (eResult < Success) {
 		return Fail_CommError;
-	}
-
-	if (nReadBytes > 0) {
-		char strText[30];
-		
-		sprintf(strText, "Read %d Bytes", nReadBytes);
-		pTerminal->pfWriteTextLine(pTerminal, strText);
 	}
 
 	if (pTerminal->aInputBuffer[pTerminal->nBufferUsed] == '\r') {
@@ -289,9 +291,7 @@ eReturn_t TerminalReadInput(sTerminal_t *pTerminal) {
 			}
 		}
 	}
-sprintf(pTerminal->aInputBuffer, "get key ");
-sprintf(pTerminal->aInputBuffer, "set key value ");
-TerminalProcessCommand(pTerminal, strlen(pTerminal->aInputBuffer));
+
 	return Success;
 }
 
@@ -546,6 +546,9 @@ eReturn_t IOCnctCreateFromTCPServ(sTCPServ_t *pTCPIface, sIOConnect_t *pIOObj) {
 		return Fail_CommError;
 	}
 	
+	//Set a short timeout so reads don't block for long
+	pTCPIface->pfSetRecvTimeout(pTCPIface, &sckClient, 1);
+	
 	pIOObj->pClient = (void *)sckClient.nSocket; //All we need is the socket number to comm through it
 
 	return Success;
@@ -563,11 +566,13 @@ eReturn_t IOCnctReadByteTCPServ(sIOConnect_t *pIOObj, uint8_t *pnByte) {
 	//Read some data
 	eResult = pServ->pfReceive(pServ, &sckClient, 1, pnByte, &nBytesRcv);
 	
-	if ((nBytesRcv == 0) || (eResult != Net_Success)) {
+	if (eResult == Net_Success) {
+		return Success;
+	} else if (eResult == NetWarn_EndOfData) {
+		return Warn_EndOfData;
+	} else {
 		return Fail_CommError;
 	}
-	
-	return Success;
 }
 
 eReturn_t IOCnctWriteByteTCPServ(sIOConnect_t *pIOObj, uint8_t nByte) {

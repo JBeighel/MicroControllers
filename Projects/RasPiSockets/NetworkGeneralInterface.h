@@ -1,12 +1,12 @@
 /**	@defgroup	networkgeniface
 	@brief		
-	@details	v0.1
+	@details	v0.3
 	#Description
 	
 	#File Information
 		File:	NetworkGeneralInterface.h
 		Author:	J. Beighel
-		Date:	12-30-2020
+		Date:	2021-04-18
 */
 
 #ifndef __NETWORKGENIFACE_H
@@ -34,7 +34,8 @@
 		@ingroup	networkgeniface
 	*/
 	typedef enum eNetReturn_t {
-		NetWarn_WrongPort	= 3,	/**< Data was received from an nexpected port */
+		NetWarn_EndOfData	= 4,	/**< A read attempt requested more data than was received */
+		NetWarn_WrongPort	= 3,	/**< Data was received from an unexpected port */
 		NetWarn_WrongIP		= 2,	/**< Data was received from an unexpected IP Address */
 		NetWarn_Unknown		= 1,	/**< An unknown but recoverable error happened during the operation */
 		Net_Success			= 0,	/**< The operation completed successfully */
@@ -57,6 +58,7 @@
 		TCPServ_Receive		= 0x08,
 		TCPServ_Send		= 0x10,
 		TCPServ_CloseClient	= 0x20,
+		TCPServ_SetRecvTO	= 0x40,
 	} eTCPServerCapabilities_t;
 	
 	/**	@brief		Enumeration of all capabilities the TCP Client General Interface defines
@@ -68,6 +70,7 @@
 		TCPClient_Close		= 0x02,
 		TCPClient_Receive	= 0x04,
 		TCPClient_Send		= 0x08,
+		TCPClient_SetRecvTO	= 0x10,
 	} eTCPClientCapabilities_t;
 	
 	/**	@brief		Enumeration of all capabilities the UDP Server General Interface defines
@@ -158,6 +161,15 @@
 	*/
 	typedef eNetReturn_t (*pfNetTCPServSend_t)(sTCPServ_t *pTCPServ, sSocket_t *pClientSck, uint32_t nDataBytes, void *pData);
 	
+	/**	@brief		Set tme out duration on receive attempts
+		@param		pTCPServ		Pointer to TCP Server object to use
+		@param		pClientSck		Pointer to client socket to modify
+		@param		nMillisec		Number of milliseconds to set as the timeout period
+		@return		Net_Success on succeess, or a code indicating the type of error encountered
+		@ingroup	networkgeniface
+	*/
+	typedef eNetReturn_t (*pfNetTCPServSetRecvTimeOut_t)(sTCPServ_t *pTCPServ, sSocket_t *pClientSck, uint32_t nMillisec);
+	
 	/**	@brief		Initialize a TCP client object and prepare it for use
 		@param		pTCPClient		Pointer to hte TCP Client object to use
 		@return		Net_Success on succeess, or a code indicating the type of error encountered
@@ -198,6 +210,14 @@
 		@ingroup	networkgeniface
 	*/
 	typedef eNetReturn_t (*pfNetTCPClientSend_t)(sTCPClient_t *pTCPClient, uint32_t nDataBytes, void *pData);
+	
+	/**	@brief		Set tme out duration on receive attempts
+		@param		pTCPClient		Pointer to TCP Client object to use
+		@param		nMillisec		Number of milliseconds to set as the timeout period
+		@return		Net_Success on succeess, or a code indicating the type of error encountered
+		@ingroup	networkgeniface
+	*/
+	typedef eNetReturn_t (*pfNetTCPClientSetRecvTimeOut_t)(sTCPClient_t *pTCPClient, uint32_t nMillisec);
 	
 	typedef eNetReturn_t (*pfNetUDPServInitialize_t)(sUDPServ_t *pUDPServ);
 	typedef eNetReturn_t (*pfNetUDPServBind_t)(sUDPServ_t *pUDPServ, sConnInfo_t *pConn);
@@ -258,6 +278,7 @@
 		pfNetTCPServAcceptClient_t pfAcceptClient;	/**< Function to wait for an accept an client connection */
 		pfNetTCPServReceive_t pfReceive;			/**< Function to receive data from a client connection */
 		pfNetTCPServSend_t pfSend;					/**< Function to send data to a client connection */
+		pfNetTCPServSetRecvTimeOut_t pfSetRecvTimeout;	/**< Function to set timeout on receive requests */
 		
 		void *pHWInfo;								/**< Information for use by the implementation */
 	} sTCPServ_t;
@@ -274,6 +295,7 @@
 		pfNetTCPClientClose_t pfClose;				/**< Function to close the connection */
 		pfNetTCPClientReceive_t pfReceive;			/**< Function to receive data from the server */
 		pfNetTCPClientSend_t pfSend;				/**< Function to send data to the server */
+		pfNetTCPClientSetRecvTimeOut_t pfSetRecvTimeout;	/**< Function to set timeout on receive requests */
 		
 		void *pHWInfo;								/**< Information for use by the implementation */
 	} sTCPClient_t;
