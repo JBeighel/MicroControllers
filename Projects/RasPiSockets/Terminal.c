@@ -30,7 +30,7 @@ eReturn_t IOCnctWriteByteUART(sIOConnect_t *pIOObj, uint8_t nByte);
 eReturn_t IOCnctReadDataUART(sIOConnect_t *pIOObj, uint8_t *pnDataBuff, uint32_t nBuffSize, uint32_t *pnReadSize);
 eReturn_t IOCnctWriteDataUART(sIOConnect_t *pIOObj, uint8_t *pnData, uint32_t nDataLen);
 
-eReturn_t TerminalWriteTextLine(sTerminal_t *pTerminal, char *pText);
+eReturn_t TerminalWriteTextLine(sTerminal_t *pTerminal, const char *pText);
 eReturn_t TerminalReadInput(sTerminal_t *pTerminal);
 
 eReturn_t TerminalProcessCommand(sTerminal_t *pTerminal, uint32_t nCmdLen);
@@ -226,7 +226,7 @@ eReturn_t TerminalInitialize(sTerminal_t *pTerm, sIOConnect_t *pIOObj) {
 	return Success;
 }
 
-eReturn_t TerminalWriteTextLine(sTerminal_t *pTerminal, char *pText) {
+eReturn_t TerminalWriteTextLine(sTerminal_t *pTerminal, const char *pText) {
 	uint32_t nTextLen;
 	eReturn_t eResult;
 
@@ -251,19 +251,8 @@ eReturn_t TerminalReadInput(sTerminal_t *pTerminal) {
 	//Read data from the IOConnect to fill the buffer
 	eResult = pTerminal->pIOObj->pfReadData(pTerminal->pIOObj, (void *)&(pTerminal->aInputBuffer[pTerminal->nBufferUsed]), TERMINAL_BUFFERSIZE - pTerminal->nBufferUsed, &nReadBytes);
 
-if (nReadBytes > 0) {
-	char strText[30];
-	
-	sprintf(strText, "Read %d Bytes result %d", nReadBytes, eResult);
-	pTerminal->pfWriteTextLine(pTerminal, strText);
-}
-
 	if (eResult < Success) {
 		return Fail_CommError;
-	}
-
-	if (pTerminal->aInputBuffer[pTerminal->nBufferUsed] == '\r') {
-		nCtr = nReadBytes;
 	}
 
 	pTerminal->nBufferUsed += nReadBytes; //Update how much of the buffer is used

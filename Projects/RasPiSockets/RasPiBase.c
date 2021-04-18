@@ -130,5 +130,9 @@ int main(int nArgCnt, char **aArgVals) {
 }
 
 eReturn_t TelnetCmdHandler(sTerminal_t *pTerminal, const char *pCmd) {
+	pTerminal->pfWriteTextLine(pTerminal, "Command>");
+	pTerminal->pfWriteTextLine(pTerminal, pCmd);
+	pTerminal->pfWriteTextLine(pTerminal, "<End");
+	
 	return Fail_Unknown;
 }

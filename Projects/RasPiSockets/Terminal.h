@@ -51,7 +51,7 @@
 		void *pClient;						/**< Pointer to client information to use */
 	} sIOConnect_t;
 
-	typedef eReturn_t (*pfTerminalWriteTextLine_t)(sTerminal_t *pTerminal, char *pText);
+	typedef eReturn_t (*pfTerminalWriteTextLine_t)(sTerminal_t *pTerminal, const char *pText);
 	typedef eReturn_t (*pfTerminalReadInput_t)(sTerminal_t *pTerminal);
 	typedef eReturn_t (*pfTerminalSetHandler_t)(sTerminal_t *pTerminal, const char *pKey, const char *pValue);
 	typedef eReturn_t (*pfTerminalGetHandler_t)(sTerminal_t *pTerminal, const char *pKey);
