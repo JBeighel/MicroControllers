@@ -254,7 +254,10 @@ eReturn_t TerminalReadInput(sTerminal_t *pTerminal) {
 	}
 
 	if (nReadBytes > 0) {
-		nCtr = nReadBytes;
+		char strText[30];
+		
+		sprintf(strText, "Read %d Bytes", nReadBytes);
+		pTerminal->pfWriteTextLine(pTerminal, strText);
 	}
 
 	if (pTerminal->aInputBuffer[pTerminal->nBufferUsed] == '\r') {

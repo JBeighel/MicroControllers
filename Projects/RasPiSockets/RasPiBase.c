@@ -43,8 +43,10 @@
 	sUDPServ_t gUDPServ;
 	sUDPClient_t gUDPClient;
 	
+	bool bStillConnected;
+	
 /*****	Prototypes 	*****/
-
+	eReturn_t TelnetCmdHandler(sTerminal_t *pTerminal, const char *pCmd);
 
 /*****	Functions	*****/
 eReturn_t BoardInit(void) {
@@ -98,16 +100,35 @@ int main(int nArgCnt, char **aArgVals) {
 	sConnInfo_t Conn;
 	
 	Conn.Addr.Octets.b0 = 192;
-	Conn.Addr.Octets.b0 = 168;
-	Conn.Addr.Octets.b0 = 1;
-	Conn.Addr.Octets.b0 = 200;
+	Conn.Addr.Octets.b1 = 168;
+	Conn.Addr.Octets.b2 = 1;
+	Conn.Addr.Octets.b3 = 200;
 	Conn.Port = 23;
 	
 	gTCPServ.pfBind(&gTCPServ, &Conn);
 	IOCnctCreateFromTCPServ(&gTCPServ, &IOObj);
 	TerminalInitialize(&Terminal, &IOObj);
+	Terminal.pfAddCmdHandler(&Terminal, &TelnetCmdHandler);
 	
 	Terminal.pfWriteTextLine(&Terminal, "Welcome!");
+	bStillConnected = true;
+	
+	while (bStillConnected == true) {
+		//Read input goes into an infinite loop pulling in data
+		//It doesn't have any response that no data is waiting
+		//So the terminal doesn't know to stop looking for more
+		if (Terminal.pfReadInput(&Terminal) < Success) {
+			//Failed to read input?
+			printf("Terminal Input Read Failed!");
+			bStillConnected = false;
+		}
+		
+		//Need a way to tell if the socket was closed
+	}
 	
 	return 0;
+}
+
+eReturn_t TelnetCmdHandler(sTerminal_t *pTerminal, const char *pCmd) {
+	return Fail_Unknown;
 }
