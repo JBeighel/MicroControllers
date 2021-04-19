@@ -1,6 +1,6 @@
 /**	File:	Network_RaspberryPi.c
 	Author:	J. Beighel
-	Date:	12-30-2020
+	Date:	2021-04-18
 */
 
 /*****	Includes	*****/
@@ -25,11 +25,13 @@ eNetReturn_t RasPiTCPServCloseSocket(sTCPServ_t *pTCPServ, sSocket_t *pSck);
 eNetReturn_t RasPiTCPServAcceptClient(sTCPServ_t *pTCPServ, sSocket_t *sSocket_t);
 eNetReturn_t RasPiTCPServReceive(sTCPServ_t *pTCPServ, sSocket_t *sSocket_t, uint32_t nNumBytes, void *pData, uint32_t *pnBytesRecv);
 eNetReturn_t RasPiTCPServSend(sTCPServ_t *pTCPServ, sSocket_t *sSocket_t, uint32_t nDataBytes, void *pData);
+eNetReturn_t RasPiTCPServSetRecvTimeOut(sTCPServ_t *pTCPServ, sSocket_t *pClientSck, uint32_t nMillisec);
 
 eNetReturn_t RasPiTCPClientConnect(sTCPClient_t *pTCPClient, sConnInfo_t *pConn);
 eNetReturn_t RasPiTCPClientClose(sTCPClient_t *pTCPClient);
 eNetReturn_t RasPiTCPClientReceive(sTCPClient_t *pTCPClient, uint32_t nNumBytes, void *pData, uint32_t *pnBytesRecv);
 eNetReturn_t RasPiTCPClientSend(sTCPClient_t *pTCPClient, uint32_t nDataBytes, void *pData);
+eNetReturn_t RasPiTCPClientSetRecvTimeOut(sTCPClient_t *pTCPClient, uint32_t nMillisec);
 
 eNetReturn_t RasPiUDPServBind(sUDPServ_t *pUDPServ, sConnInfo_t *pConn);
 eNetReturn_t RasPiUDPServCloseHost(sUDPServ_t *pUDPServ);
@@ -54,6 +56,7 @@ eNetReturn_t RasPiTCPServInitialize(sTCPServ_t *pTCPServ) {
 	pTCPServ->pfAcceptClient = &RasPiTCPServAcceptClient;
 	pTCPServ->pfReceive = &RasPiTCPServReceive;
 	pTCPServ->pfSend = &RasPiTCPServSend;
+	pTCPServ->pfSetRecvTimeout = &RasPiTCPServSetRecvTimeOut;
 	
 	//Set other object values
 	pTCPServ->eCapabilities = TCPSERV_CAPS;
@@ -142,18 +145,41 @@ eNetReturn_t RasPiTCPServAcceptClient(sTCPServ_t *pTCPServ, sSocket_t *pSck) {
 }
 
 eNetReturn_t RasPiTCPServReceive(sTCPServ_t *pTCPServ, sSocket_t *pSck, uint32_t nDataBytes, void *pData, uint32_t *pnBytesRecv) {
-	int nResult;
+	int nResult, nError;
+	socklen_t nLen;
 	
 	nResult = recv(pSck->nSocket, pData, nDataBytes, 0);
-	if (nResult == SOCKET_INVALID) {
+	//errno of EAGAIN means try again, or request timed out
+	if ((nResult == SOCKET_INVALID) && (errno != EAGAIN)) {
 		*pnBytesRecv = 0;
 		
 		//errno has the failure code
 		return NetFail_Unknown;
 	}
+
+	if (nResult == SOCKET_INVALID) {
+		*pnBytesRecv = 0;
+	} else {
+		*pnBytesRecv = nResult;
+	}
 	
-	*pnBytesRecv = nResult;
-	return Net_Success;
+	if (*pnBytesRecv == 0) { //Read no data, check if socket is alive
+		nLen = sizeof (nError);
+		nResult = getsockopt (pSck->nSocket, SOL_SOCKET, SO_ERROR, &nError, &nLen);
+		if (nResult != 0) { //Failed to get socket status
+			return NetFail_Unknown;
+		}
+		
+		if (nError != 0) { //Some error occurred
+			return NetFail_Unknown;
+		}
+	}
+	
+	if (*pnBytesRecv < nDataBytes) {
+		return NetWarn_EndOfData;
+	} else {
+		return Net_Success;
+	}
 }
 
 eNetReturn_t RasPiTCPServSend(sTCPServ_t *pTCPServ, sSocket_t *pSck, uint32_t nDataBytes, void *pData) {
@@ -162,6 +188,25 @@ eNetReturn_t RasPiTCPServSend(sTCPServ_t *pTCPServ, sSocket_t *pSck, uint32_t nD
 	nResult = send(pSck->nSocket, pData, nDataBytes, 0);
 	if (nResult == SOCKET_INVALID) {
 		//errno has the failure code
+		return NetFail_Unknown;
+	}
+	
+	return Net_Success;
+}
+
+eNetReturn_t RasPiTCPServSetRecvTimeOut(sTCPServ_t *pTCPServ, sSocket_t *pClientSck, uint32_t nMillisec) {
+	struct timeval tTime;
+	int nResult, nKeepAlive;
+	
+	//Convert the time requested into OS value
+	tTime.tv_sec = nMillisec / 1000;
+	tTime.tv_usec = (nMillisec - tTime.tv_sec) * 1000;
+
+	//Set the timeout duration
+	nResult = setsockopt(pClientSck->nSocket, SOL_SOCKET, SO_RCVTIMEO, (void *)&tTime, sizeof(struct timeval));
+	
+	if (nResult != 0) {
+		//errno has error code
 		return NetFail_Unknown;
 	}
 	
@@ -178,6 +223,7 @@ eNetReturn_t RasPiTCPClientInitialize(sTCPClient_t *pTCPClient) {
 	pTCPClient->pfClose = &RasPiTCPClientClose;
 	pTCPClient->pfReceive = &RasPiTCPClientReceive;
 	pTCPClient->pfSend = &RasPiTCPClientSend;
+	pTCPClient->pfSetRecvTimeout = &RasPiTCPClientSetRecvTimeOut;
 	
 	//Set other object values
 	pTCPClient->Sck.nSocket = SOCKET_INVALID;
@@ -249,7 +295,12 @@ eNetReturn_t RasPiTCPClientReceive(sTCPClient_t *pTCPClient, uint32_t nDataBytes
 	}
 	
 	*pnBytesRecv = nResult;
-	return Net_Success;
+	
+	if (*pnBytesRecv < nDataBytes) {
+		return NetWarn_EndOfData;
+	} else {
+		return Net_Success;
+	}
 }
 
 eNetReturn_t RasPiTCPClientSend(sTCPClient_t *pTCPClient, uint32_t nDataBytes, void *pData) {
@@ -258,6 +309,25 @@ eNetReturn_t RasPiTCPClientSend(sTCPClient_t *pTCPClient, uint32_t nDataBytes, v
 	nResult = send(pTCPClient->Sck.nSocket, pData, nDataBytes, 0);
 	if (nResult == SOCKET_INVALID) {
 		//errno has the failure code
+		return NetFail_Unknown;
+	}
+	
+	return Net_Success;
+}
+
+eNetReturn_t RasPiTCPClientSetRecvTimeOut(sTCPClient_t *pTCPClient, uint32_t nMillisec) {
+	struct timeval tTime;
+	int nResult;
+	
+	//Convert the time requested into OS value
+	tTime.tv_sec = nMillisec / 1000;
+	tTime.tv_usec = (nMillisec - tTime.tv_sec) * 1000;
+
+	//Set the timeout duration
+	nResult = setsockopt(pTCPClient->Sck.nSocket, SOL_SOCKET, SO_RCVTIMEO, (void *)&tTime, sizeof(struct timeval));
+	
+	if (nResult != 0) {
+		//errno has error code
 		return NetFail_Unknown;
 	}
 	

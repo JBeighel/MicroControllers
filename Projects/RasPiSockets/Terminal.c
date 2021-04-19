@@ -271,6 +271,7 @@ eReturn_t TerminalReadInput(sTerminal_t *pTerminal) {
 				for (nCutCtr = 0; nCutCtr + nCtr < pTerminal->nBufferUsed; nCutCtr++) {
 					pTerminal->aInputBuffer[nCutCtr] = pTerminal->aInputBuffer[nCutCtr + nCtr];
 				}
+				pTerminal->aInputBuffer[nCutCtr] = '\0';//Make sure it was placed
 				pTerminal->aInputBuffer[nCtr] = '\0'; //Probably not needed, but won't hurt
 
 				//Reduce the used count
