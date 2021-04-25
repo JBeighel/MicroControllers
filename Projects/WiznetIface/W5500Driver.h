@@ -78,6 +78,11 @@
 	*/
 	#define W5500_HIGHPORTSTART		50000
 	
+	/**	@brief		Verification attemptes will be made if the data is this size or smaller
+		@ingroup	w5500driver
+	*/
+	#define W5500_READVERIFYSIZE	4
+	
 	/**	@brief		All return codes for the W5500 driver 
 		@ingroup	w5500driver
 	*/

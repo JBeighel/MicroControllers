@@ -27,12 +27,14 @@ eNetReturn_t IfaceTCPServAcceptClient(sTCPServ_t *pTCPServ, sSocket_t *pClientSc
 eNetReturn_t IfaceTCPServReceive(sTCPServ_t *pTCPServ, sSocket_t *pClientSck, uint32_t nNumBytes, void *pData, uint32_t *pnBytesRecv);
 eNetReturn_t IfaceTcpServSend(sTCPServ_t *pTCPServ, sSocket_t *pClientSck, uint32_t nDataBytes, void *pData);
 eNetReturn_t IfaceTCPServGetClientInfo(sTCPServ_t *pTCPServ, sConnInfo_t *pConn);
+eNetReturn_t IfaceTCPServSetRecvTimeOut(sTCPServ_t *pTCPServ, sSocket_t *pClientSck, uint32_t nMillisec);
 
 eNetReturn_t IfaceTCPClientInitialize(sTCPClient_t *pTCPClient);
 eNetReturn_t IfaceTCPClientConnect(sTCPClient_t *pTCPClient, sConnInfo_t *pConn);
 eNetReturn_t IfaceTCPClientClose(sTCPClient_t *pTCPClient);
 eNetReturn_t IfaceTCPClientReceive(sTCPClient_t *pTCPClient, uint32_t nNumBytes, void *pData, uint32_t *pnBytesRecv);
 eNetReturn_t IfaceTCPClientSend(sTCPClient_t *pTCPClient, uint32_t nDataBytes, void *pData);
+eNetReturn_t IfaceTCPClientSetRecvTimeOut(sTCPClient_t *pTCPClient, uint32_t nMillisec);
 
 eNetReturn_t IfaceUDPServInitialize(sUDPServ_t *pUDPServ);
 eNetReturn_t IfaceUDPServBind(sUDPServ_t *pUDPServ, sConnInfo_t *pConn);
@@ -60,6 +62,7 @@ eNetReturn_t IfaceTCPServObjInitialize(sTCPServ_t *pTCPServ) {
 	pTCPServ->pfAcceptClient = &IfaceTCPServAcceptClient;
 	pTCPServ->pfReceive = &IfaceTCPServReceive;
 	pTCPServ->pfSend = &IfaceTcpServSend;
+	pTCPServ->pfSetRecvTimeout = &IfaceTCPServSetRecvTimeOut;
 	
 	return Net_Success;
 }
@@ -84,6 +87,10 @@ eNetReturn_t IfaceTCPServAcceptClient(sTCPServ_t *pTCPServ, sSocket_t *pClientSc
 	return NetFail_NotImplem;
 }
 
+eNetReturn_t IfaceTCPServSetRecvTimeOut(sTCPServ_t *pTCPServ, sSocket_t *pClientSck, uint32_t nMillisec) {
+	return NetFail_NotImplem;
+}
+
 eNetReturn_t IfaceTCPServReceive(sTCPServ_t *pTCPServ, sSocket_t *pClientSck, uint32_t nNumBytes, void *pData, uint32_t *pnBytesRecv) {
 	return NetFail_NotImplem;
 }
@@ -102,6 +109,7 @@ eNetReturn_t IfaceTCPClientObjInitialize(sTCPClient_t *pTCPClient) {
 	pTCPClient->pfClose = &IfaceTCPClientClose;
 	pTCPClient->pfReceive = &IfaceTCPClientReceive;
 	pTCPClient->pfSend = &IfaceTCPClientSend;
+	pTCPClient->pfSetRecvTimeout = &IfaceTCPClientSetRecvTimeOut;
 	
 	return Net_Success;
 }
@@ -123,6 +131,10 @@ eNetReturn_t IfaceTCPClientSend(sTCPClient_t *pTCPClient, uint32_t nDataBytes, v
 }
 
 eNetReturn_t IfaceTCPClientClose(sTCPClient_t *pTCPClient) {
+	return NetFail_NotImplem;
+}
+
+eNetReturn_t IfaceTCPClientSetRecvTimeOut(sTCPClient_t *pTCPClient, uint32_t nMillisec) {
 	return NetFail_NotImplem;
 }
 

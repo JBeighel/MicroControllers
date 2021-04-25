@@ -1,12 +1,12 @@
 /**	@defgroup	boardsupport
-	@brief
+	@brief		Support for peripherals attached to processor
 	@details	v0.1
 	#Description
 
 	#File Information
-		File:	???.c
+		File:	BoardSupport.h
 		Author:	J. Beighel
-		Date:	MM-DD-YYYY
+		Date:	2021-03-10
 */
 
 #ifndef __BOARDSUPPORT_H
