@@ -39,6 +39,7 @@
 
 /*****	Globals		*****/
 	sDNPMsgBuffer_t gDNPBuild, gDNPParse;
+	sDNPDataValue_t gDNPValue;
 	sTerminal_t gTerminal;
 
 /*****	Prototypes 	*****/
@@ -93,9 +94,18 @@ void BootstrapTask(void const * argument) {
 		DNPBufferNewMessage(&gDNPBuild);
 		gDNPBuild.nDestAddr = 0xFFFC;
 		gDNPBuild.nSourceAddr = 0x1234;
-		gDNPBuild.eControlCode = DNPCtrl_Read;
 		gDNPBuild.eDataControl = DNPData_Direction | DNPData_Primary | DNPData_UnconfirmData;
+
+		/*
+		gDNPBuild.eControlCode = DNPCtrl_Read;
 		DNPBuilderAddDataObjectRequest(&gDNPBuild, DNPGrp_BinaryInput, 2, 0, 0);
+		*/
+
+
+		gDNPBuild.eControlCode = DNPCtrl_DirectOperate;
+		DNPBuilderAddBinaryOutputCommandDataObject(&gDNPBuild, 0x01, 0, DNPBinOutCtrl_PulseOn, 1, 500, 0, 0);
+
+
 		DNPBuilderGenerateDNP(&gDNPBuild);
 		gTime.pfWatchdogRefresh();
 
@@ -103,8 +113,9 @@ void BootstrapTask(void const * argument) {
 		DNPParserReceivedData(&gDNPParse, gDNPBuild.aDNPMessage, 0, gDNPBuild.nDNPMsgLen, &nUsed);
 
 		DNPParserNextDataObject(&gDNPParse);
+		DNPParserNextDataValue(&gDNPParse, &gDNPValue);
 
-		TerminalCommandHandler(&gTerminal, " aaabbbccc a*(b+)(c(c)c?) ");
+		//TerminalCommandHandler(&gTerminal, " aaabbbccc a*(b+)(c(c)c?) ");
 	}
 
 	return;

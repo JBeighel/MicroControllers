@@ -1,6 +1,6 @@
 /**	File:	TimeGeneralInterface.c
 	Author:	J. Beighel
-	Date:	2021-02-02
+	Date:	2021-03-08
 */
 
 /*****	Includes	*****/
@@ -29,6 +29,19 @@
 	*/
 	eReturn_t TimeDelayNotImplemented(uint32_t nDelayAmount);
 
+	/**	@brief	Watchdog timer control function not implemented
+	 *	@ingroup	timeiface
+	 */
+	eReturn_t WatchdogNotImplemented(void);
+
+	eReturn_t TimerStartNotImplemented(void *pTimerHW);
+
+	eReturn_t TimerStopNotImplemented(void *pTimerHW);
+
+	eReturn_t TimerSetMillisecondsNotImplemented(void *pTimerHW, uint32_t nCountVal);
+
+	eReturn_t TimerInterruptNotImplemented(void *pTimerHW, pfTimerInterruptHandler_t pfHandler, void *pParam);
+
 /*****	Functions	*****/
 
 eReturn_t TimeInterfaceInitialize(sTimeIface_t *pIface) {
@@ -38,6 +51,15 @@ eReturn_t TimeInterfaceInitialize(sTimeIface_t *pIface) {
 	pIface->pfDelayMicroSeconds = &TimeDelayNotImplemented;
 	pIface->pfDelay100NanoSeconds = &TimeDelayNotImplemented;
 	
+	pIface->pfWatchdogStart = &WatchdogNotImplemented;
+	pIface->pfWatchdogStop = &WatchdogNotImplemented;
+	pIface->pfWatchdogRefresh = &WatchdogNotImplemented;
+
+	pIface->pfInterruptStart = &TimerStartNotImplemented;
+	pIface->pfInterruptStop = &TimerStopNotImplemented;
+	pIface->pfInterruptSetMilliseconds = &TimerSetMillisecondsNotImplemented;
+	pIface->pfInterruptSetHandler = &TimerInterruptNotImplemented;
+
 	pIface->eCapabilities = TimeCap_None;
 	
 	return Success;
@@ -48,5 +70,25 @@ uint32_t TimeCurrentTicksNotImplemented(void) {
 }
 
 eReturn_t TimeDelayNotImplemented(uint32_t nDelayAmount) {
+	return Fail_NotImplem;
+}
+
+eReturn_t WatchdogNotImplemented(void) {
+	return Fail_NotImplem;
+}
+
+eReturn_t TimerStartNotImplemented(void *pTimerHW) {
+	return Fail_NotImplem;
+}
+
+eReturn_t TimerStopNotImplemented(void *pTimerHW) {
+	return Fail_NotImplem;
+}
+
+eReturn_t TimerSetMillisecondsNotImplemented(void *pTimerHW, uint32_t nCountVal) {
+	return Fail_NotImplem;
+}
+
+eReturn_t TimerInterruptNotImplemented(void *pTimerHW, pfTimerInterruptHandler_t pfHandler, void *pParam) {
 	return Fail_NotImplem;
 }

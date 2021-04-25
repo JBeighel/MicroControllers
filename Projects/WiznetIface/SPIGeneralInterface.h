@@ -1,6 +1,6 @@
 /**	@defgroup	spiiface
 	@brief		General interface for using the SPI bus
-	@details	v0.3
+	@details	v0.5
 	# Intent #
 		This module is to create a common interface for interacting with a SPI bus.  Drivers 
 		for devices that operate over this bus should use this interface to operate the 
@@ -45,7 +45,7 @@
 	# File Information #
 		File:	SPIGeneralInterface.c
 		Author:	J. Beighel
-		Date:	2021-01-26
+		Date:	2021-03-02
 */
 
 #ifndef __SPIGENIFACE
@@ -63,7 +63,7 @@
 	*/
 	typedef enum eSPICapabilities_t {
 		SPI_NoCapabilities	= 0x00000000,	/**< Default, SPI bus driver has no capabilities */
-		SPI_Configure		= 0x00000001,	/**< SPI bus driver allows configuration of the port */
+		SPI_Configurable	= 0x00000001,	/**< SPI bus driver allows configuration of the port */
 		SPI_BeginTransfer	= 0x00000002,	/**< SPI bus driver allows user to begin a data transfer */
 		SPI_EndTransfer		= 0x00000004,	/**< SPI bus driver allows user to end a data transfer */
 		SPI_BiDir1Byte		= 0x00000008,	/**< SPI bus driver allows user to bi-directionally transfer 1 byte */
@@ -103,6 +103,8 @@
 		SPIFail_Unknown		= -1,	/**< An unknown and unrecoverable error happened during the operation */
 		SPIFail_Unsupported	= -2,	/**< The requested operation is not supported by this device */
 		SPIFail_Timeout		= -3,	/**< The requested operation timed out before completion */
+		SPIFail_Capability	= -4,	/**< The provided SPI implementation is missing a needed capability */
+		SPIFail_Mode		= -5,	/**< The SPI device is configured for the wrong mode */
 	} eSPIReturn_t;
 	
 	typedef eSPIReturn_t (*pfInitializeSPIBus_t)(sSPIIface_t *pIface, void *pHWInfo, uint32_t nBusClockFreq, eSPIDataOrder_t eDataOrder, eSPIMode_t eMode);

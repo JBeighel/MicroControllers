@@ -283,9 +283,7 @@ eReturn_t TerminalReadInput(sTerminal_t *pTerminal) {
 			}
 		}
 	}
-sprintf(pTerminal->aInputBuffer, "get key ");
-sprintf(pTerminal->aInputBuffer, "set key value ");
-TerminalProcessCommand(pTerminal, strlen(pTerminal->aInputBuffer));
+
 	return Success;
 }
 
