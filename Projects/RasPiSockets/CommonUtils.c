@@ -1,7 +1,7 @@
 /*
 	File:	CommonUtils.h
 	Author:	J. Beighel
-	Date:	11-25-2020
+	Date:	2021-01-26
 */
 
 /***** Includes		*****/
@@ -127,4 +127,16 @@ uint16_t CountSetBitsInInt16(uint32_t nVal) {
 	nVal = (nVal * 0x0101) >> 8; //Sum all chunks into the highest byte, then shift down to lowest
 
 	return nVal;
+}
+
+uint8_t ReverseBitsInUInt8(uint8_t nVal) {
+	uint8_t nCtr = 0, nRev = 0;
+	
+	for (nCtr = 0; nCtr < 8; nCtr++) {
+		nRev <<= 1;
+		nRev |= nVal & 0x01;
+		nVal >>= 1;
+	}
+	
+	return nRev;
 }

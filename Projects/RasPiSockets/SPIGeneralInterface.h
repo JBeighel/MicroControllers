@@ -1,6 +1,6 @@
 /**	@defgroup	spiiface
 	@brief		General interface for using the SPI bus
-	@details	v0.3
+	@details	v0.4
 	# Intent #
 		This module is to create a common interface for interacting with a SPI bus.  Drivers 
 		for devices that operate over this bus should use this interface to operate the 
@@ -26,14 +26,14 @@
 		take the form of SPI_#_HWINFO
 
 		In addition the driver must define a value to reach the SPIPortInitialize() function.
-		This should take the form of SPI_#_PORTINIT
+		This should take the form of SPI_INIT
 
 		Having these defined gives a very consistent and generic means of establishing the
 		interface object in the application that looks like this:
 
 		sSPIIface_t SpiObj;
 
-		SPI_1_PORTINIT(&SpiObj, SPI_1_HWINFO, 5000000, SPI_MSBFirst, SPI_Mode0);
+		SPI_INIT(&SpiObj, SPI_1_HWINFO, 5000000, SPI_MSBFirst, SPI_Mode0);
 
 		The last thing the driver must do is create a define of the capabilities that it allows.
 		This define should be options from the eSPICapabilities_t enumeration ORed together.  The
@@ -45,7 +45,7 @@
 	# File Information #
 		File:	SPIGeneralInterface.c
 		Author:	J. Beighel
-		Created:09-04-2020
+		Date:	2021-03-02
 */
 
 #ifndef __SPIGENIFACE
@@ -79,6 +79,12 @@
 	} eSPIDataOrder_t;
 	
 	/**	@brief		Enumeration of clock and data sampling methods the bus will use
+		@details	CPOL is clock polarity, 0 means it begins in a low state and the 
+			first edge will be rising.  One means it begins in a high state and the 
+			first edge will be falling.
+			
+			CPHA is clock phase and spicifies when the data bits will change (output)
+			and when they will be read (input / data capture).
 		@ingroup	spiiface
 	*/
 	typedef enum eSPIMode_t {
@@ -97,6 +103,8 @@
 		SPIFail_Unknown		= -1,	/**< An unknown and unrecoverable error happened during the operation */
 		SPIFail_Unsupported	= -2,	/**< The requested operation is not supported by this device */
 		SPIFail_Timeout		= -3,	/**< The requested operation timed out before completion */
+		SPIFail_Capability	= -4,	/**< The provided SPI implementation is missing a needed capability */
+		SPIFail_Mode		= -5,	/**< The SPI device is configured for the wrong mode */
 	} eSPIReturn_t;
 	
 	typedef eSPIReturn_t (*pfInitializeSPIBus_t)(sSPIIface_t *pIface, void *pHWInfo, uint32_t nBusClockFreq, eSPIDataOrder_t eDataOrder, eSPIMode_t eMode);

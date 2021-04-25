@@ -1,6 +1,6 @@
 /*	File:	W5500Driver.c
 	Author:	J. Beighel
-	Date:	08-27-2020
+	Date:	2021-03-06
 */
 
 /***** Includes		*****/
@@ -19,6 +19,12 @@
 /***** Prototypes 	*****/
 	/**	@brief		Read data from the Wiznet peripheral
 		@details	Performs read operations with the peripheral over the SPI bus
+			If the data is W5500_READVERIFYSIZE bytes or less then it will be read a second
+			time as a verification.  The function will only return if the data is read back
+			with an identical value, otherwise it will continue reading.
+			
+			If the data is larger than W5500_READVERIFYSIZE no verification is attempted.  
+			The results of the first read attempt are returned.
 		@param		pDev		Pointer to the Wiznet5500 device object
 		@param		nAddress	The address in the requested back to read from
 		@param		eControl	Indicate the memory bank to read from
@@ -27,6 +33,19 @@
 		@ingroup	w5500driver
 	*/
 	eW5500Return_t W5500ReadData(sW5500Obj_t *pDev, uint16_t nAddress, eW5500Control_t eControl, uint8_t *pBuff, uint8_t nBytes);
+	
+	/**	@brief		Read data from the Wiznet peripheral
+		@details	Performs read operations with the peripheral over the SPI bus
+			No verification read is attempted.  The data is returned as reported in the first
+			read attempt.
+		@param		pDev		Pointer to the Wiznet5500 device object
+		@param		nAddress	The address in the requested back to read from
+		@param		eControl	Indicate the memory bank to read from
+		@param		pBuff		Buffer to hold the read data
+		@param		nBytes		Number of bytes to read
+		@ingroup	w5500driver
+	*/
+	eW5500Return_t W5500ReadDataSkipVerify(sW5500Obj_t *pDev, uint16_t nAddress, eW5500Control_t eControl, uint8_t *pBuff, uint8_t nBytes);
 	
 	/**	@brief		Write data from the Wiznet peripheral
 		@details	Performs write operations with the peripheral over the SPI bus
@@ -38,6 +57,8 @@
 		@ingroup	w5500driver
 	*/
 	eW5500Return_t W5500WriteData(sW5500Obj_t *pDev, uint16_t nAddress, eW5500Control_t eControl, const uint8_t *pBuff, uint8_t nBytes);
+	
+	eW5500Return_t W5500WriteDataSkipVerify(sW5500Obj_t *pDev, uint16_t nAddress, eW5500Control_t eControl, const uint8_t *pBuff, uint8_t nBytes);
 	
 	/**	@brief		Binds a TCP port on the Wiznet device and listens for connections
 		@details	The wiznet device does not allow multiply IP addresses, so the IP
@@ -86,6 +107,34 @@
 	eNetReturn_t W5500NetTCPServReceive(sTCPServ_t *pTCPServ, sSocket_t *pClientSck, uint32_t nDataBytes, void *pData, uint32_t *pnBytesRecv);
 	
 	eNetReturn_t W5500NetTCPServSend(sTCPServ_t *pTCPServ, sSocket_t *pClientSck, uint32_t nDataBytes, void *pData);
+	
+	eNetReturn_t W5500NetTCPClientConnect(sTCPClient_t *pTCPClient, sConnInfo_t *pConn);
+	
+	/**	@brief		Closes the TCP connection
+		@param		pTCPClient		Pointer to hte TCP Client object to use
+		@return		Net_Success on succeess, or a code indicating the type of error encountered
+		@ingroup	networkgeniface
+	*/
+	eNetReturn_t W5500NetTCPClientClose(sTCPClient_t *pTCPClient);
+	
+	/**	@brief		Waits for and receives data from a TCP server
+		@param		pTCPClient		Pointer to hte TCP Client object to use
+		@param		nDataBytes		Number of bytes the data buffer can hold
+		@param		pData			Pointer to the bufer to receive the data 
+		@param		pnBytesRecv		Returns the number of data bytes received
+		@return		Net_Success on succeess, or a code indicating the type of error encountered
+		@ingroup	networkgeniface
+	*/
+	eNetReturn_t W5500NetTCPClientReceive(sTCPClient_t *pTCPClient, uint32_t nDataBytes, void *pData, uint32_t *pnBytesRecv);
+	
+	/**	@brief		Send data to a TCP server
+		@param		pTCPClient		Pointer to hte TCP Client object to use
+		@param		nDataBytes		Number of bytes to send
+		@param		pData			Buffer holding the data to send
+		@return		Net_Success on succeess, or a code indicating the type of error encountered
+		@ingroup	networkgeniface
+	*/
+	eNetReturn_t W5500NetTCPClientSend(sTCPClient_t *pTCPClient, uint32_t nDataBytes, void *pData);
 
 /***** Functions	*****/
 eW5500Return_t W5500Initialize(sW5500Obj_t *pDev, sSPIIface_t *pSpiBus, sGPIOIface_t *pIOObj, uint8_t nCSPin) {
@@ -103,7 +152,9 @@ eW5500Return_t W5500Initialize(sW5500Obj_t *pDev, sSPIIface_t *pSpiBus, sGPIOIfa
 	
 	//Reset the device
 	nModeReg = W5500CmdMode_Reset;
-	W5500WriteData(pDev, W5500SckReg_Mode, W5500BSB_CommonRegister, &nModeReg, 1);
+	W5500WriteDataSkipVerify(pDev, W5500SckReg_Mode, W5500BSB_CommonRegister, &nModeReg, 1);
+	DELAYMILLISEC(5);
+	W5500WriteDataSkipVerify(pDev, W5500SckReg_Mode, W5500BSB_CommonRegister, &nModeReg, 1);
 	DELAYMILLISEC(5);
 	
 	//Clear ping disable bit
@@ -120,7 +171,7 @@ eW5500Return_t W5500Initialize(sW5500Obj_t *pDev, sSPIIface_t *pSpiBus, sGPIOIfa
 		nControl |= W5500BSB_Register;
 		
 		W5500WriteData(pDev, W5500SckReg_Mode, (eW5500Control_t)nControl, &nModeReg, 1);
-		W5500WriteData(pDev, W5500SckReg_Command, (eW5500Control_t)nControl, &nCmd, 1);
+		W5500WriteDataSkipVerify(pDev, W5500SckReg_Command, (eW5500Control_t)nControl, &nCmd, 1); //Can't read back socket commands
 		
 		//Set all buffers to 2K, evenly spreads out available space
 		nCmd = W5500SckBuff_2KB;
@@ -256,7 +307,7 @@ eW5500Return_t W5500SocketListen(sW5500Obj_t *pDev, uint8_t *pnSocket, uint16_t 
 	nControl |= W5500BSB_Register;
 	
 	anRegVal[0] = W5500SckInt_AllMask; //Clear any pending interrupts
-	W5500WriteData(pDev, W5500SckReg_Interrupt, (eW5500Control_t)nControl, &anRegVal[0], 1);
+	W5500WriteDataSkipVerify(pDev, W5500SckReg_Interrupt, (eW5500Control_t)nControl, &anRegVal[0], 1);
 	
 	anRegVal[0] = nPort >> 8;
 	anRegVal[1] = nPort & 0xFF;
@@ -278,7 +329,7 @@ eW5500Return_t W5500SocketListen(sW5500Obj_t *pDev, uint8_t *pnSocket, uint16_t 
 	W5500WriteData(pDev, W5500SckReg_Mode, (eW5500Control_t)nControl, &(anRegVal[0]), 1);
 	
 	anRegVal[0] = W5500SckCmd_Open; //Command it to open to establish the socket
-	W5500WriteData(pDev, W5500SckReg_Command, (eW5500Control_t)nControl, &anRegVal[0], 1);
+	W5500WriteDataSkipVerify(pDev, W5500SckReg_Command, (eW5500Control_t)nControl, &anRegVal[0], 1);
 	
 	//Should move the socket to INIT status
 	anRegVal[0] = W5500SckStat_Closed;
@@ -291,7 +342,7 @@ eW5500Return_t W5500SocketListen(sW5500Obj_t *pDev, uint8_t *pnSocket, uint16_t 
 	
 	if (eProtocol == IPPROTO_TCP) { //Must command TCP sockets to listen next
 		anRegVal[0] = W5500SckCmd_Listen;
-		W5500WriteData(pDev, W5500SckReg_Command, (eW5500Control_t)nControl, &anRegVal[0], 1);
+		W5500WriteDataSkipVerify(pDev, W5500SckReg_Command, (eW5500Control_t)nControl, &anRegVal[0], 1);
 	}
 	
 	if (pDev->nNextPort == nPort) { //Just in case don't clobber next outbound
@@ -594,7 +645,7 @@ eW5500Return_t W5500CloseSocket(sW5500Obj_t *pDev, uint8_t nSocket) {
 	return W5500_Success;
 }
 
-eW5500Return_t W5500ReadData(sW5500Obj_t *pDev, uint16_t nAddress, eW5500Control_t eControl, uint8_t *pBuff, uint8_t nBytes) {
+eW5500Return_t W5500ReadDataSkipVerify(sW5500Obj_t *pDev, uint16_t nAddress, eW5500Control_t eControl, uint8_t *pBuff, uint8_t nBytes) {
 	sGPIOIface_t *pGPIO = pDev->pGPIO;
 	sSPIIface_t *pSPI = pDev->pSPI;
 	uint8_t nSend[3], nCtr;
@@ -642,7 +693,79 @@ eW5500Return_t W5500ReadData(sW5500Obj_t *pDev, uint16_t nAddress, eW5500Control
 	return W5500_Success;
 }
 
-eW5500Return_t W5500WriteData(sW5500Obj_t *pDev, uint16_t nAddress, eW5500Control_t eControl, const uint8_t *pBuff, uint8_t nBytes) {
+eW5500Return_t W5500ReadData(sW5500Obj_t *pDev, uint16_t nAddress, eW5500Control_t eControl, uint8_t *pBuff, uint8_t nBytes)  {
+	sGPIOIface_t *pGPIO = pDev->pGPIO;
+	sSPIIface_t *pSPI = pDev->pSPI;
+	bool bVerified, bDidFirstRead;
+	uint8_t aVerify[W5500_READVERIFYSIZE], aSend[3];
+	uint16_t nCtr;
+	
+	aSend[0] = nAddress >> 8;
+	aSend[1] = nAddress & 0x00FF;
+	aSend[2] = eControl & (~W5500BSB_OpModeMask); //Strip off data length bits
+	aSend[2] &= ~W5500BSB_ReadWriteMask; //Strip off any read/write bits
+	aSend[2] |= W5500BSB_Read; //Add correct read/write bit
+	
+	//Add the correct data length bits
+	switch (nBytes) {
+		case 1:
+			aSend[2] |= W5500BSB_OM1ByteLen;
+			break;
+		case 2:
+			aSend[2] |= W5500BSB_OM2ByteLen;
+			break;
+		case 4:
+			aSend[2] |= W5500BSB_OM4ByteLen;
+			break;
+		default:
+			aSend[2] |= W5500BSB_OMVariableLen;
+			break;
+	}
+	
+	bVerified = false;
+	bDidFirstRead = false;
+	do {
+		//Begin SPI transaction
+		pGPIO->pfDigitalWriteByPin(pGPIO, pDev->nChipSelectPin, false);
+		pSPI->pfBeginTransfer(pSPI);
+		
+		//Send the address and control
+		for (nCtr = 0; nCtr < 3; nCtr++) {
+			pSPI->pfTransferByte(pSPI, aSend[nCtr], &(pBuff[0]));
+		}
+		
+		//Read out the data
+		for (nCtr = 0; nCtr < nBytes; nCtr++) {
+			pSPI->pfTransferByte(pSPI, 0xFF, &(pBuff[nCtr]));
+		}
+		
+		//End SPI transaction
+		pSPI->pfEndTransfer(pSPI);
+		pGPIO->pfDigitalWriteByPin(pGPIO, pDev->nChipSelectPin, true);
+		
+		if (bDidFirstRead == true) { //COmpare read data to verify buffer
+			bVerified = true; //Assume its a good read
+			for (nCtr = 0; (nCtr < nBytes) && (nBytes <= W5500_READVERIFYSIZE); nCtr++) {
+				if (aVerify[nCtr] != pBuff[nCtr]) { //Turns out it wasn't good
+					bVerified = false;
+					nCtr = nBytes + 1; //Break the for loop
+				}
+			}
+		} else { //Need a verification read still, can't compare
+			bDidFirstRead = true;
+		}
+		
+		if (nBytes <= 4) { //Copy what was read into the verification buffer
+			for (nCtr = 0; nCtr < nBytes; nCtr++) {
+				aVerify[nCtr] = pBuff[nCtr];
+			}
+		}
+	} while ((bVerified == false) && (nBytes <= W5500_READVERIFYSIZE));
+	
+	return W5500_Success;
+}
+
+eW5500Return_t W5500WriteDataSkipVerify(sW5500Obj_t *pDev, uint16_t nAddress, eW5500Control_t eControl, const uint8_t *pBuff, uint8_t nBytes) {
 	sGPIOIface_t *pGPIO = pDev->pGPIO;
 	sSPIIface_t *pSPI = pDev->pSPI;
 	uint8_t nSend[3], nRecv, nCtr;
@@ -687,6 +810,74 @@ eW5500Return_t W5500WriteData(sW5500Obj_t *pDev, uint16_t nAddress, eW5500Contro
 	pSPI->pfEndTransfer(pSPI);
 	pGPIO->pfDigitalWriteByPin(pGPIO, pDev->nChipSelectPin, true);
 	DELAYMICROSEC(W5500_MICROSECCSHIGH);
+	
+	return W5500_Success;
+}
+
+eW5500Return_t W5500WriteData(sW5500Obj_t *pDev, uint16_t nAddress, eW5500Control_t eControl, const uint8_t *pBuff, uint8_t nBytes) {
+	sGPIOIface_t *pGPIO = pDev->pGPIO;
+	sSPIIface_t *pSPI = pDev->pSPI;
+	bool bVerified;
+	uint8_t aSend[3], aVerify[W5500_READVERIFYSIZE];
+	uint16_t nCtr;
+	
+	aSend[0] = nAddress >> 8;
+	aSend[1] = nAddress & 0x00FF;
+	aSend[2] = eControl & (~W5500BSB_OpModeMask); //Strip off data length bits
+	aSend[2] &= ~W5500BSB_ReadWriteMask; //Strip off any read/write bits
+	aSend[2] |= W5500BSB_Write; //Add correct read/write bit
+	
+	//Add the correct data length bits
+	switch (nBytes) {
+		case 1:
+			aSend[2] |= W5500BSB_OM1ByteLen;
+			break;
+		case 2:
+			aSend[2] |= W5500BSB_OM2ByteLen;
+			break;
+		case 4:
+			aSend[2] |= W5500BSB_OM4ByteLen;
+			break;
+		default:
+			aSend[2] |= W5500BSB_OMVariableLen;
+			break;
+	}
+	
+	bVerified = false;
+	do {
+		//Begin SPI transaction
+		pGPIO->pfDigitalWriteByPin(pGPIO, pDev->nChipSelectPin, false);
+		pSPI->pfBeginTransfer(pSPI);
+
+		//Send the address and control
+		for (nCtr = 0; nCtr < 3; nCtr++) {
+			pSPI->pfTransferByte(pSPI, aSend[nCtr], aSend);
+		}
+		
+		//Write out the data
+		for (nCtr = 0; nCtr < nBytes; nCtr++) {
+			pSPI->pfTransferByte(pSPI, pBuff[nCtr], aSend);
+		}
+
+		//End SPI transaction
+		pSPI->pfEndTransfer(pSPI);
+		pGPIO->pfDigitalWriteByPin(pGPIO, pDev->nChipSelectPin, true);
+		DELAYMICROSEC(W5500_MICROSECCSHIGH);
+		
+		if (nBytes <= W5500_READVERIFYSIZE) { //Read back the data to ensure a good write
+			W5500ReadData(pDev, nAddress, eControl, aVerify, nBytes);
+			
+			bVerified = true; //Assume it passed to start
+			for (nCtr = 0; nCtr < nBytes; nCtr++) {
+				if (pBuff[nCtr] != aVerify[nCtr]) { //It didn't pass, try again
+					bVerified = false;
+					nCtr = nBytes + 1; //Stop the for loop, no need to keep checking
+				}
+			}
+		} else { //Too much data to verify, hope for the best
+			bVerified = true;
+		}
+	} while (bVerified == false);
 	
 	return W5500_Success;
 }
@@ -902,3 +1093,118 @@ eNetReturn_t W5500NetTCPServSend(sTCPServ_t *pTCPServ, sSocket_t *pClientSck, ui
 		return Net_Success;
 	}
 }
+
+eW5500Return_t W5500CreateTCPClient(sW5500Obj_t *pDev, sTCPClient_t *pTCPClient) {
+	//Start with sane structure
+	IfaceTCPClientObjInitialize(pTCPClient);
+
+	//Fill out the structure variables
+	pTCPClient->Sck.nSocket = SOCKET_INVALID;
+	pTCPClient->Sck.Conn.Port = 0;
+	pTCPClient->Sck.Conn.Addr.nNetLong = 0;
+	pTCPClient->pHWInfo = (void *)pDev;
+	pTCPClient->eCapabilities = W5500_TCPCLIENTCAPS;
+
+	//Fill out function pointers
+	pTCPClient->pfConnect = &W5500NetTCPClientConnect;
+	pTCPClient->pfClose = &W5500NetTCPClientClose;
+	pTCPClient->pfReceive = &W5500NetTCPClientReceive;
+	pTCPClient->pfSend = &W5500NetTCPClientSend;
+	
+	return W5500_Success;
+}
+
+eNetReturn_t W5500NetTCPClientConnect(sTCPClient_t *pTCPClient, sConnInfo_t *pConn) {
+	sW5500Obj_t *pDev = (sW5500Obj_t *)pTCPClient->pHWInfo;
+	eW5500Return_t eResult;
+	IN_ADDR IPServ;
+	uint8_t nSck;
+	
+	IPServ.S_un.S_addr = pConn->Addr.nNetLong;
+	
+	eResult = W5500SocketConnect(pDev, &nSck, &IPServ, pConn->Port);
+	
+	if (eResult == W5500_Success) {
+		pTCPClient->Sck.Conn.Port = pConn->Port;
+		pTCPClient->Sck.Addr.nNetLong = pConn->Addr.nNetLong;
+		pTCPClient->Sck.nSocket = nSck;
+		return Net_Success;
+	} else {
+		return NetFail_Unknown;
+	}
+}
+	
+eNetReturn_t W5500NetTCPClientClose(sTCPClient_t *pTCPClient) {
+	eW5500Return_t eResult;
+	sW5500Obj_t * pDev = (sW5500Obj_t *)pTCPClient->pHWInfo;
+	
+	if (pTCPClient->Sck.nSocket == SOCKET_INVALID) {
+		return NetFail_InvSocket;
+	}
+	
+	eResult = W5500CloseSocket(pDev, pTCPClient->Sck.nSocket);
+	pTCPClient->Sck.nSocket = SOCKET_INVALID;
+	pTCPClient->Sck.Conn.Port = 0;
+	pTCPClient->Sck.Conn.Addr.nNetLong = 0;
+	
+	if (eResult != W5500_Success) {
+		return NetFail_Unknown;
+	} else {
+		return Net_Success;
+	}
+}
+	
+eNetReturn_t W5500NetTCPClientReceive(sTCPClient_t *pTCPClient, uint32_t nDataBytes, void *pData, uint32_t *pnBytesRecv) {
+	sW5500Obj_t *pDev = (sW5500Obj_t *)pTCPClient->pHWInfo;
+	eW5500Return_t eResult;
+	uint16_t nAvail;
+	eW5500SckProt_t eProt;
+	eW5500SckStat_t eState;
+	SOCKADDR_IN ConnAddr;
+	
+	(*pnBytesRecv) = 0;
+	
+	//Make sure the socket is in a valid state
+	eResult = W5500SocketStatus(pDev, pTCPClient->Sck.nSocket, &eProt, &eState, &nAvail, &ConnAddr, sizeof(SOCKADDR_IN));
+		
+	if (eResult != W5500_Success) { //failed to get socket information
+		return NetFail_Unknown;
+	} else if (eState != W5500SckStat_Establish) {
+		return NetFail_SocketState;
+	}
+	
+	//Socket looks good, accept out the data
+	eResult = W5500SocketReceive(pDev, pTCPClient->Sck.nSocket, pData, nDataBytes, pnBytesRead);
+	if (eResult < W5500_Success) {
+		return NetFail_Unknown;
+	} else {
+		return Net_Success;
+	}
+}
+	
+eNetReturn_t W5500NetTCPClientSend(sTCPClient_t *pTCPClient, uint32_t nDataBytes, void *pData) {
+	sW5500Obj_t *pDev = (sW5500Obj_t *)pTCPClient->pHWInfo;
+	eW5500Return_t eResult;
+	uint16_t nAvail;
+	eW5500SckProt_t eProt;
+	eW5500SckStat_t eState;
+	SOCKADDR_IN ConnAddr;
+	
+	//Make sure the socket is in a valid state
+	eResult = W5500SocketStatus(pDev, pTCPClient->Sck.nSocket, &eProt, &eState, &nAvail, &ConnAddr, sizeof(SOCKADDR_IN));
+		
+	if (eResult != W5500_Success) { //failed to get socket information
+		return NetFail_Unknown;
+	} else if (eState != W5500SckStat_Establish) {
+		return NetFail_SocketState;
+	}
+	
+	//Socket looks good, ship out the data
+	eResult = W5500SocketTCPSend(pDev, pTCPClient->Sck.nSocket, pData, nDataBytes);
+	if (eResult < W5500_Success) {
+		return NetFail_Unknown;
+	} else {
+		return Net_Success;
+	}
+}
+

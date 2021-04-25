@@ -10,7 +10,7 @@
 
 
 /*****	Definitions	*****/
-	#define PATTERN_LEN		(sizeof(manPattern) / sizeof(uint32_t))
+	
 
 /*****	Constants	*****/
 

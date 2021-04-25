@@ -1,6 +1,6 @@
 /**	@defgroup	w5500driver
 	@brief		Driver for the Wizner W5500 Ethernet device
-	@details	v0.2
+	@details	v0.3
 	# Description #
 		This is an ethernet device that includes buffers for transmit/receive as well as includes
 		the entire Ethernet stack.  It will allow 8 sockets to be used for Ethernet communication
@@ -21,7 +21,7 @@
 	# File Info #
 		File:	W5500Driver.c
 		Author:	J. Beighel
-		Date:	08-27-2020
+		Date:	2021-03-06
 */
 
 #ifndef __W5500DRIVER
@@ -77,6 +77,11 @@
 		@ingroup	w5500driver
 	*/
 	#define W5500_HIGHPORTSTART		50000
+	
+	/**	@brief		Verification attemptes will be made if the data is this size or smaller
+		@ingroup	w5500driver
+	*/
+	#define W5500_READVERIFYSIZE	4
 	
 	/**	@brief		All return codes for the W5500 driver 
 		@ingroup	w5500driver
@@ -567,6 +572,8 @@
 		@ingroup	w5500driver
 	*/
 	eW5500Return_t W5500CreateTCPServer(sW5500Obj_t *pDev, sTCPServ_t *pTCPServ);
+	
+	eW5500Return_t W5500CreateTCPClient(sW5500Obj_t *pDev, sTCPClient_t *pTCPClient);
 	
 /***** Functions	*****/
 

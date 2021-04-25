@@ -34,7 +34,7 @@
 
 	eReturn_t DNPBuilderAddDataObjectRequest(sDNPMsgBuffer_t *pMsg, eDNPGroup_t Group, uint8_t Variation, uint16_t CountStart, uint16_t CountStop);
 
-	eReturn_t DNPBuilderAddBinaryOutputCommandDataObject(sDNPMsgBuffer_t *pMsg, uint8_t Variation, uint16_t PrefixIndex, uint8_t ControlCode, uint8_t Count, uint32_t OnTime, uint32_t OffTime, uint8_t Status);
+	eReturn_t DNPBuilderAddBinaryOutputCommandDataObject(sDNPMsgBuffer_t *pMsg, uint8_t Variation, uint16_t PrefixIndex, eDNPBinOutControlCode_t eCtrlCode, uint8_t nOpCount, uint32_t nOnTime, uint32_t nOffTime, uint8_t nStatus);
 
 /*****	Functions	*****/
 

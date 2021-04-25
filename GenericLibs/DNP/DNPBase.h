@@ -237,11 +237,26 @@
 		uint32_t nCurrPoint;			/**< Last data point number that was read out */
 	} sDNPDataObject_t;
 
+	/**	@brief		Structure to break out the Group 12 Variation 1 data object, control relay output block
+	 *	@ingroup	dnpmsgparse
+	 */
+	typedef struct __attribute__((__packed__)) sDNPObjGrp012Var01_t {
+		eDNPBinOutControlCode_t eControlCode;
+		uint8_t nCount;
+		uint32_t nOnTime;
+		uint32_t nOffTime;
+		uint8_t nStatusCode;
+	} sDNPObjGrp012Var01_t;
+
 	/**	@brief		Union to parse the values from the data in a data object
+	 *	@details	The parsing structures only work if the processor uses the correct
+	 *		byte orders.  DNP stipulates that all values are passed low byte first
+	 *		high byte last.
 	 *	@ingroup	dnpmsgparse
 	 */
 	typedef union uDNPDataBlock_t {
 		uint8_t aBytes[DNP_OBJECTDATASIZE];	/**< Raw bytes in this data point */
+		sDNPObjGrp012Var01_t BinOutCmd;
 	} uDNPDataBlock_t;
 
 	/**	@brief		Details of a single data point in a data object
