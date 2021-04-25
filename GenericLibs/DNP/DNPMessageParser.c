@@ -118,7 +118,7 @@ eReturn_t DNPParserReceivedData(sDNPMsgBuffer_t *pMsg, uint8_t *pData, uint32_t 
 			pMsg->nUserDataLen += 1;
 
 			if (pMsg->nDNPMsgLen - nChunkStartIdx >= DNP_DATACRCCHUNKSIZE + sizeof(crc16_t)) {
-				nU16Val = BytesToUInt16(pMsg->aDNPMessage, false, pMsg->nDNPMsgLen - 1); //CRC in message
+				nU16Val = BytesToUInt16(pMsg->aDNPMessage, false, pMsg->nDNPMsgLen - 2); //CRC in message
 				nCRCVal = CalculateCRC16(CRC_DNP, &(pMsg->aDNPMessage[nChunkStartIdx]), DNP_DATACRCCHUNKSIZE); //Calculated CRC
 				pMsg->nUserDataLen -= 2; //The CRC value was copied into the user data, overwrite it
 				nChunkStartIdx = pMsg->nDNPMsgLen; //Begin a new chunk
@@ -129,7 +129,7 @@ eReturn_t DNPParserReceivedData(sDNPMsgBuffer_t *pMsg, uint8_t *pData, uint32_t 
 				}
 
 				//First byte of data section is the transport header, don't put that into user data
-				if (pMsg->nDNPMsgLen - pMsg->nFramgentIdx == DNP_MSGHEADERLEN + DNP_DATACRCCHUNKSIZE) {
+				if (pMsg->nDNPMsgLen - pMsg->nFramgentIdx == DNP_MSGHEADERLEN + DNP_DATACRCCHUNKSIZE + sizeof(crc16_t)) {
 					pMsg->nTransportSequence = pMsg->aUserData[pMsg->nUserDataLen - 16];
 
 					//Shift the chunk bytes down by 1 to squeeze out the transport header
@@ -161,7 +161,7 @@ eReturn_t DNPParserReceivedData(sDNPMsgBuffer_t *pMsg, uint8_t *pData, uint32_t 
 			}
 
 			//Transport header indicates if this is the last fragment, make sure we have it
-			if (pMsg->nDNPMsgLen - pMsg->nFramgentIdx <= DNP_MSGHEADERLEN + DNP_DATACRCCHUNKSIZE) {
+			if (pMsg->nDNPMsgLen - pMsg->nFramgentIdx < DNP_MSGHEADERLEN + DNP_DATACRCCHUNKSIZE + sizeof(crc16_t)) {
 				//Message didn't have a full chunk, so transport header wasn't extracted yet
 				pMsg->nTransportSequence = pMsg->aDNPMessage[pMsg->nFramgentIdx + DNPHdrIdx_TransportHdr];
 
@@ -374,7 +374,7 @@ eReturn_t DNPParserNextDataValue(sDNPMsgBuffer_t * pMsg, sDNPDataValue_t *pValue
 	}
 
 	//Next is the data
-	for (nCtr = 0; nCtr < pMsg->sDataObj.nPrefixBytes; nCtr++) {
+	for (nCtr = 0; nCtr < pMsg->sDataObj.nDataBytes; nCtr++) {
 		pValue->Data.aBytes[nCtr] = pMsg->aUserData[pMsg->nUserDataIdx]; //Data is least significant byte first
 		pMsg->nUserDataIdx += 1;
 	}
