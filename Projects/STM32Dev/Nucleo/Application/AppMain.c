@@ -101,10 +101,14 @@ void BootstrapTask(void const * argument) {
 		DNPBuilderAddDataObjectRequest(&gDNPBuild, DNPGrp_BinaryInput, 2, 0, 0);
 		*/
 
-
+		/*
 		gDNPBuild.eControlCode = DNPCtrl_DirectOperate;
 		DNPBuilderAddBinaryOutputCommandDataObject(&gDNPBuild, 0x01, 0, DNPBinOutCtrl_PulseOn, 1, 500, 0, 0);
+		*/
 
+		gDNPBuild.eControlCode = DNPCtrl_Response;
+		uint8_t aFlags[] = {0x80, 0x81, 0x81, 0x80};
+		DNPBuilderAddBinaryInputDataObject(&gDNPBuild, 1, 4, aFlags, true, 500);
 
 		DNPBuilderGenerateDNP(&gDNPBuild);
 		gTime.pfWatchdogRefresh();
@@ -113,6 +117,10 @@ void BootstrapTask(void const * argument) {
 		DNPParserReceivedData(&gDNPParse, gDNPBuild.aDNPMessage, 0, gDNPBuild.nDNPMsgLen, &nUsed);
 
 		DNPParserNextDataObject(&gDNPParse);
+		DNPParserNextDataValue(&gDNPParse, &gDNPValue);
+		DNPParserNextDataValue(&gDNPParse, &gDNPValue);
+		DNPParserNextDataValue(&gDNPParse, &gDNPValue);
+		DNPParserNextDataValue(&gDNPParse, &gDNPValue);
 		DNPParserNextDataValue(&gDNPParse, &gDNPValue);
 
 		//TerminalCommandHandler(&gTerminal, " aaabbbccc a*(b+)(c(c)c?) ");
@@ -158,7 +166,7 @@ void CycleLEDColors(void) {
 
 eReturn_t TerminalCommandHandler(sTerminal_t *pTerminal, const char *pCmd) {
 	char strInput[TERMINAL_BUFFERSIZE];
-	char strCmd[50], strParam[50];
+	char strCmd[40], strParam[40];
 	char *pStart;
 	uint32_t nIdx;
 	sRegExResult_t RXResult;

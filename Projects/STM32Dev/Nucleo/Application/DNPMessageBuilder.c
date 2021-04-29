@@ -1,6 +1,6 @@
 /**	File:	DNPMessageBuilder.c
 	Author:	J. Beighel
-	Date:	2021-03-15
+	Date:	2021-04-27
 */
 
 /*****	Includes	*****/
@@ -19,7 +19,23 @@
 
 
 /*****	Prototypes 	*****/
+	/**	@brief		Add a byte of user data to a DNP message buffer
+	 *	@param		pMsg		The message buffer to add to
+	 *	@param		nData		The data to add to the buffer
+	 *	@return		Success if the data is added.  Or a code indicating
+	 *		the failure encountered.
+	 *	@ingroup	dnpmsgbuild
+	 */
 	eReturn_t DNPBuilderAddByte(sDNPMsgBuffer_t *pMsg, uint8_t nData);
+
+	/**	@brief		Add a data block to the user data of a DNP message buffer
+	 *	@param		pMsg		The message buffer to add to
+	 *	@param		pData		The data to add to the buffer
+	 *	@param		nDataLen	Number of data bytes to add
+	 *	@return		Success if the data is added.  Or a code indicating
+	 *		the failure encountered.
+	 *	@ingroup	dnpmsgbuild
+	 */
 	eReturn_t DNPBuilderAddData(sDNPMsgBuffer_t *pMsg, uint8_t *pData, uint32_t nDataLen);
 
 /*****	Functions	*****/
@@ -238,3 +254,158 @@ eReturn_t DNPBuilderAddBinaryOutputCommandDataObject(sDNPMsgBuffer_t *pMsg, uint
 
 	return Success;
 }
+
+eReturn_t DNPBuilderAddBinaryOutputDataObject(sDNPMsgBuffer_t *pMsg, uint8_t nVariation, uint8_t nNumPoints, eDNPObjBinOutFlags_t *peStatuses, bool bIncludePrefix, uint16_t nStartAddress) {
+	uint16_t nCtr;
+	eDNPQualifier_t eQual;
+	uint8_t aBytes[2];
+
+	//build up the data object
+	DNPBuilderAddByte(pMsg, DNPGrp_BinaryOutput); //Group
+	DNPBuilderAddByte(pMsg, nVariation);
+
+	//Qualifier
+	if ((bIncludePrefix == true) && (nVariation == 2)) { //Each point gets a prefix
+		//Prefix holds address, so we only need a count up front
+		eQual = DNPQual_IndexPrefix2Bytes | DNPQual_CodeSingleVal1Bytes;
+		DNPBuilderAddByte(pMsg, eQual);
+
+		//Add single value in the range field
+		DNPBuilderAddByte(pMsg, nNumPoints);
+	} else { //Variation 1 can't do prefixes, or they weren't requested
+		bIncludePrefix = false; //Just to be sure its correct
+
+		//No prefixes, so the addresses go up front
+		eQual = DNPQual_IndexPrefixNone | DNPQual_CodeAddrStopAndStart2Bytes;
+		DNPBuilderAddByte(pMsg, eQual);
+
+		//Range start
+		UInt16ToBytes(nStartAddress, true, aBytes,0);
+		DNPBuilderAddData(pMsg, aBytes, 2);
+
+		//Range stop
+		UInt16ToBytes(nStartAddress + (nNumPoints - 1), true, aBytes,0);
+		DNPBuilderAddData(pMsg, aBytes, 2);
+	}
+
+	//Now fill in all the data points
+	switch (nVariation) {
+		case 1: //Packed bits
+			aBytes[0] = 0;
+			for (nCtr = 0; nCtr < nNumPoints; nCtr++) {
+				//Advance to the next bit
+				aBytes[0] <<= 1;
+
+				if (CheckAllBitsInMask(peStatuses[(nNumPoints - 1) - nCtr], DNPBinOutFlag_State) == true) {
+					aBytes[0] |= 0x01;
+				}
+
+				if ((nCtr % 8) == 7) {//Filled a byte
+					DNPBuilderAddByte(pMsg, aBytes[0]);
+					aBytes[0] = 0;
+				}
+			}
+
+			if ((nCtr % 8) != 0) { //Ended on a partial byte, add the remainder
+				DNPBuilderAddByte(pMsg, aBytes[0]);
+			}
+
+			break;
+		case 2: //Flag registers
+			//Loop through and add all points
+			for (nCtr = 0; nCtr < nNumPoints; nCtr++) {
+				//Add the prefix
+				if (bIncludePrefix == true) {
+					UInt16ToBytes(nStartAddress + nCtr, true, aBytes,0);
+					DNPBuilderAddData(pMsg, aBytes, 2);
+				}
+
+				//Add the data
+				DNPBuilderAddByte(pMsg, (uint8_t)(peStatuses[nCtr]));
+			}
+
+			break;
+		default:
+			return Fail_Invalid;
+	}
+
+	return Success;
+}
+
+eReturn_t DNPBuilderAddBinaryInputDataObject(sDNPMsgBuffer_t *pMsg, uint8_t nVariation, uint8_t nNumPoints, eDNPObjBinInFlags_t *peStatuses, bool bIncludePrefix, uint16_t nStartAddress) {
+	uint16_t nCtr;
+	eDNPQualifier_t eQual;
+	uint8_t aBytes[2];
+
+	//build up the data object
+	DNPBuilderAddByte(pMsg, DNPGrp_BinaryInput); //Group
+	DNPBuilderAddByte(pMsg, nVariation);
+
+	//Qualifier
+	if ((bIncludePrefix == true) && (nVariation == 2)) { //Each point gets a prefix
+		//Prefix holds address, so we only need a count up front
+		eQual = DNPQual_IndexPrefix2Bytes | DNPQual_CodeSingleVal1Bytes;
+		DNPBuilderAddByte(pMsg, eQual);
+
+		//Add single value in the range field
+		DNPBuilderAddByte(pMsg, nNumPoints);
+	} else { //Variation 1 can't do prefixes, or they weren't requested
+		bIncludePrefix = false; //Just to be sure its correct
+
+		//No prefixes, so the addresses go up front
+		eQual = DNPQual_IndexPrefixNone | DNPQual_CodeAddrStopAndStart2Bytes;
+		DNPBuilderAddByte(pMsg, eQual);
+
+		//Range start
+		UInt16ToBytes(nStartAddress, true, aBytes,0);
+		DNPBuilderAddData(pMsg, aBytes, 2);
+
+		//Range stop
+		UInt16ToBytes(nStartAddress + (nNumPoints - 1), true, aBytes,0);
+		DNPBuilderAddData(pMsg, aBytes, 2);
+	}
+
+	//Now fill in all the data points
+	switch (nVariation) {
+		case 1: //Packed bits
+			aBytes[0] = 0;
+			for (nCtr = 0; nCtr < nNumPoints; nCtr++) {
+				//Advance to the next bit
+				aBytes[0] <<= 1;
+
+				if (CheckAllBitsInMask(peStatuses[(nNumPoints - 1) - nCtr], DNPBinInFlag_State) == true) {
+					aBytes[0] |= 0x01;
+				}
+
+				if ((nCtr % 8) == 7) {//Filled a byte
+					DNPBuilderAddByte(pMsg, aBytes[0]);
+					aBytes[0] = 0;
+				}
+			}
+
+			if ((nCtr % 8) != 0) { //Ended on a partial byte, add the remainder
+				DNPBuilderAddByte(pMsg, aBytes[0]);
+			}
+
+			break;
+		case 2: //Flag registers
+			//Loop through and add all points
+			for (nCtr = 0; nCtr < nNumPoints; nCtr++) {
+				//Add the prefix
+				if (bIncludePrefix == true) {
+					UInt16ToBytes(nStartAddress + nCtr, true, aBytes,0);
+					DNPBuilderAddData(pMsg, aBytes, 2);
+				}
+
+				//Add the data
+				DNPBuilderAddByte(pMsg, (uint8_t)(peStatuses[nCtr]));
+			}
+
+			break;
+		default:
+			return Fail_Invalid;
+	}
+
+	return Success;
+}
+

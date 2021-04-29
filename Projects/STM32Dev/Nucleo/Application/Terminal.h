@@ -21,7 +21,7 @@
 	#include "StringTools.h"
 
 /*****	Defines		*****/
-	#define TERMINAL_BUFFERSIZE		35
+	#define TERMINAL_BUFFERSIZE		50
 
 	#define TERMINAL_MAXHANDLERS	5
 
