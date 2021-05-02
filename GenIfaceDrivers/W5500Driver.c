@@ -1,6 +1,6 @@
 /*	File:	W5500Driver.c
 	Author:	J. Beighel
-	Date:	2021-03-06
+	Date:	2021-05-02
 */
 
 /***** Includes		*****/
@@ -160,7 +160,7 @@ eW5500Return_t W5500Initialize(sW5500Obj_t *pDev, sSPIIface_t *pSpiBus, sGPIOIfa
 	
 	//Check the SPI Mode
 	if ((pSpiBus->eMode != SPI_Mode0) && (pSpiBus->eMode != SPI_Mode3)) {
-		return SPIFail_Mode;
+		return W5500Fail_SpiMode;
 	}
 	
 	return W5500_Success;
