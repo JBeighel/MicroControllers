@@ -1,6 +1,6 @@
 /**	File:	US2066Driver.c
 	Author:	J. Beighel
-	Date:	2021-01-22
+	Date:	2021-05-04
 */
 
 /*****	Includes	*****/
@@ -223,6 +223,11 @@ eUS2066Return_t US2066InitSPI(sUS2066Info_t *pDev, sTimeIface_t *pTime, sGPIOIfa
 	
 	pDev->pTime->pfDelayMilliSeconds(US2066_PULSEINITMSEC);
 	US2066WriteByte(pDev, false, US2066_DISPLAYON);
+	
+	//Check the SPI Mode
+	if (pSpiBus->eMode != SPI_Mode3) {
+		return US2066Fail_SpiMode;
+	}
 	
 	return US2066_Success;
 }

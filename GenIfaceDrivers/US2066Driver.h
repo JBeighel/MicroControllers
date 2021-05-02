@@ -1,6 +1,6 @@
 /**	@defgroup	us2066driver
 	@brief		Driver for the US2066 OLED/PLED Segment/Common Driver with Controller
-	@details	v0.2
+	@details	v0.3
 	#Description
 		This controller is used in the New Haven OLED 4x20 character displays.  
 		It functions almost identically to the TC1602A controller so that driver
@@ -10,7 +10,7 @@
 	#File Information
 		File:	US2066Driver.h
 		Author:	J. Beighel
-		Date:	2021-01-19
+		Date:	2021-05-04
 */
 
 #ifndef __US2066DRIVER
@@ -89,6 +89,7 @@
 									error happened during the operation */
 		US2066Fail_InvalisPos		= -2,	/**< A cursor position given was 
 									invalid */
+		US2066Fail_SpiMode			= -3,	/**< SPI mode is invalid for this device */
 	} eUS2066Return_t;
 
 	typedef enum eUS2066Cmd_t {
