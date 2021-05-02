@@ -1,6 +1,6 @@
 /**	@defgroup i2ciface_arduino
 	@brief
-	@details
+	@details	v0.1
 	# Intent #
 
 
@@ -10,7 +10,7 @@
 	# File Info #
 		File:	I2C_Arduino.h
 		Author:	J. Beighel
-		Date:	2021-01-22
+		Date:	2021-05-02
 */
 
 /**	@defgroup i2ciface_arduino_priv : Private Objects
@@ -28,6 +28,8 @@
 
 /*****	Constants	*****/
 	#define		I2C_1_HWINFO	(&Wire)
+	
+	#define		I2C_1_CAPS		(I2CCap_ReadUint8Reg | I2CCap_ReadData | I2CCap_WriteUint8Reg | I2CCap_WriteData | I2CCap_GeneralCall | I2CCap_Shutdown)
 	
 	#define		I2C_INIT		ArduinoI2CInitialize
 
@@ -89,6 +91,8 @@ eI2CReturn_t ArduinoI2CInitialize(sI2CIface_t *pI2CIface, bool bActAsMaster, uin
 	pI2CIface->pfI2CWriteUint8Reg = &ArduinoI2CWriteUint8Reg;
 	pI2CIface->pfI2CWriteData = &ArduinoI2CWriteData;
 	pI2CIface->pfI2CGeneralCall = &ArduinoI2CGeneralCall;
+	
+	pI2CIface->eCapabilities = I2C_1_CAPS;
 	
 	return I2C_Success;
 }

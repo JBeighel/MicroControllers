@@ -1,7 +1,7 @@
 /*	#File Information
 		File:	I2C_NucleoL412KB.c
 		Author:	J. Beighel
-		Date:	2021-03-01
+		Date:	2021-05-02
 */
 
 /*****	Includes	*****/
@@ -51,6 +51,8 @@ eI2CReturn_t NucleoI2CInitialize(sI2CIface_t *pI2CIface, bool bActAsMaster, uint
 	pI2CIface->pfI2CWriteUint8Reg = &NucleoI2CWriteUint8Reg;
 	pI2CIface->pfI2CWriteData = &NucleoI2CWriteData;
 	pI2CIface->pfI2CGeneralCall = &NucleoI2CGeneralCall;
+	
+	pI2CIface->eCapabilities = I2C_1_CAPS; //All hardware has the same capabilities
 	
 	return I2C_Success;
 }
