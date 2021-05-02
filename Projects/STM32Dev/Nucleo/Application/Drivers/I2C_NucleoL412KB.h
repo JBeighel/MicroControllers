@@ -1,6 +1,6 @@
 /**	@defgroup	i2ciface_nucleo
 	@brief		I2C General Interface Implementation for ST Nucleo boards
-	@details	v0.1
+	@details	v0.2
 	# Intent #
 
 
@@ -9,7 +9,7 @@
 	#File Information
 		File:	I2C_NucleoL412KB.h
 		Author:	J. Beighel
-		Date:	2021-03-01
+		Date:	2021-05-02
 */
 
 /**	@defgroup i2ciface_nucleo_priv : Private Objects
@@ -36,6 +36,9 @@
 	#define		I2C_INIT		NucleoI2CInitialize
 
 	#define		I2C_TIMEOUT		100
+	
+	#define		I2C_1_CAPS		(I2CCap_ReadUint8Reg | I2CCap_ReadData | I2CCap_WriteUint8Reg | I2CCap_WriteData | I2CCap_GeneralCall)
+	#define		I2C_3_CAPS		I2C_1_CAPS
 
 /*****	Definitions		*****/
 

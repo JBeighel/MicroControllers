@@ -1,6 +1,6 @@
 /**	@defgroup	i2ciface
 	@brief		Abstracted interface for general purpose I2C port communications
-	@details	v0.2
+	@details	v0.3
 	# Intent #
 		The intent of this module is to ensure that device drivers are not coupled with I2C hardware
 		implementations.  By using this interface to operate the hardware it should allow the device
@@ -50,7 +50,7 @@
 	# File Information #
 		File:	I2CGeneralInterface.c
 		Author:	J. Beighel
-		Date:	2021-01-22
+		Date:	2021-05-02
 */
 
 /**	@defgroup i2ciface_priv : Private Objects
@@ -129,6 +129,8 @@
 		eI2CReturn_t	(*pfI2CWriteData)		(sI2CIface_t *pI2CIface, uint8_t nDevAddr, uint8_t nNumBytes, void *pDataBuff);
 		
 		eI2CReturn_t	(*pfI2CGeneralCall)		(sI2CIface_t *pI2CIface, uint8_t nValue);
+		
+		eI2CCapabilities_t	eCapabilities;
 		
 		bool			bMaster;
 		uint32_t		nClockFreq;

@@ -1,3 +1,8 @@
+/*	File:	I2CGeneralInterface.c
+	Author:	J. Beighel
+	Date:	2021-05-02
+*/
+
 #include "I2CGeneralInterface.h"
 
 /***** Protected Constants   *****/
@@ -56,6 +61,8 @@ eI2CReturn_t I2CInterfaceInitialize(sI2CIface_t *pI2CIface) {
 	pI2CIface->pfI2CWriteUint8Reg = &I2CIfaceNoWriteUint8Reg;
 	pI2CIface->pfI2CWriteData = &I2CIfaceNoWriteData;
 	pI2CIface->pfI2CGeneralCall = &I2CIfaceNoGeneralCall;
+	
+	pI2CIface->eCapabilities = I2CCap_None;
 	
 	return I2C_Success;
 }
