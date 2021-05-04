@@ -291,8 +291,8 @@ eReturn_t DNPParserNextDataObject(sDNPMsgBuffer_t *pMsg) {
 	}
 
 	if ((eQualPart == DNPQual_CodeSingleVal1Bytes) || (eQualPart == DNPQual_CodeSingleVal2Bytes) || (eQualPart == DNPQual_CodeSingleVal4Bytes)) {
-		//Single count values must start at 1 to avoid overrun
-		pMsg->sDataObj.nAddressStart = 1;
+		//Single count values must start at 0 to preserve the count
+		pMsg->sDataObj.nAddressStart = 0;
 	}
 
 	pMsg->sDataObj.nAddressEnd = 0;
@@ -304,6 +304,13 @@ eReturn_t DNPParserNextDataObject(sDNPMsgBuffer_t *pMsg) {
 	//Get the number of bits in each value
 	nCtr = pMsg->sDataObj.nAddressEnd - pMsg->sDataObj.nAddressStart; //Number of values
 	pMsg->sDataObj.nDataBytes = DNPGetDataObjectBitSize(pMsg->sDataObj.eGroup, pMsg->sDataObj.nVariation);
+
+	if (pMsg->sDataObj.eGroup == DNPGrp_DeviceAttrib) {
+		//Device attributes have a variable size, figure out how big it really is
+		pMsg->sDataObj.nDataBytes = pMsg->aUserData[pMsg->nUserDataIdx + 2]; //Skip over prefix index and type to get length
+		pMsg->sDataObj.nDataBytes += 2; //Don't forget those bytes we skipped
+		pMsg->sDataObj.nDataBytes *= 8; //Switch to bits for a moment
+	}
 
 	if (pMsg->sDataObj.nDataBytes == 1) { //Packed bits should not have a prefix
 		pMsg->sDataObj.nTotalBytes = pMsg->sDataObj.nDataBytes / 8;
@@ -338,7 +345,7 @@ eReturn_t DNPParserNextDataObject(sDNPMsgBuffer_t *pMsg) {
 			return Fail_Invalid;
 	}
 
-	pMsg->sDataObj.nTotalBytes = pMsg->sDataObj.nPrefixBytes * nCtr;
+	pMsg->sDataObj.nTotalBytes += pMsg->sDataObj.nPrefixBytes * nCtr;
 
 	pMsg->sDataObj.nCurrPoint = 0; //Reset to get first point
 	return Success;

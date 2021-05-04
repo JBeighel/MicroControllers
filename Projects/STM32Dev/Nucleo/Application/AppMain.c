@@ -106,9 +106,14 @@ void BootstrapTask(void const * argument) {
 		DNPBuilderAddBinaryOutputCommandDataObject(&gDNPBuild, 0x01, 0, DNPBinOutCtrl_PulseOn, 1, 500, 0, 0);
 		*/
 
+		/*
 		gDNPBuild.eControlCode = DNPCtrl_Response;
 		uint8_t aFlags[] = {0x80, 0x81, 0x81, 0x80};
 		DNPBuilderAddBinaryInputDataObject(&gDNPBuild, 1, 4, aFlags, true, 500);
+		*/
+
+		gDNPBuild.eControlCode = DNPCtrl_Response;
+		DNPBuilderAddDeviceAttributeValue(&gDNPBuild, DNPDevAttr_Manufacturer, "Blah");
 
 		DNPBuilderGenerateDNP(&gDNPBuild);
 		gTime.pfWatchdogRefresh();

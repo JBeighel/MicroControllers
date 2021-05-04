@@ -223,6 +223,16 @@ eReturn_t DNPBuilderAddDataObjectRequest(sDNPMsgBuffer_t *pMsg, eDNPGroup_t eGro
 	return Success;
 }
 
+eReturn_t DNPBuilderAddDeviceAttributeRequest(sDNPMsgBuffer_t *pMsg, eDNPDevAttrVar_t eAttr) {
+	DNPBuilderAddByte(pMsg, DNPGrp_DeviceAttrib);
+	DNPBuilderAddByte(pMsg, eAttr);
+	DNPBuilderAddByte(pMsg, DNPQual_IndexPrefixNone | DNPQual_CodeCountStopAndStart1Bytes);
+	DNPBuilderAddByte(pMsg, 0); //Start/Data format 0 means don't care
+	DNPBuilderAddByte(pMsg, 0); //Stop/Length 0 means give me the full value no truncation
+
+	return Success;
+}
+
 eReturn_t DNPBuilderAddBinaryOutputCommandDataObject(sDNPMsgBuffer_t *pMsg, uint8_t nVariation, uint16_t nPrefixIdx, eDNPBinOutControlCode_t eCtrlCode, uint8_t nOpCount, uint32_t nOnTime, uint32_t nOffTime, uint8_t nStatus) {
 	unsigned char aBytes[4];
 
@@ -409,3 +419,23 @@ eReturn_t DNPBuilderAddBinaryInputDataObject(sDNPMsgBuffer_t *pMsg, uint8_t nVar
 	return Success;
 }
 
+eReturn_t DNPBuilderAddDeviceAttributeValue(sDNPMsgBuffer_t *pMsg, eDNPDevAttrVar_t eAttr, const char *pValue) {
+	uint32_t nCtr;
+	uint8_t nStrLen;
+
+	nStrLen = strlen(pValue);
+
+	DNPBuilderAddByte(pMsg, DNPGrp_DeviceAttrib);
+	DNPBuilderAddByte(pMsg, eAttr);
+	DNPBuilderAddByte(pMsg, DNPQual_IndexPrefix1Bytes | DNPQual_CodeSingleVal1Bytes);
+	DNPBuilderAddByte(pMsg, 1); //Range value
+	DNPBuilderAddByte(pMsg, eAttr); //Index, first attribute in message
+	DNPBuilderAddByte(pMsg, 1); //Data type, 1 means ASCII string
+	DNPBuilderAddByte(pMsg, nStrLen); //Data length
+
+	for (nCtr = 0; nCtr < nStrLen; nCtr++) {
+		DNPBuilderAddByte(pMsg, pValue[nCtr]);
+	}
+
+	return Success;
+}

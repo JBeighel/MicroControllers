@@ -14,6 +14,8 @@
 	#define __DNPMESSAGEBUILDER_H
 
 /*****	Includes	*****/
+	#include <string.h>
+
 	#include "DNPBase.h"
 	#include "CRC16.h"
 
@@ -61,6 +63,8 @@
 	 */
 	eReturn_t DNPBuilderAddDataObjectRequest(sDNPMsgBuffer_t *pMsg, eDNPGroup_t Group, uint8_t Variation, uint16_t CountStart, uint16_t CountStop);
 
+	eReturn_t DNPBuilderAddDeviceAttributeRequest(sDNPMsgBuffer_t *pMsg, eDNPDevAttrVar_t eAttr);
+
 	/**	@brief		Add a command request for a binary output object, group 12
 	 *	@param		pMsg		Message buffer to add the data object to
 	 *	@param		Variation	The data object variation to request
@@ -101,6 +105,8 @@
 	 *	@ingroup	dnpmsgbuild
 	 */
 	eReturn_t DNPBuilderAddBinaryInputDataObject(sDNPMsgBuffer_t *pMsg, uint8_t nVariation, uint8_t nNumPoints, eDNPObjBinInFlags_t *peStatuses, bool bIncludePrefix, uint16_t nStartAddress);
+
+	eReturn_t DNPBuilderAddDeviceAttributeValue(sDNPMsgBuffer_t *pMsg, eDNPDevAttrVar_t eAttr, const char *pValue);
 
 /*****	Functions	*****/
 

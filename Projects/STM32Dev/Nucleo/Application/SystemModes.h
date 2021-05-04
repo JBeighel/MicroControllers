@@ -39,6 +39,16 @@
 	 */
 	#define	SYSMODE_NOTRANSITIONS	0
 
+	/**	@brief		The maximum number of tasks that will check in routinely
+	 *	@ingroup	sysmodes
+	 */
+	#define SYSMODE_NUMTASKS	4
+
+	/**	@brief		Number of system ticks between verifications that all tasks checked in
+	 *	@ingroup	sysmodes
+	 */
+	#define SYSMODE_TASKCHECK	100
+
 	/**	@brief		Macro to convert a mode into a transition flag
 	 *	@ingroup	sysmodes
 	 */
@@ -69,12 +79,22 @@
 		SysPerm_ConfigEdit		= 0x0004,	/**< Modify system configuration */
 	} eSysModePermissions_t;
 
+	/**	@brief		Type used to identify Task Identifiers
+	 *	@details	This type is used for convenience by the module.  The
+	 *		actual value can be cast to or from any compatible data size.
+	 *	@ingroup	sysmodes
+	 */
+	typedef uint32_t SysModeTaskID_t;
+
 	/**	@brief		Prototype for all mode change event handler functions
 	 *	@ingroup	sysmodes
 	 */
 	typedef eReturn_t (*pfSysModeChangeHandler_t)();
 
-	typedef uint32_t SysModeTaskID_t;
+	/**	@brief		Prototype for all event handlers for tasks that don't check in
+	 *	@ingroup	sysmodes
+	 */
+	typedef void (*pfSysModeTaskCheckFail_t)(SysModeTaskID_t TaskID);
 
 
 /*****	Constants	*****/

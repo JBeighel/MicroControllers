@@ -221,6 +221,38 @@
 		DNPBinOutCtrl_Trip				= 0x80,
 	} eDNPBinOutControlCode_t;
 
+	typedef enum eDNPDevAttrVar_t {
+		DNPDevAttr_SecureAuthVer		= 0xD1,
+		DNPDevAttr_SecureStatsPerAssoc	= 0xD2,
+		DNPDevAttr_BinaryOutPerObj		= 0xD8,
+		DNPDevAttr_TimingAccuracy		= 0xD9,
+		DNPDevAttr_TimeSyncDuration		= 0xDA,
+		DNPDevAttr_AnalogOutCnt			= 0xDD,
+		DNPDevAttr_BinaryOutCnt			= 0xE0,
+		DNPDevAttr_CounterCnt			= 0xE5,
+		DNPDevAttr_AnalogInCnt			= 0xE9,
+		DNPDevAttr_BinaryInCnt			= 0xEF,
+		DNPDevAttr_MaxFragSend			= 0xF0,
+		DNPDevAttr_MaxFragRecv			= 0xF1,
+		DNPDevAttr_SoftwareVer			= 0xF2,
+		DNPDevAttr_HardwareVer			= 0xF3,
+		DNPDevAttr_StationName			= 0xF5,
+		DNPDevAttr_SerialNumber			= 0xF8,
+		DNPDevAttr_ProductName			= 0xFA,
+		DNPDevAttr_Manufacturer			= 0xFC,
+		DNPDevAttr_RequestAll			= 0xFE,
+		DNPDevAttr_AttrSupported		= 0xFF,
+	} eDNPDevAttrVar_t;
+
+	typedef enum eDNPDevAttrTypes_t {
+		DNPDevAttr_VisibleString		= 1,
+		DNPDevAttr_UnsignedInt			= 2,
+		DNPDevAttr_SignedInt			= 3,
+		DNPDevAttr_FLoat				= 4,
+		DNPDevAttr_OctetString			= 5,
+		DNPDevAttr_BitString			= 6,
+	} eDNPDevAttrTypes_t;
+
 	typedef enum eDNPObjBinOutFlags_t {
 		DNPBinOutFlag_Online		= 0x01,	/**< Point is online, data is reliable */
 		DNPBinOutFlag_Restart		= 0x02,	/**< Data has not been updated since the device reset */
@@ -256,6 +288,12 @@
 		uint32_t nCurrPoint;			/**< Last data point number that was read out */
 	} sDNPDataObject_t;
 
+	typedef struct __attribute__((__packed__)) sDNPObjGrp000Type01_t {
+		eDNPDevAttrTypes_t eType;
+		uint8_t nLength;
+		char aData[DNP_OBJECTDATASIZE - 2];
+	} sDNPObjGrp000Type01_t;
+
 	typedef struct __attribute__((__packed__)) sDNPObjGrp001Var02_t {
 		eDNPObjBinInFlags_t eFlags;
 	} sDNPObjGrp001Var02_t;
@@ -283,6 +321,7 @@
 	 */
 	typedef union uDNPDataBlock_t {
 		uint8_t aBytes[DNP_OBJECTDATASIZE];	/**< Raw bytes in this data point */
+		sDNPObjGrp000Type01_t DevAttrText;
 		sDNPObjGrp001Var02_t BinInValue;
 		sDNPObjGrp010Var02_t BinOutValue;
 		sDNPObjGrp012Var01_t BinOutCmd;
