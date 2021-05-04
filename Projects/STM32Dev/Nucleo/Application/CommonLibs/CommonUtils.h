@@ -1,6 +1,6 @@
 /**	@defgroup	commonutils
 	@brief		Common utilities and objects
-	@details	v 0.9
+	@details	v 0.10
 	# Description #
 		This is a collection of commonly used utilities.
 		This includes variable types, macros, and constants.
@@ -48,6 +48,7 @@
 		Fail_CommError	= -3,	/**< Communications layer failure */
 		Fail_Invalid	= -4,	/**< Some value provided was invalid for this operation */
 		Fail_BufferSize = -5,	/**< A data buffer is too small to fit the requested information */
+		Fail_Blocked	= -6,	/**< Requested operation was prevented by other logic */
 	} eReturn_t;
 
 /***** Globals		*****/
