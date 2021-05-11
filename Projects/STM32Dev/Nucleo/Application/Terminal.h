@@ -1,12 +1,12 @@
 /**	@defgroup	terminal	Generic terminal interfaces
 	@brief		Generic terminal user interface
-	@details	v0.2
+	@details	v0.3
 	#Description
 	
 	#File Information
 		File:	Terminal.h
 		Author:	J. Beighel
-		Date:	2021-04-18
+		Date:	2021-05-06
 */
 
 #ifndef __TERMINAL_H

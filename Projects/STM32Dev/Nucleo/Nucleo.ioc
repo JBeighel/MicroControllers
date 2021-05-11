@@ -1,8 +1,8 @@
 #MicroXplorer Configuration settings - do not modify
 FREERTOS.FootprintOK=true
 FREERTOS.IPParameters=Tasks01,FootprintOK,configTOTAL_HEAP_SIZE
-FREERTOS.Tasks01=startupTask,0,512,BootstrapTask,As weak,NULL,Dynamic,NULL,NULL
-FREERTOS.configTOTAL_HEAP_SIZE=5000
+FREERTOS.Tasks01=startupTask,0,768,BootstrapTask,As weak,NULL,Dynamic,NULL,NULL
+FREERTOS.configTOTAL_HEAP_SIZE=15360
 File.Version=6
 GPIO.groupedBy=Group By Peripherals
 I2C1.IPParameters=Timing
@@ -69,6 +69,8 @@ NVIC.DebugMonitor_IRQn=true\:0\:0\:false\:false\:true\:false\:false\:false
 NVIC.EXTI3_IRQn=true\:5\:0\:false\:false\:true\:true\:true\:true
 NVIC.ForceEnableDMAVector=true
 NVIC.HardFault_IRQn=true\:0\:0\:false\:false\:true\:false\:false\:false
+NVIC.I2C3_ER_IRQn=true\:5\:0\:false\:false\:true\:true\:true\:true
+NVIC.I2C3_EV_IRQn=true\:5\:0\:false\:false\:true\:true\:true\:true
 NVIC.MemoryManagement_IRQn=true\:0\:0\:false\:false\:true\:false\:false\:false
 NVIC.NonMaskableInt_IRQn=true\:0\:0\:false\:false\:true\:false\:false\:false
 NVIC.PendSV_IRQn=true\:15\:0\:false\:false\:false\:true\:false\:false

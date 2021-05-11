@@ -1,6 +1,6 @@
 /**	File:	SystemModes.c
 	Author:	J. Beighel
-	Date:	2021-05-03
+	Date:	2021-05-06
 */
 
 /*****	Includes	*****/
@@ -38,7 +38,23 @@
 	} sSysModeInfo_t;
 
 /*****	Constants	*****/
+	const eSysModeModes_t gSysModeTransitions[SysMode_NumModes] = {
+		[SysMode_Initialize]	= SystemModeFlag(SysMode_Normal) | SystemModeFlag(SysMode_Error),
+		[SysMode_Configure]		= SystemModeFlag(SysMode_Reset),
+		[SysMode_Normal]		= SystemModeFlag(SysMode_Reset) | SystemModeFlag(SysMode_Shutdown) | SystemModeFlag(SysMode_Error),
+		[SysMode_Reset]			= SYSMODE_NOTRANSITIONS,
+		[SysMode_Shutdown]		= SYSMODE_NOTRANSITIONS,
+		[SysMode_Error]			= SystemModeFlag(SysMode_Reset),
+	};
 
+	const eSysModePermissions_t gSysModePermissions[SysMode_NumModes] = {
+		[SysMode_Initialize]	= SysPerm_None,
+		[SysMode_Configure]		= SysPerm_ConfigEdit,
+		[SysMode_Normal]		= SysPerm_None,
+		[SysMode_Reset]			= SysPerm_Shutdown,
+		[SysMode_Shutdown]		= SysPerm_Shutdown,
+		[SysMode_Error]			= SysPerm_None,
+	};
 
 /*****	Globals		*****/
 	sSysModeInfo_t mSysInfo;
@@ -168,7 +184,7 @@ eReturn_t SysModeSystemVerify() {
 		ExpFlags >>= 32 - mSysInfo.nTasksTracked;
 
 		//Compare with the check in flags
-		ExpFlags &= mSysInfo.TaskFlags;
+		ExpFlags &= ~mSysInfo.TaskFlags;
 		if (ExpFlags != 0) {
 			//ExpFlags has flags for the tasks that didn't check in
 			for (nCtr = 0; nCtr < mSysInfo.nTasksTracked; nCtr++) {
@@ -184,6 +200,8 @@ eReturn_t SysModeSystemVerify() {
 				ExpFlags >>= 1;
 			}
 		}
+
+		mSysInfo.TaskFlags = 0; //Clear out all flags
 	}
 
 	//See if time in mode has elapsed

@@ -101,26 +101,12 @@
 	/**	@brief		List of all valid transitions from one mode to another
 	 *	@ingroup	sysmodes
 	 */
-	const eSysModeModes_t gSysModeTransitions[SysMode_NumModes] = {
-		[SysMode_Initialize]	= SystemModeFlag(SysMode_Normal) | SystemModeFlag(SysMode_Error),
-		[SysMode_Configure]		= SystemModeFlag(SysMode_Reset),
-		[SysMode_Normal]		= SystemModeFlag(SysMode_Reset) | SystemModeFlag(SysMode_Shutdown) | SystemModeFlag(SysMode_Error),
-		[SysMode_Reset]			= SYSMODE_NOTRANSITIONS,
-		[SysMode_Shutdown]		= SYSMODE_NOTRANSITIONS,
-		[SysMode_Error]			= SystemModeFlag(SysMode_Reset),
-	};
+	extern const eSysModeModes_t gSysModeTransitions[SysMode_NumModes];
 
 	/**	@brief		List of all system permissions allowed in each mode
 	 *	@ingroup	sysmodes
 	 */
-	const eSysModePermissions_t gSysModePermissions[SysMode_NumModes] = {
-		[SysMode_Initialize]	= SysPerm_None,
-		[SysMode_Configure]		= SysPerm_ConfigEdit,
-		[SysMode_Normal]		= SysPerm_None,
-		[SysMode_Reset]			= SysPerm_Shutdown,
-		[SysMode_Shutdown]		= SysPerm_Shutdown,
-		[SysMode_Error]			= SysPerm_None,
-	};
+	extern const eSysModePermissions_t gSysModePermissions[SysMode_NumModes];
 
 /*****	Globals		*****/
 
@@ -185,8 +171,23 @@
 	 */
 	eReturn_t SysModeSetModeExitHandler(eSysModeModes_t eMode, pfSysModeChangeHandler_t pfHandler);
 
+	/**	@brief		Verifies that tasks are checking in and if the mode duration elapsed
+	 *	@details	The return code will be success unless a handler function
+	 *		encounters a problem.  In these cases the return of this function
+	 *		will be the code from the handler function.
+	 *		The tasks verification will be done every SYSMODE_TASKCHECK system
+	 *		ticks.
+	 *		This function must be called periodically in order to perform its
+	 *		verification routines.
+	 *	@return		Success upon completion, or a code indicating the error encountered
+	 *	@ingroup	sysmodes
+	 */
 	eReturn_t SysModeSystemVerify();
 
+	/**	@brief		Each task calls this to confirm they are running properly
+	 *	@return		Success upon completion, or a code indicating the error encountered
+	 *	@ingroup	sysmodes
+	 */
 	eReturn_t SysModeTaskCheckIn(SysModeTaskID_t TaskID);
 
 /*****	Functions	*****/
