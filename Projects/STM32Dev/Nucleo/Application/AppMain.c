@@ -83,6 +83,8 @@ void BootstrapTask(void const * argument) {
 
 	SysModeInitialize(&gTime);
 
+	DBInitialize();
+
 	gTerminal.pfAddCmdHandler(&gTerminal, &TerminalCommandHandler);
 
 	xTaskCreate(&TerminalTask, "UART Terminal", 512, (void *)Task_Terminal, osPriorityAboveNormal, NULL);

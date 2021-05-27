@@ -1,6 +1,6 @@
 /**	@defgroup	commonutils
 	@brief		Common utilities and objects
-	@details	v 0.10
+	@details	v 0.11
 	# Description #
 		This is a collection of commonly used utilities.
 		This includes variable types, macros, and constants.
@@ -105,6 +105,23 @@
 	#else
 		#define SetAllBitsInMask(Register, Mask)	Register = (((uint32_t)Register) | ((uint32_t)(Mask)))
 	#endif
+
+	/** @brief		Performs an assertion at compile time
+		@details	Performs a conditional test at compile time and will throw
+			a compiler warning if it fails.  Unlike \#ifdef checks this will
+			allow the use of some runtime values, such as sizeof() giving it a
+			bit more flexibility.  However, the compiler error will always be
+			division by zero so you'll need to check the macro call to see the
+			true problem.
+			Example:
+				//Verify that sSomeStruct_t is less than 51 bytes
+				STATIC_ASSERT(StructSizeTest, sizeof(sSomeStruct_t) < 51);
+		@param		Desc	Description of the assertion, follows the rules for \#define naming
+		@param		Test	The conditional test to perform
+		@return Throws a compiler error if the conditional test is false
+		@ingroup	commonutils
+	*/
+	#define STATIC_ASSERT(Desc, Test) enum { Desc = 1 / (Test) }
 
 	/**	@brief		Returns the larger of two numeric values
 		@param		nNum1	The first number to compare
