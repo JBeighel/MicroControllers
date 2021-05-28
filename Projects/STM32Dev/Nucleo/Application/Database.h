@@ -78,18 +78,23 @@
 	} eDBDataType_t;
 
 	typedef enum eDBFlags_t {
-		DBFlag_MaskNone		= 0x0,			/**< Mask for no flags */
+		DBFlag_MaskNone		= 0x00000000,	/**< Mask for no flags */
 		DBFlag_MaskAll		= 0xFFFFFFFF,	/**< Mask for all flags (forces type to 4 byte size) */
 
-		DBFlag_NoReading	= 0x0002,		/**< No reading has been made since device powered on */
-		DBFlag_LocalForce	= 0x0010,		/**< Value is forced by this device */
-		DBFlag_RemoteForce	= 0x0008,		/**< Value is forced by reporting device (this device relays value) */
-		DBFlag_MeasVal		= 0x0080,
-		DBFlag_Online		= 0x0001,
-		DBFlag_CommLost		= 0x0004,
+		DBFlag_NoReading	= 0x00000002,	/**< No reading has been made since device powered on */
+		DBFlag_LocalForce	= 0x00000010,	/**< Value is forced by this device */
+		DBFlag_RemoteForce	= 0x00000008,	/**< Value is forced by reporting device (this device relays value) */
+		DBFlag_Online		= 0x00000001,	/**< Measurement point is reporting data */
+		DBFlag_CommLost		= 0x00000004,	/**< Communications lost to the measurement point */
 
-		DBFlag_Input		= 0x0200,		/**< Value is treated as if it were from a measured input */
-		DBFlag_ReadOnly		= 0x0400,		/**< Value can only be read from */
+		DBFlag_Input		= 0x00000200,	/**< Value is treated as if it were from a measured input */
+		DBFlag_ReadOnly		= 0x00000400,	/**< Value can only be read from */
+		DBFlag_MeasVal		= 0x00000800,	/**< Measured value, not virtual point */
+
+		DBFlag_EventMask	= 0xFF000000,	/**< Mask of all bits used to enable events */
+		DBFlag_EventChange	= 0x01000000,	/**< Raise event on value change */
+		DBFlag_EventLow		= 0x02000000,	/**< Raise event for low threshold */
+		DBFlag_EventHigh	= 0x04000000,	/**< Raise event for high threshold */
 	} eDBFlags_t;
 
 	/**	@brief		Structure containing all identifying elements of a data value
@@ -215,6 +220,40 @@
 
 /*****	Functions	*****/
 	eReturn_t DBInitialize();
+
+	/**	@brief		Sets the values associated with an analog measurement point
+	 *	@details	Allows you to identify the analog point by its database
+	 *		index then set both the measurement value and associated flags.
+	 *	@param		nDBIdx			Database index of the point to be updated
+	 *	@param		nNewValue		Measurement value to set for the point
+	 *	@param		eNewFlags		New flags to set for the point
+	 *	@return		Success if the point is updated.  Fail_Invalid if the point
+	 *		can not be found in the database.  Fail_Unknown if a problem is
+	 *		encountered in the database.
+	 *	@ingroup	database
+	 */
+	eReturn_t DBSetAnalogByDBIdx(uint32_t nDBIdx, DBAnalogVal_t nNewValue, eDBFlags_t eNewFlags);
+
+	/**	@brief		Sets the values associated with an analog measurement point
+	 *	@details	Allows you to identify the analog point by its type index
+	 *		then set both the measurement value and associated flags.
+	 *	@param		nTypeIdx		Type index of the point to be updated
+	 *	@param		nNewValue		Measurement value to set for the point
+	 *	@param		eNewFlags		New flags to set for the point
+	 *	@return		Success if the point is updated.  Fail_Invalid if the point
+	 *		can not be found in the database.  Fail_Unknown if a problem is
+	 *		encountered in the database.
+	 *	@ingroup	database
+	 */
+	eReturn_t DBSetAnalogByTypeIdx(uint32_t nTypeIdx, DBAnalogVal_t nNewValue, eDBFlags_t eNewFlags);
+
+	eReturn_t DBReadAnalogValueByDBIdx(uint32_t nDBIdx, DBAnalogVal_t *pnValue);
+
+	eReturn_t DBReadAnalogValueByTypeIdx(uint32_t nTypeIdx, DBAnalogVal_t *pnValue);
+
+	eReturn_t DBConfigureAnalogValueByDBIdx(uint32_t nDBIdx, DBAnalogVal_t nChgThresh, DBAnalogVal_t nHighThresh, DBAnalogVal_t nLowThresh, eDBUnits_t eUnits, DBAnalogVal_t nRangeMin, DBAnalogVal_t nRangeMax);
+
+	eReturn_t DBConfigureAnalogValueByTypeIdx(uint32_t nTypeIdx, DBAnalogVal_t nChgThresh, DBAnalogVal_t nHighThresh, DBAnalogVal_t nLowThresh, eDBUnits_t eUnits, DBAnalogVal_t nRangeMin, DBAnalogVal_t nRangeMax);
 
 #endif
 

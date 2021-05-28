@@ -17,6 +17,16 @@
 	
 	#define DB_NUMOBJECTS		(DB_NUMANALOGS + DB_NUMDIGITALS + DB_NUMSETTINGS + DB_NUMPROPERTIES)
 
+	#define DB_ANALOGSTARTIDX	0
+	#define DB_DIGITALSTARTIDX	(DB_NUMANALOGS)
+	#define DB_SETTINGSTARTIDX	(DB_NUMANALOGS + DB_NUMDIGITALS)
+	#define DB_PROPERTYSTARTIDX	(DB_NUMANALOGS + DB_NUMDIGITALS + DB_NUMSETTINGS)
+
+	#define DB_ANALOGENDIDX		((DB_ANALOGSTARTIDX + DB_NUMANALOGS) - 1)
+	#define DB_DIGITALENDTIDX	((DB_DIGITALSTARTIDX + DB_NUMDIGITALS) - 1)
+	#define DB_SETTINGENDIDX	((DB_SETTINGSTARTIDX + DB_NUMSETTINGS) - 1)
+	#define DB_PROPERTYENDIDX	((DB_PROPERTYSTARTIDX + DB_NUMPROPERTIES) - 1)
+
 /*****	Constants	*****/
 	//Similar constant to hold default analog thresholds/units/ranges and digital counter/debounce settings
 	const sDBEvents_t cDefDigitalEvents = {
@@ -111,7 +121,7 @@ eReturn_t DBInitialize() {
 	uint32_t nCtr, nStartOffset;
 
 	//Prepare the database arrays, Analog points first
-	nStartOffset = 0;
+	nStartOffset = DB_ANALOGSTARTIDX;
 	for (nCtr = nStartOffset; nCtr < nStartOffset + DB_NUMANALOGS; nCtr++) {
 		//Initialize database object identifiers
 		gaObjects[nCtr].nDBIdx = nCtr;
@@ -132,7 +142,7 @@ eReturn_t DBInitialize() {
 	}
 
 	//Prepare Digital points
-	nStartOffset = DB_NUMANALOGS;
+	nStartOffset = DB_DIGITALSTARTIDX;
 	for (nCtr = nStartOffset; nCtr < nStartOffset + DB_NUMDIGITALS; nCtr++) {
 		//Initialize database object identifiers
 		gaObjects[nCtr].nDBIdx = nCtr;
@@ -153,7 +163,7 @@ eReturn_t DBInitialize() {
 	}
 
 	//Prepare Settings (Applies all default settings)
-	nStartOffset = DB_NUMANALOGS + DB_NUMDIGITALS;
+	nStartOffset = DB_SETTINGSTARTIDX;
 	for (nCtr = nStartOffset; nCtr < nStartOffset + DB_NUMPROPERTIES; nCtr++) {
 		//Initialize database object identifiers
 		gaObjects[nCtr].nDBIdx = nStartOffset;
@@ -174,7 +184,7 @@ eReturn_t DBInitialize() {
 	}
 
 	//Prepare properties
-	nStartOffset = DB_NUMANALOGS + DB_NUMDIGITALS + DB_NUMPROPERTIES;
+	nStartOffset = DB_PROPERTYSTARTIDX;
 	for (nCtr = nStartOffset; nCtr < nStartOffset + DB_NUMSETTINGS; nCtr++) {
 		//Initialize database object identifiers
 		gaObjects[nCtr].nDBIdx = nCtr;
@@ -195,4 +205,174 @@ eReturn_t DBInitialize() {
 	}
 
 	return Success;
+}
+
+eReturn_t DBSetAnalogByDBIdx(uint32_t nDBIdx, DBAnalogVal_t nNewValue, eDBFlags_t eNewFlags) {
+	sDBDataObject_t *pDBObj;
+	DBAnalogVal_t nValChange;
+
+	if (IsNumberInInclusiveRange(nDBIdx, DB_ANALOGSTARTIDX, DB_ANALOGENDIDX) == false) {
+		//Index is not in the valid range for analog points
+		return Fail_Invalid;
+	}
+
+	pDBObj = &(gaObjects[nDBIdx]);
+
+	if (pDBObj->eType != DB_AnalogPoint) {
+		//Found a non-analog in the analog range, shouldn't happen
+		return Fail_Unknown;
+	}
+
+	//Point seems to be valid, apply the updates
+	if (pDBObj->pValue->Analog.eCurrFlags != eNewFlags) {
+		pDBObj->pValue->Analog.ePriorFlags = pDBObj->pValue->Analog.eCurrFlags;
+		pDBObj->pValue->Analog.eCurrFlags = eNewFlags;
+	}
+
+	if (pDBObj->pValue->Analog.nCurrValue != nNewValue) {
+		pDBObj->pValue->Analog.nPriorValue = pDBObj->pValue->Analog.nCurrValue;
+		pDBObj->pValue->Analog.nCurrValue = nNewValue;
+
+		//With a new measurement, see if events need raised
+		if ((pDBObj->pValue->Analog.nCurrValue <= pDBObj->pValue->Analog.nLowThresh) &&
+				(CheckAllBitsInMask(pDBObj->pValue->Analog.eCurrFlags, DBFlag_EventLow) == true)) {
+			//Test that handler was set and call it
+		}
+
+		if ((pDBObj->pValue->Analog.nCurrValue >= pDBObj->pValue->Analog.nHighThresh) &&
+				(CheckAllBitsInMask(pDBObj->pValue->Analog.eCurrFlags, DBFlag_EventHigh) == true)) {
+			//Test that handler was set and call it
+		}
+
+		nValChange = pDBObj->pValue->Analog.nPriorValue - pDBObj->pValue->Analog.nCurrValue;
+		nValChange = AbsoluteValue(nValChange);
+		if ((nValChange >= pDBObj->pValue->Analog.nChangeThresh) &&
+				(CheckAllBitsInMask(pDBObj->pValue->Analog.eCurrFlags, DBFlag_EventChange) == true) &&
+				(pDBObj->Events.pfDBValueChange != NULL)) {
+			pDBObj->Events.pfDBValueChange(pDBObj->eType, pDBObj->nTypeIdx);
+		}
+	}
+
+	return Success;
+}
+
+eReturn_t DBSetAnalogByTypeIdx(uint32_t nTypeIdx, DBAnalogVal_t nNewValue, eDBFlags_t eNewFlags) {
+	uint32_t nCtr;
+
+	if (nTypeIdx >= DB_NUMANALOGS) { //Invalid index
+		return Fail_Invalid;
+	}
+
+	//Scan through the database looking for this value
+	for (nCtr = DB_ANALOGSTARTIDX; nCtr <= DB_ANALOGENDIDX; nCtr++) {
+		if (gaObjects[nCtr].eType != DB_AnalogPoint) {
+			//Found a non-analog in the analog range, shouldn't happen
+			return Fail_Unknown;
+		}
+
+		if (gaObjects[nCtr].nTypeIdx == nTypeIdx) {
+			//Found the requested point, apply the updates
+			return DBSetAnalogByDBIdx(gaObjects[nCtr].nDBIdx, nNewValue, eNewFlags);
+		}
+	}
+
+	//Went through all the analog space and couldn't find the requested point
+	return Fail_Invalid;
+}
+
+eReturn_t DBReadAnalogValueByDBIdx(uint32_t nDBIdx, DBAnalogVal_t *pnValue) {
+	sDBDataObject_t *pDBObj;
+
+	*pnValue = 0; //In case something goes wrong
+
+	if (IsNumberInInclusiveRange(nDBIdx, DB_ANALOGSTARTIDX, DB_ANALOGENDIDX) == false) {
+		//Index is not in the valid range for analog points
+		return Fail_Invalid;
+	}
+
+	pDBObj = &(gaObjects[nDBIdx]);
+
+	if (pDBObj->eType != DB_AnalogPoint) {
+		//Found a non-analog in the analog range, shouldn't happen
+		return Fail_Unknown;
+	}
+
+	//Point seems to be valid, provide the value
+	*pnValue = pDBObj->pValue->Analog.nCurrValue;
+
+	return Success;
+}
+
+eReturn_t DBReadAnalogValueByTypeIdx(uint32_t nTypeIdx, DBAnalogVal_t *pnValue) {
+	uint32_t nCtr;
+
+	if (nTypeIdx >= DB_NUMANALOGS) { //Invalid index
+		return Fail_Invalid;
+	}
+
+	//Scan through the database looking for this value
+	for (nCtr = DB_ANALOGSTARTIDX; nCtr <= DB_ANALOGENDIDX; nCtr++) {
+		if (gaObjects[nCtr].eType != DB_AnalogPoint) {
+			//Found a non-analog in the analog range, shouldn't happen
+			return Fail_Unknown;
+		}
+
+		if (gaObjects[nCtr].nTypeIdx == nTypeIdx) {
+			//Found the requested point, apply the updates
+			return DBReadAnalogValueByDBIdx(gaObjects[nCtr].nDBIdx, pnValue);
+		}
+	}
+
+	//Went through all the analog space and couldn't find the requested point
+	return Fail_Invalid;
+}
+
+eReturn_t DBConfigureAnalogValueByDBIdx(uint32_t nDBIdx, DBAnalogVal_t nChgThresh, DBAnalogVal_t nHighThresh, DBAnalogVal_t nLowThresh, eDBUnits_t eUnits, DBAnalogVal_t nRangeMin, DBAnalogVal_t nRangeMax) {
+	sDBDataObject_t *pDBObj;
+
+	if (IsNumberInInclusiveRange(nDBIdx, DB_ANALOGSTARTIDX, DB_ANALOGENDIDX) == false) {
+		//Index is not in the valid range for analog points
+		return Fail_Invalid;
+	}
+
+	pDBObj = &(gaObjects[nDBIdx]);
+
+	if (pDBObj->eType != DB_AnalogPoint) {
+		//Found a non-analog in the analog range, shouldn't happen
+		return Fail_Unknown;
+	}
+
+	//Point seems to be valid, apply the settings
+	pDBObj->pValue->Analog.eUnits = eUnits;
+	pDBObj->pValue->Analog.nRangeMin = nRangeMin;
+	pDBObj->pValue->Analog.nRangeMax = nRangeMax;
+	pDBObj->pValue->Analog.nChangeThresh = nChgThresh;
+	pDBObj->pValue->Analog.nHighThresh = nHighThresh;
+	pDBObj->pValue->Analog.nLowThresh = nLowThresh;
+
+	return Success;
+}
+
+eReturn_t DBConfigureAnalogValueByTypeIdx(uint32_t nTypeIdx, DBAnalogVal_t nChgThresh, DBAnalogVal_t nHighThresh, DBAnalogVal_t nLowThresh, eDBUnits_t eUnits, DBAnalogVal_t nRangeMin, DBAnalogVal_t nRangeMax) {
+	uint32_t nCtr;
+
+	if (nTypeIdx >= DB_NUMANALOGS) { //Invalid index
+		return Fail_Invalid;
+	}
+
+	//Scan through the database looking for this value
+	for (nCtr = DB_ANALOGSTARTIDX; nCtr <= DB_ANALOGENDIDX; nCtr++) {
+		if (gaObjects[nCtr].eType != DB_AnalogPoint) {
+			//Found a non-analog in the analog range, shouldn't happen
+			return Fail_Unknown;
+		}
+
+		if (gaObjects[nCtr].nTypeIdx == nTypeIdx) {
+			//Found the requested point, apply the updates
+			return DBConfigureAnalogValueByDBIdx(gaObjects[nCtr].nDBIdx, nChgThresh, nHighThresh, nLowThresh, eUnits, nRangeMin, nRangeMax);
+		}
+	}
+
+	//Went through all the analog space and couldn't find the requested point
+	return Fail_Invalid;
 }

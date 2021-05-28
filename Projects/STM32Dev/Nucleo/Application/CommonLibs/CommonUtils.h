@@ -150,6 +150,13 @@
 	*/
 	#define	IsNumberInInclusiveRange(nNumber, nRangeMin, nRangeMax)		(((nNumber >= nRangeMin) && (nNumber <= nRangeMax)) ? true : false)
 	
+	/** @brief Macro to find the absolute value of a numeric value
+		@param Number Numeric value to find the absolute value of
+		@return Positive magnitude of Number
+		@ingroup	commonutils
+	*/
+	#define AbsoluteValue(Number) (((Number) >= 0) ? (Number) : ((Number) * -1))
+
 	/**	@brief		Determines if a given number exists in an array
 		@param		nNumber		The number to check for in the array
 		@param		aList		The array to searrch through
