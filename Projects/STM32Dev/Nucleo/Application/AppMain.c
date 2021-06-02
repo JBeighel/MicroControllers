@@ -88,7 +88,7 @@ void BootstrapTask(void const * argument) {
 	gTerminal.pfAddCmdHandler(&gTerminal, &TerminalCommandHandler);
 
 	xTaskCreate(&TerminalTask, "UART Terminal", 512, (void *)Task_Terminal, osPriorityAboveNormal, NULL);
-	//xTaskCreate(&I2CTask, "I2C Controller", 256, (void *)Task_I2C, osPriorityAboveNormal, NULL);
+	xTaskCreate(&I2CTask, "I2C Controller", 256, (void *)Task_I2C, osPriorityAboveNormal, NULL);
 
 	//Begin the application
 	SysModeTransitionMode(SysMode_Normal);

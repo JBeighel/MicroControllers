@@ -1,6 +1,6 @@
 /*	File:	I2CGeneralInterface.c
 	Author:	J. Beighel
-	Date:	2021-05-02
+	Date:	2021-05-07
 */
 
 #include "I2CGeneralInterface.h"
@@ -50,6 +50,20 @@
 	*/
 	eI2CReturn_t I2CIfaceNoGeneralCall (sI2CIface_t *pI2CIface, uint8_t nValue);
 
+	eI2CReturn_t I2CIfaceNoSlaveListenEnable(sI2CIface_t *pI2CIface, uint8_t nAddr, bool bEnable);
+
+	eI2CReturn_t I2CIfaceNoSlaveSetAddrHandler(sI2CIface_t *pI2CIface, pfI2CSlaveAddrHandler_t pfHandler);
+
+	eI2CReturn_t I2CIfaceNoSlaveSetRecvCompHandler(sI2CIface_t *pI2CIface, pfI2CSlaveCompHandler_t pfHandler);
+
+	eI2CReturn_t I2CIfaceNoSlaveSetSendCompHandler(sI2CIface_t *pI2CIface, pfI2CSlaveCompHandler_t pfHandler);
+
+	eI2CReturn_t I2CIfaceNoSlaveSetTransCompHandler(sI2CIface_t *pI2CIface, pfI2CSlaveCompHandler_t pfHandler);
+
+	eI2CReturn_t I2CIfaceNoSlaveSendData(sI2CIface_t *pI2CIface, uint16_t nDataLen, uint8_t *pData);
+
+	eI2CReturn_t I2CIfaceNoSlaveRecvData(sI2CIface_t *pI2CIface, uint16_t nBuffLen, uint8_t *pData);
+
 /***** Function Code         *****/
 eI2CReturn_t I2CInterfaceInitialize(sI2CIface_t *pI2CIface) {
 	memset(pI2CIface, 0, sizeof(sI2CIface_t));
@@ -62,7 +76,16 @@ eI2CReturn_t I2CInterfaceInitialize(sI2CIface_t *pI2CIface) {
 	pI2CIface->pfI2CWriteData = &I2CIfaceNoWriteData;
 	pI2CIface->pfI2CGeneralCall = &I2CIfaceNoGeneralCall;
 	
+	pI2CIface->pfSlaveListenEnable = I2CIfaceNoSlaveListenEnable;
+	pI2CIface->pfSlaveSetAddrHandler = I2CIfaceNoSlaveSetAddrHandler;
+	pI2CIface->pfSlaveSetRecvCompHandler = I2CIfaceNoSlaveSetRecvCompHandler;
+	pI2CIface->pfSlaveSetSendCompHandler = I2CIfaceNoSlaveSetSendCompHandler;
+	pI2CIface->pfSlaveSetTransCompHandler = I2CIfaceNoSlaveSetSendCompHandler;
+	pI2CIface->pfSlaveSendData = I2CIfaceNoSlaveSendData;
+	pI2CIface->pfSlaveRecvData = I2CIfaceNoSlaveRecvData;
+
 	pI2CIface->eCapabilities = I2CCap_None;
+	pI2CIface->nSlaveAddress = 0;
 	
 	return I2C_Success;
 }
@@ -93,5 +116,33 @@ eI2CReturn_t I2CIfaceNoWriteData (sI2CIface_t *pI2CIface, uint8_t nDevAddr, uint
 }
 
 eI2CReturn_t I2CIfaceNoGeneralCall (sI2CIface_t *pI2CIface, uint8_t nValue) {
+	return I2C_Fail_Unsupported;
+}
+
+eI2CReturn_t I2CIfaceNoSlaveListenEnable(sI2CIface_t *pI2CIface, uint8_t nAddr, bool bEnable) {
+	return I2C_Fail_Unsupported;
+}
+
+eI2CReturn_t I2CIfaceNoSlaveSetAddrHandler(sI2CIface_t *pI2CIface, pfI2CSlaveAddrHandler_t pfHandler) {
+	return I2C_Fail_Unsupported;
+}
+
+eI2CReturn_t I2CIfaceNoSlaveSetRecvCompHandler(sI2CIface_t *pI2CIface, pfI2CSlaveCompHandler_t pfHandler) {
+	return I2C_Fail_Unsupported;
+}
+
+eI2CReturn_t I2CIfaceNoSlaveSetTransCompHandler(sI2CIface_t *pI2CIface, pfI2CSlaveCompHandler_t pfHandler) {
+	return I2C_Fail_Unsupported;
+}
+
+eI2CReturn_t I2CIfaceNoSlaveSetSendCompHandler(sI2CIface_t *pI2CIface, pfI2CSlaveCompHandler_t pfHandler) {
+	return I2C_Fail_Unsupported;
+}
+
+eI2CReturn_t I2CIfaceNoSlaveSendData(sI2CIface_t *pI2CIface, uint16_t nDataLen, uint8_t *pData) {
+	return I2C_Fail_Unsupported;
+}
+
+eI2CReturn_t I2CIfaceNoSlaveRecvData(sI2CIface_t *pI2CIface, uint16_t nBuffLen, uint8_t *pData) {
 	return I2C_Fail_Unsupported;
 }

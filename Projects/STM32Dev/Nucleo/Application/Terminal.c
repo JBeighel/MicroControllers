@@ -1,6 +1,6 @@
 /**	File:	Terminal.c
 	Author:	J. Beighel
-	Date:	2021-05-06
+	Date:	2021-06-01
 */
 
 /*****	Includes	*****/
@@ -189,7 +189,7 @@ eReturn_t IOCnctWriteDataUART(sIOConnect_t *pIOObj, uint8_t *pnData, uint32_t nD
 		} else {
 			nCurrWriteLen = nDataLen;
 		}
-		eResult = pUART->pfUARTWriteData(pUART, nCurrWriteLen, &pnData);
+		eResult = pUART->pfUARTWriteData(pUART, nCurrWriteLen, pnData);
 
 		if (eResult != UART_Success) {
 			return Fail_CommError;
@@ -259,6 +259,9 @@ eReturn_t TerminalReadInput(sTerminal_t *pTerminal) {
 	}
 
 	pTerminal->nBufferUsed += nReadBytes; //Update how much of the buffer is used
+	if (nReadBytes > 0) {
+		nCtr = 5;
+	}
 
 	//Look through the buffer for new line characters
 	for (nCtr = 0; nCtr < pTerminal->nBufferUsed; nCtr++) {

@@ -17,6 +17,8 @@
 	 *	@ingroup	dnp
 	 */
 	const sDNPDataObjBitSize_t gDNPObjSize[] = {
+		{ .eGroup =  DNPGrp_DeviceAttrib,		.nVariation = 0,	.nBits = 8,	},	//Device attributes
+
 		{ .eGroup = DNPGrp_BinaryInput,			.nVariation = 1,	.nBits = 1, },	//Packed format
 		{ .eGroup = DNPGrp_BinaryInput,			.nVariation = 2,	.nBits = 8, },	//With flags
 
@@ -141,6 +143,11 @@ uint16_t DNPGetDataObjectBitSize(eDNPGroup_t eGroup, uint8_t nVariation) {
 	for (nCtr = 0; nCtr < sizeof(gDNPObjSize) / sizeof(sDNPDataObjBitSize_t); nCtr++) {
 		if ((gDNPObjSize[nCtr].eGroup == eGroup) && (gDNPObjSize[nCtr].nVariation == nVariation)) {
 			//Found the requested data object
+			return gDNPObjSize[nCtr].nBits;
+		}
+
+		if ((gDNPObjSize[nCtr].eGroup == eGroup) && (gDNPObjSize[nCtr].nVariation == 0)) {
+			//Found a catch all data object for this group
 			return gDNPObjSize[nCtr].nBits;
 		}
 	}

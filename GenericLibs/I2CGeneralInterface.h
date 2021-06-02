@@ -1,6 +1,6 @@
 /**	@defgroup	i2ciface
 	@brief		Abstracted interface for general purpose I2C port communications
-	@details	v0.3
+	@details	v0.4
 	# Intent #
 		The intent of this module is to ensure that device drivers are not coupled with I2C hardware
 		implementations.  By using this interface to operate the hardware it should allow the device
@@ -50,7 +50,7 @@
 	# File Information #
 		File:	I2CGeneralInterface.c
 		Author:	J. Beighel
-		Date:	2021-05-02
+		Date:	2021-05-10
 */
 
 /**	@defgroup i2ciface_priv : Private Objects
@@ -107,14 +107,37 @@
 		I2CCap_ReadData			= 0x0004,	/**< Can read an arbitrary number of bytes */
 		I2CCap_WriteUint8Reg	= 0x0008,	/**< Can send an 8 bit address and write an 8 bit value */
 		I2CCap_WriteData		= 0x0010,	/**< Can write an arbitrary number of bytes */
-		I2CCap_GeneralCall		= 0x0020,	/**< Can send a signle byte value to the general call address */
+		I2CCap_GeneralCall		= 0x0020,	/**< Can send a single byte value to the general call address */
+
+		I2CCap_Slave			= 0x0040,	/**< Can operate in slave mode, includes send and receive data */
+		I2CCap_SlaveAddrEvent	= 0x0080,	/**< Can raise an event when the bus address is heard */
+		I2CCap_SlaveSendEvent	= 0x0100,	/**< Can raise an event when all data is sent and master wants more */
+		I2CCap_SlaveRecvEvent	= 0x0200,	/**< Can raise an event when all data is received and master sends more */
+		I2CCap_SlaveTransEvent	= 0x0400,	/**< Can raise an event when the master ends all transfers */
 	} eI2CCapabilities_t;
 	
-	/**	@brief		Prototype for function that will initizlize the hardware for an I2C interface
-		@ingroup	i2ciface
+	/**	@brief		Enumeration of master requests from the slave
+	 *	@ingroup	i2ciface
+	 */
+	typedef enum eI2CSlaveDirection_t {
+		I2CSlave_MasterReceive,		/**< Master has requested to read data from slave */
+		I2CSlave_MasterTransmit,	/**< Master has requested to send data to slave */
+	} eI2CSlaveDirection_t;
+
+	/**	@brief		Prototype for function that will initialize the hardware for an I2C interface
+	 *	@param		pI2CIface		Pointer to the I2C interface object
+	 *	@param		bActAsMaster	True to be a master, false for slave, on the bus
+	 *	@param		nClockFreq		I2C bus clock frequency
+	 *	@param		pHWInfo			Pointer to hardware information
+	 *	@return		I2C_Success upon success, or a code indicating the
+	 *		error encountered.
+	 *	@ingroup	i2ciface
 	*/
 	typedef eI2CReturn_t (*pfInitializeI2CBus_t)(sI2CIface_t *pI2CIface, bool bActAsMaster, uint32_t nClockFreq, void *pHWInfo);
 	
+	typedef eI2CReturn_t (*pfI2CSlaveAddrHandler_t)(sI2CIface_t *pI2CIface, eI2CSlaveDirection_t eDirect, uint16_t nAddrMatch);
+	typedef eI2CReturn_t (*pfI2CSlaveCompHandler_t)(sI2CIface_t *pI2CIface);
+
 	/**	@brief		Structure defining all functions an I2C bus driver must provide
 		@ingroup	i2ciface
 	*/
@@ -122,19 +145,109 @@
 		pfInitializeI2CBus_t pfInitialize;
 		eI2CReturn_t	(*pfShutdown)			(sI2CIface_t *pI2CIface);
 		
+		//Master functions
+
 		eI2CReturn_t	(*pfI2CReadUint8Reg)	(sI2CIface_t *pI2CIface, uint8_t nDevAddr, uint8_t nRegAddr, uint8_t *pnValue);
 		eI2CReturn_t	(*pfI2CReadData)		(sI2CIface_t *pI2CIface, uint8_t nDevAddr, uint8_t nNumBytes, void *pDataBuff, uint8_t *pnBytesRead);
-		
 		eI2CReturn_t	(*pfI2CWriteUint8Reg)	(sI2CIface_t *pI2CIface, uint8_t nDevAddr, uint8_t nRegAddr, uint8_t nValue);
 		eI2CReturn_t	(*pfI2CWriteData)		(sI2CIface_t *pI2CIface, uint8_t nDevAddr, uint8_t nNumBytes, void *pDataBuff);
-		
 		eI2CReturn_t	(*pfI2CGeneralCall)		(sI2CIface_t *pI2CIface, uint8_t nValue);
 		
-		eI2CCapabilities_t	eCapabilities;
+		//Slave functions
+
+		/**	@brief		Sets the Slave configured I2C to begin listening
+		 *	@details	For slave I2C Interface only.
+		 *		The I2C interface will listen on the data line for its address.
+		 *		When the address is matched it will raise the Address Event.
+		 *	@param		pI2CIface		Pointer to the I2C interface object
+		 *	@param		nAddr			Slave address to listen for
+		 *	@param		bEnable			True to begin listening, false to stop
+		 *	@return		I2C_Success upon success, or a code indicating the
+		 *		error encountered.
+		 */
+		eI2CReturn_t	(*pfSlaveListenEnable)			(sI2CIface_t *pI2CIface, uint8_t nAddr, bool bEnable);
+
+		/**	@brief		Sets the handler for the Address Event
+		 *	@details	For slave I2C Interface only.
+		 *		When the I2C interface hears its address on the data bus it
+		 *		will raise this event to allow the application to prepare for
+		 *		the next frame of data.
+		 *	@param		pI2CIface		Pointer to the I2C interface object
+		 *	@param		pfHandler		Pointer to function that will handle this event
+		 *	@return		I2C_Success upon success, or a code indicating the
+		 *		error encountered.
+		 */
+		eI2CReturn_t	(*pfSlaveSetAddrHandler)		(sI2CIface_t *pI2CIface, pfI2CSlaveAddrHandler_t pfHandler);
+
+		/**	@brief		Sets the handler for the Receive Complete Event
+		 *	@details	For slave I2C Interface only.
+		 *		When the I2C interface has received the expected amount of data
+		 *		this event will be called to allow the application to prepare
+		 *		for the next frame.
+		 *	@param		pI2CIface		Pointer to the I2C interface object
+		 *	@param		pfHandler		Pointer to function that will handle this event
+		 *	@return		I2C_Success upon success, or a code indicating the
+		 *		error encountered.
+		 */
+		eI2CReturn_t	(*pfSlaveSetRecvCompHandler)	(sI2CIface_t *pI2CIface, pfI2CSlaveCompHandler_t pfHandler);
+
+		/**	@brief		Sets the handler for the Send Complete Event
+		 *	@details	For slave I2C Interface only.
+		 *		When the I2C interface has sent the expected amount of data
+		 *		this event will be called to allow the application to prepare
+		 *		for the next frame.
+		 *	@param		pI2CIface		Pointer to the I2C interface object
+		 *	@param		pfHandler		Pointer to function that will handle this event
+		 *	@return		I2C_Success upon success, or a code indicating the
+		 *		error encountered.
+		 */
+		eI2CReturn_t	(*pfSlaveSetSendCompHandler)	(sI2CIface_t *pI2CIface, pfI2CSlaveCompHandler_t pfHandler);
+
+		/**	@brief		Sets the handler for the Receive Complete Event
+		 *	@details	For slave I2C Interface only.
+		 *		When the master on the connected I2C buss has ended the data
+		 *		transfer the Transaction Complete event will be raised, called
+		 *		the function specified here.
+		 *		This may be called prior to the Send/Receive Complete events it
+		 *		the master ends the transfer prematurely.
+		 *	@param		pI2CIface		Pointer to the I2C interface object
+		 *	@param		pfHandler		Pointer to function that will handle this event
+		 *	@return		I2C_Success upon success, or a code indicating the
+		 *		error encountered.
+		 */
+		eI2CReturn_t	(*pfSlaveSetTransCompHandler)	(sI2CIface_t *pI2CIface, pfI2CSlaveCompHandler_t pfHandler);
+
+		/**	@brief		Queues data to be sent after the master requests data
+		 *	@details	The data buffer pointed to will not be copied.
+		 *		Modifying its contents will modify the data that will be sent.
+		 *		The memory can be reused once the Send Complete event is
+		 *		raised and handled.
+		 *	@param		pI2CIface		Pointer to the I2C interface object
+		 *	@param		nDataLen		Length of the data to send
+		 *	@param		pData			Pointer to data buffer
+		 *	@return		I2C_Success upon success, or a code indicating the
+		 *		error encountered.
+		 */
+		eI2CReturn_t	(*pfSlaveSendData)				(sI2CIface_t *pI2CIface, uint16_t nDataLen, uint8_t *pData);
+
+		/**	@brief		Queues data to be received after the master sends data
+		 *	@details	The data buffer will be stored to write data to, it
+		 *		will not be entirely updated until the Receive Complete event
+		 *		is raised and handled.
+		 *	@param		pI2CIface		Pointer to the I2C interface object
+		 *	@param		nDataLen		Amount of data to expect
+		 *	@param		pData			Pointer to data buffer
+		 *	@return		I2C_Success upon success, or a code indicating the
+		 *		error encountered.
+		 */
+		eI2CReturn_t	(*pfSlaveRecvData)				(sI2CIface_t *pI2CIface, uint16_t nDataLen, uint8_t *pData);
 		
-		bool			bMaster;
-		uint32_t		nClockFreq;
-		void			*pHWInfo;
+		eI2CCapabilities_t	eCapabilities;	/**< Capabilities flags this interface provides */
+		
+		bool			bMaster;			/**< True if interface is master on the bus */
+		uint16_t		nSlaveAddress;		/**< Address slave is listening for */
+		uint32_t		nClockFreq;			/**< Bus clock frequency */
+		void			*pHWInfo;			/**< Pointer to hardware information */
 	} sI2CIface_t;
 
 /*****	Globals		*****/
