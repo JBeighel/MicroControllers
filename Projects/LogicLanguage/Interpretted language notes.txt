@@ -1,0 +1,129 @@
+Variables:
+
+enum eVarType_t {
+	Unspecified,
+	Bool,
+	Int8,	//All ints are signed
+	Int16,
+	Int32,
+	Int64,
+	Decimal, //No sizes (double?)
+	Date, //UInt64 microseconds since 1970
+	//No strings
+}
+
+struct {
+	enum Lists specified type
+	uint64_t All interger math, allows for overflow detection on smaller sizes
+			Also can hold time information using microseconds from 1970
+	double	All decimal math
+}
+
+All operations will be done as doubles (if either value is Decimal) or Int64 (if no Decimal values).  Results will be truncated as needed to return to the specified data type.
+
+Example:
+Short : Int8 := 5
+Long : Int32 := 1000
+
+LD$ Short
+ADD$ Long // 1000 + 5 = 1005 stored in $Long
+
+LD$ Long
+ADD$ Short // 1005 + 5 = 1010 (0x03F2) truncates to 242 (0x00F2) stored in $Short
+
+
+Memory Blocks:
+Each block is an array of variables.  The blocks are scoped to a programming unit.  Global block is accessible to all programs.  Local blocks are only available to the function they are attached to, they will be created when the function starts and destroyed when the function returns.
+Each block holds the same number of variables.  16 | 32?
+
+There will also be a memory block for the stack.  This is available to all functions.  Data passed between programming units must be either in the stack or global variables.  Operations will push/pull form the stack.  Function parameters will be push/pulled from the stack along with returned values.
+
+There will be 4 registers (named A through D) available for the instructions.  These are intended as holding spaces for multi-step expressions.  
+Example: nNumber := 7 + 2 * 3
+Order of operations makes this 7 + (2 * 3), two operations performed in a different order than they appear in
+LD# 7 //Load constant 7 onto the stack
+ST% A //Store a stack value into register A
+LD# 2 //Load constant 2 onto the stack
+ST% B //Store a stack value into register B
+LD# 3 //Load constant 3 onto the stack
+MULT% B //Multiple a stack value with register B, put the result in register B
+LD% B //Load register B's value onto the stack
+ADD% A //Add a stack value with register A, puit the result in register ADD
+LD% A //Load register A's value onto the stack
+ST$ nNumber //Store a stack value into variable nNumber
+
+Programming units:
+These are essentially functions.  They will stipulate a number of expected parameters to be placed in order on the stack.  Upon return the stipulated values will also be pushed onto the stack.
+//Variables are mapped to indexes in some memory block.  Names are only known by the compiler
+VAR_GLOBAL
+	nSetting : Int16 := 803
+	nOnOff : Bool := False
+END_GLOBAL
+VAR_INPUT
+	//Var name : type := initial value (:= for assignment)
+	//Inputs don't get a default value, only locals
+	bDoWork : Bool
+	nNumber : Int8
+END_VAR_INPUT
+VAR_OUTPUT
+	//These must be set before the function returns
+	nFraction : Float
+	bSuccess : Bool
+END_VAR_OUTPUT
+VAR_LOCAL
+	nNumerator : Float := 17.62
+	nDenominator : Int16 := 74
+END_VAR_LOCAL
+CODE
+	//Instructions go here
+	//Inputs will be popped from stack automatically
+	//Outputs are pushed to stack automatically as well
+END_CODE
+
+As shown the syntax is:
+<variable name> : <type> [:= <initial value>]
+The initial value will only be honored in the Global and Local variable sections.  Inputs and outputs are expected to be initialized in the code.
+
+The Global variables listed in any programming unit will be added to the Global list if they do not exist.  If they already exist then the initial value will be verified against what is already specified.
+
+The CODE/END_CODE section holds all the commands to carry out.  The commands needed to pop input values from the stack and place them in local variables will be inserted by the compiler.  Similarly the commands to push local variables onto the stack as output values will be inserted by the compiler.
+Branching to functions or calling external functions will not have their necessary push/pop operations inserted by the compiler.
+Initially only the Linker will be aware of which index gets which variable so only it can correctly identify these things.  Once the sytax has moved past this assembly look these additional stack operations may be taken over by the compiler.
+
+Instructions:
+Instructions will be a command word followed by a single parameter.  Any additional values needed are to be popped off the stack in the order necessary.  Results will be placed in the location specified in the parameter, or on the stack.
+Command	Suffix	Description
+LD		#%$@	Load a value onto the stack
+ST		%$@	Store a value from the stack into some location
+ADD		%$@	Addition, parameter with first stack value.  Results into param, param += first stack
+SUB		%$@	Subtraction
+MULT	%$@	Multiply
+DIV		%$@	Divide
+RSH		%$@	Right shift
+LSH		%$@	Left shift
+AND		%$@	Binary/bitwise and &
+OR		%$@	Binary/bitwise or |
+XOR		%$@	Binary/bitwise XOR ^
+NEG		%$@	Binary/bitwise negation ~
+LOGAND	%$@	Logical And && (works on ==0 for false and !=0 for true)
+LOGOR	%$@	Logical Or ||
+LOGNEG	%$@	Logical Not !
+JMP		:	Jump to a new execution location
+JMPZ	:	Jump to a new execution location if the first stack value is zero
+JMPNZ	:	Jump to a new execution location if the first stack value is non-zero
+BRANCH	:	Branch to a new programming unit and begin executing.  Stack pushes must be done
+RETURN		End executing this programming unit and return to previous.  Stack pushes must be done (no parameter)
+EXTERN	:	Call an external operation.  These are program extensions handled by objects outside the runtime.  The inputs and outputs are handled through the stack which must be dealt with before and after this command
+
+The commands will have a suffix to indicate the type of parameter it will accept.  This parameter may be a numeric value, character register, or string label or variable name.
+Expected suffixes:
+#	Numeric literal, followed by numerical value: -?[0-9]+(.[0-9]*)?
+%	Register, followed by single letter: [A-Da-d]
+:	Label/Programming Unit, followed by name: [A-Za-z][A-Za-z_0-9]+
+$	Local Variable, followed by name: [A-Za-z][A-Za-z_0-9]+
+@	Global Variable, followed by name: [A-Za-z][A-Za-z_0-9]+
+
+Register values are not guaranteed to be preserved through branch commands.  It is recomended to load them immediately before use.  They should be preserved through all other commands, making it safe to load them execute a series of non-branch instructions without impact to the register contents.
+Stack contents will be modified by branch and extern commands.  They should pop off and push a predetermined number of values, all other contents should be preserved.  After a branch or extern command values pushed to the stack must be popped off, even if the values are discarded.  This is necessary to retain stack integrity through multiple return instructions.
+
+The programming unit will record its entry point when it begins execution.  This way the return can go back to the correct location.  Each programming unit invocation will create new local space for execution that includes this return point.
