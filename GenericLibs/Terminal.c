@@ -1,6 +1,6 @@
 /**	File:	Terminal.c
 	Author:	J. Beighel
-	Date:	2021-04-18
+	Date:	2021-06-01
 */
 
 /*****	Includes	*****/
@@ -152,6 +152,8 @@ eReturn_t IOCnctReadDataUART(sIOConnect_t *pIOObj, uint8_t *pnDataBuff, uint32_t
 	uint16_t nReadBytes, nDataLen;
 	eUARTReturn_t eResult;
 
+	*pnReadSize = 0; //Haven't read anything yet
+
 	while (nBuffSize > 0) {
 		if (nBuffSize > UINT16_MAXVALUE) {
 			nDataLen = UINT16_MAXVALUE;
@@ -160,6 +162,7 @@ eReturn_t IOCnctReadDataUART(sIOConnect_t *pIOObj, uint8_t *pnDataBuff, uint32_t
 		}
 
 		eResult = pUART->pfUARTReadData(pUART, nDataLen, pnDataBuff, &nReadBytes);
+		*pnReadSize += nReadBytes; //Update how much data we've read in
 
 		if (eResult < UART_Success) {
 			return Fail_CommError;
@@ -167,9 +170,9 @@ eReturn_t IOCnctReadDataUART(sIOConnect_t *pIOObj, uint8_t *pnDataBuff, uint32_t
 			return Warn_EndOfData;
 		}
 
-		//REad successful, try to get more
+		//Read successful, try to get more
 		nBuffSize -= nDataLen;
-		pnDataBuff = &(pnDataBuff[nDataLen]);
+		pnDataBuff = &(pnDataBuff[nDataLen]); //Update pointer so next read is positioned correctly
 	}
 
 	return Success;
@@ -186,7 +189,7 @@ eReturn_t IOCnctWriteDataUART(sIOConnect_t *pIOObj, uint8_t *pnData, uint32_t nD
 		} else {
 			nCurrWriteLen = nDataLen;
 		}
-		eResult = pUART->pfUARTWriteData(pUART, nCurrWriteLen, &pnData);
+		eResult = pUART->pfUARTWriteData(pUART, nCurrWriteLen, pnData);
 
 		if (eResult != UART_Success) {
 			return Fail_CommError;
@@ -256,6 +259,9 @@ eReturn_t TerminalReadInput(sTerminal_t *pTerminal) {
 	}
 
 	pTerminal->nBufferUsed += nReadBytes; //Update how much of the buffer is used
+	if (nReadBytes > 0) {
+		nCtr = 5;
+	}
 
 	//Look through the buffer for new line characters
 	for (nCtr = 0; nCtr < pTerminal->nBufferUsed; nCtr++) {

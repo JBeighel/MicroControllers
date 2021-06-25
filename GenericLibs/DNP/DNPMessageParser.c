@@ -1,6 +1,6 @@
 /**	File:	DNPMessageParser.c
 	Author:	J. Beighel
-	Date:	2021-03-15
+	Date:	2021-04-29
 */
 
 /*****	Includes	*****/
@@ -286,24 +286,31 @@ eReturn_t DNPParserNextDataObject(sDNPMsgBuffer_t *pMsg) {
 	//Extract the start and stop addresses
 	pMsg->sDataObj.nAddressStart = 0;
 	for (nCtr = 0; nCtr < nStartBytes; nCtr++) {
-		pMsg->sDataObj.nAddressStart = pMsg->aUserData[pMsg->nUserDataIdx];
+		pMsg->sDataObj.nAddressStart |= (pMsg->aUserData[pMsg->nUserDataIdx] << (8 * nCtr));
 		pMsg->nUserDataIdx += 1;
 	}
 
 	if ((eQualPart == DNPQual_CodeSingleVal1Bytes) || (eQualPart == DNPQual_CodeSingleVal2Bytes) || (eQualPart == DNPQual_CodeSingleVal4Bytes)) {
-		//Single count values must start at 1 to avoid overrun
-		pMsg->sDataObj.nAddressStart = 1;
+		//Single count values must start at 0 to preserve the count
+		pMsg->sDataObj.nAddressStart = 0;
 	}
 
 	pMsg->sDataObj.nAddressEnd = 0;
 	for (nCtr = 0; nCtr < nStopBytes; nCtr++) {
-		pMsg->sDataObj.nAddressEnd = pMsg->aUserData[pMsg->nUserDataIdx];
+		pMsg->sDataObj.nAddressEnd |= (pMsg->aUserData[pMsg->nUserDataIdx] << (8 * nCtr));
 		pMsg->nUserDataIdx += 1;
 	}
 
 	//Get the number of bits in each value
 	nCtr = pMsg->sDataObj.nAddressEnd - pMsg->sDataObj.nAddressStart; //Number of values
 	pMsg->sDataObj.nDataBytes = DNPGetDataObjectBitSize(pMsg->sDataObj.eGroup, pMsg->sDataObj.nVariation);
+
+	if (pMsg->sDataObj.eGroup == DNPGrp_DeviceAttrib) {
+		//Device attributes have a variable size, figure out how big it really is
+		pMsg->sDataObj.nDataBytes = pMsg->aUserData[pMsg->nUserDataIdx + 2]; //Skip over prefix index and type to get length
+		pMsg->sDataObj.nDataBytes += 2; //Don't forget those bytes we skipped
+		pMsg->sDataObj.nDataBytes *= 8; //Switch to bits for a moment
+	}
 
 	if (pMsg->sDataObj.nDataBytes == 1) { //Packed bits should not have a prefix
 		pMsg->sDataObj.nTotalBytes = pMsg->sDataObj.nDataBytes / 8;
@@ -312,7 +319,7 @@ eReturn_t DNPParserNextDataObject(sDNPMsgBuffer_t *pMsg) {
 			pMsg->sDataObj.nTotalBytes += 1;
 		}
 
-		pMsg->sDataObj.nDataBytes = pMsg->sDataObj.nTotalBytes;
+		pMsg->sDataObj.nDataBytes /= 8; //Convert from bits to bytes
 	} else { //Regular data is in even bytes
 		pMsg->sDataObj.nDataBytes /= 8; //Convert from bits to byte
 
@@ -338,21 +345,21 @@ eReturn_t DNPParserNextDataObject(sDNPMsgBuffer_t *pMsg) {
 			return Fail_Invalid;
 	}
 
-	pMsg->sDataObj.nTotalBytes = pMsg->sDataObj.nPrefixBytes * nCtr;
+	pMsg->sDataObj.nTotalBytes += pMsg->sDataObj.nPrefixBytes * nCtr;
 
 	pMsg->sDataObj.nCurrPoint = 0; //Reset to get first point
 	return Success;
 }
 
 eReturn_t DNPParserNextDataValue(sDNPMsgBuffer_t * pMsg, sDNPDataValue_t *pValue) {
-	uint32_t nCtr;
+	uint32_t nCtr, nObjBits;
 
 	if (pMsg->sDataObj.eGroup == DNPGrp_Unknown) {
 		//No data object was prepared
 		return Fail_Invalid;
 	}
 
-	if (pMsg->sDataObj.nCurrPoint >= pMsg->sDataObj.nAddressEnd - pMsg->sDataObj.nAddressStart) {
+	if (pMsg->sDataObj.nCurrPoint > pMsg->sDataObj.nAddressEnd - pMsg->sDataObj.nAddressStart) {
 		//Out of points in this data object
 		return Warn_EndOfData;
 	}
@@ -374,9 +381,21 @@ eReturn_t DNPParserNextDataValue(sDNPMsgBuffer_t * pMsg, sDNPDataValue_t *pValue
 	}
 
 	//Next is the data
-	for (nCtr = 0; nCtr < pMsg->sDataObj.nDataBytes; nCtr++) {
-		pValue->Data.aBytes[nCtr] = pMsg->aUserData[pMsg->nUserDataIdx]; //Data is least significant byte first
-		pMsg->nUserDataIdx += 1;
+	nObjBits = DNPGetDataObjectBitSize(pMsg->sDataObj.eGroup, pMsg->sDataObj.nVariation);
+	if (nObjBits < 8) { //Object uses packed bits
+		nCtr = pMsg->sDataObj.nCurrPoint / 8; // Figure out what byte its in
+		nObjBits = 1 << (pMsg->sDataObj.nCurrPoint % 8); //Which bit in that byte?
+
+		if ((pMsg->aUserData[pMsg->nUserDataIdx + nCtr] & nObjBits) != 0) {
+			pValue->Data.aBytes[0] = DNPBinOutFlag_State;
+		} else {
+			pValue->Data.aBytes[0] = 0;
+		}
+	} else { //Object uses full bytes
+		for (nCtr = 0; nCtr < pMsg->sDataObj.nDataBytes; nCtr++) {
+			pValue->Data.aBytes[nCtr] = pMsg->aUserData[pMsg->nUserDataIdx]; //Data is least significant byte first
+			pMsg->nUserDataIdx += 1;
+		}
 	}
 
 	//Copy in all the object details

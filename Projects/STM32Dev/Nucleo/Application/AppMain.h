@@ -27,6 +27,8 @@
 
 	#include "Terminal.h"
 	#include "StringTools.h"
+	#include "SystemModes.h"
+	#include "Database.h"
 
 /*****	Defines		*****/
 

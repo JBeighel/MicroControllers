@@ -1,6 +1,6 @@
 /**	@defgroup	commonutils
 	@brief		Common utilities and objects
-	@details	v 0.9
+	@details	v 0.11
 	# Description #
 		This is a collection of commonly used utilities.
 		This includes variable types, macros, and constants.
@@ -48,6 +48,7 @@
 		Fail_CommError	= -3,	/**< Communications layer failure */
 		Fail_Invalid	= -4,	/**< Some value provided was invalid for this operation */
 		Fail_BufferSize = -5,	/**< A data buffer is too small to fit the requested information */
+		Fail_Blocked	= -6,	/**< Requested operation was prevented by other logic */
 	} eReturn_t;
 
 /***** Globals		*****/
@@ -105,6 +106,23 @@
 		#define SetAllBitsInMask(Register, Mask)	Register = (((uint32_t)Register) | ((uint32_t)(Mask)))
 	#endif
 
+	/** @brief		Performs an assertion at compile time
+		@details	Performs a conditional test at compile time and will throw
+			a compiler warning if it fails.  Unlike \#ifdef checks this will
+			allow the use of some runtime values, such as sizeof() giving it a
+			bit more flexibility.  However, the compiler error will always be
+			division by zero so you'll need to check the macro call to see the
+			true problem.
+			Example:
+				//Verify that sSomeStruct_t is less than 51 bytes
+				STATIC_ASSERT(StructSizeTest, sizeof(sSomeStruct_t) < 51);
+		@param		Desc	Description of the assertion, follows the rules for \#define naming
+		@param		Test	The conditional test to perform
+		@return Throws a compiler error if the conditional test is false
+		@ingroup	commonutils
+	*/
+	#define STATIC_ASSERT(Desc, Test) enum { Desc = 1 / (Test) }
+
 	/**	@brief		Returns the larger of two numeric values
 		@param		nNum1	The first number to compare
 		@param		nNum2	The second number to compare
@@ -132,6 +150,13 @@
 	*/
 	#define	IsNumberInInclusiveRange(nNumber, nRangeMin, nRangeMax)		(((nNumber >= nRangeMin) && (nNumber <= nRangeMax)) ? true : false)
 	
+	/** @brief Macro to find the absolute value of a numeric value
+		@param Number Numeric value to find the absolute value of
+		@return Positive magnitude of Number
+		@ingroup	commonutils
+	*/
+	#define AbsoluteValue(Number) (((Number) >= 0) ? (Number) : ((Number) * -1))
+
 	/**	@brief		Determines if a given number exists in an array
 		@param		nNumber		The number to check for in the array
 		@param		aList		The array to searrch through
