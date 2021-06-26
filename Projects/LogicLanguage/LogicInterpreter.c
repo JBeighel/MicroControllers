@@ -24,6 +24,8 @@
 	eLogicReturn_t LogicStackPush(sLogicRunTime_t *pRunTime, sLogicVariable_t *pValue);
 	
 	eLogicReturn_t LogicRunInstruction(sLogicRunTime_t *pRunTime);
+	
+	eLogicReturn_t LogicVariableAdd(sLogicVariable_t *pAddendSum, sLogicVariable_t *pAddend);
 
 /*****	Functions	*****/
 eLogicReturn_t LogicRunTimeInitialize(sLogicRunTime_t *pRunTime) {
@@ -250,43 +252,7 @@ eLogicReturn_t LogicRunInstruction(sLogicRunTime_t *pRunTime) {
 			}
 			
 			//Add it into the parameter based on var type			
-			if (pParam->eType == LGCVar_Unspecified) { //No value type, just copy into
-				pParam->eType = StackVal.eType;
-				pParam->nInteger == StackVal.nInteger;
-				pParam->nDecimal == StackVal.nDecimal;
-			} else if (pParam->eType == LGCVar_Bool) {
-				//Adding to one remains true
-				if (pParam->nInteger == 0) {
-					if ((StackVal.eType == LGCVar_Decimal) && (StackVal.nDecimal != 0)) {
-						pParam->nInteger = 1;
-					} else if (StackVal.nInteger != 0) { //All other values are integer
-						pParam->nInteger = 1;
-					}
-				}
-			} else if (pParam->eType == LGCVar_Decimal) {
-				//Add to decimal value
-				if (StackVal.eType == LGCVar_Decimal) {
-					pParam->nDecimal += StackVal.nDecimal;
-				} else { //All other values are integer
-					pParam->nDecimal += StackVal.nInteger;
-				}
-			} else {
-				//Add to integer value
-				if (StackVal.eType == LGCVar_Decimal) {
-					pParam->nInteger += StackVal.nDecimal;
-				} else { //All other values are integer
-					pParam->nInteger += StackVal.nInteger;
-				}
-				
-				//Truncate small int types
-				if (pParam->eType == LGCVar_Int32) {
-					pParam->nInteger &= 0xFFFFFFFF;
-				} else if (pParam->eType == LGCVar_Int16) {
-					pParam->nInteger &= 0xFFFF;
-				} else if (pParam->eType == LGCVar_Int8) {
-					pParam->nInteger &= 0xFF;
-				}
-			}
+			LogicVariableAdd(pParam, &StackVal);
 			
 			break;
 		default:
@@ -294,5 +260,47 @@ eLogicReturn_t LogicRunInstruction(sLogicRunTime_t *pRunTime) {
 	}
 	
 	//Command completed correctly
+	return LogicSuccess;
+}
+
+eLogicReturn_t LogicVariableAdd(sLogicVariable_t *pAddendSum, sLogicVariable_t *pAddend) {
+	if (pAddendSum->eType == LGCVar_Unspecified) { //No value type, just copy into
+		pAddendSum->eType = pAddend->eType;
+		pAddendSum->nInteger == pAddend->nInteger;
+		pAddendSum->nDecimal == pAddend->nDecimal;
+	} else if (pAddendSum->eType == LGCVar_Bool) {
+		//Adding to one remains true
+		if (pAddendSum->nInteger == 0) {
+			if ((pAddend->eType == LGCVar_Decimal) && (pAddend->nDecimal != 0)) {
+				pAddendSum->nInteger = 1;
+			} else if (pAddend->nInteger != 0) { //All other values are integer
+				pAddendSum->nInteger = 1;
+			}
+		}
+	} else if (pAddendSum->eType == LGCVar_Decimal) {
+		//Add to decimal value
+		if (pAddend->eType == LGCVar_Decimal) {
+			pAddendSum->nDecimal += pAddend->nDecimal;
+		} else { //All other values are integer
+			pAddendSum->nDecimal += pAddend->nInteger;
+		}
+	} else {
+		//Add to integer value
+		if (pAddend->eType == LGCVar_Decimal) {
+			pAddendSum->nInteger += pAddend->nDecimal;
+		} else { //All other values are integer
+			pAddendSum->nInteger += pAddend->nInteger;
+		}
+		
+		//Truncate small int types
+		if (pAddendSum->eType == LGCVar_Int32) {
+			pAddendSum->nInteger &= 0xFFFFFFFF;
+		} else if (pAddendSum->eType == LGCVar_Int16) {
+			pAddendSum->nInteger &= 0xFFFF;
+		} else if (pAddendSum->eType == LGCVar_Int8) {
+			pAddendSum->nInteger &= 0xFF;
+		}
+	}
+	
 	return LogicSuccess;
 }
