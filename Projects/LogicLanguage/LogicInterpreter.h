@@ -27,6 +27,22 @@
 	#define LOGIC_PROGRAMINSTRS	20
 
 /*****	Definitions	*****/
+	typedef enum eLogicReturn_t {
+		LogicWarn_ProgramEnded	= 3,	/**< Return with no program unit to return to, execution ended */
+		LogicWarn_ProgramReturn	= 2,	/**< Current program unit returned to previous unit */
+		LogicWarn_Unknown		= 1,
+		LogicSuccess			= 0,
+		LogicFail_Unknown		= -1,
+		LogicFail_InvalidProg	= -2,	
+		LogicFail_InvalidVar	= -3,
+		LogicFail_StackUnderflow= -4,
+		LogicFail_StackOverflow	= -5,
+		LogicFail_NoReturn		= -6,	/**< Reached end of instruction space and did not return */
+		LogicFail_ParamType		= -7,
+		LogicFail_InvalidInstr	= -8,
+		LogicFail_InvalidParam	= -9,
+	} eLogicReturn_t;
+
 	typedef enum eLogicVarType_t {
 		LGCVar_Unspecified,
 		LGCVar_Bool,
@@ -124,11 +140,11 @@
 
 
 /*****	Prototypes 	*****/
-	eReturn_t LogicRunTimeInitialize(sLogicRunTime_t *pRunTime);
+	eLogicReturn_t LogicRunTimeInitialize(sLogicRunTime_t *pRunTime);
 	
-	eReturn_t LogicSetProgramInstruction(sLogicRunTime_t *pRunTime, uint32_t nProgramIdx, uint32_t nInstIdx, sLogicInstruction_t eInst, sLogicVariable_t *pParam);
+	eLogicReturn_t LogicSetProgramInstruction(sLogicRunTime_t *pRunTime, uint32_t nProgramIdx, uint32_t nInstIdx, eLogicInstType_t eInst, sLogicVariable_t *pParam);
 	
-	eReturn_t LogicRunProgram(sLogicRunTime_t *pRunTime, uint32_t nProgramIdx);
+	eLogicReturn_t LogicRunProgram(sLogicRunTime_t *pRunTime, uint32_t nProgramIdx);
 
 /*****	Functions	*****/
 

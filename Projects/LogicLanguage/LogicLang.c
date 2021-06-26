@@ -20,6 +20,7 @@
 	#include "Network_RaspberryPi.h"
 	
 	//Driver libraries
+	#include "LogicInterpreter.h"
 	
 /*****	Defines		*****/
 
@@ -86,11 +87,47 @@ eReturn_t BoardInit(void) {
 }
 
 int main(int nArgCnt, char **aArgVals) {
+	sLogicRunTime_t RunTime;
+	sLogicVariable_t Param;
+	eLogicReturn_t eResult;
 	
-	if (BoardInit() != Success) {
+	if ((false) && (BoardInit() != Success)) {
 		printf("Board initialization failed.\r\n");
 		return 1;
 	}
+	
+	LogicRunTimeInitialize(&RunTime);
+	
+	//Push constant 5 on the stack
+	Param.eType = LGCVar_Int16;
+	Param.nInteger = 5;
+	LogicSetProgramInstruction(&RunTime, 0, 0, LGCIns_CmdLoad | LGCIns_ParamConstNumber, &Param);
+	
+	//Pop stack value (5) into local variabble 0
+	Param.eType = LGCVar_Int16;
+	Param.nInteger = 0;
+	LogicSetProgramInstruction(&RunTime, 0, 1, LGCIns_CmdStore | LGCIns_ParamLocalVar, &Param);
+	
+	//Push local variable 0 on the stack
+	Param.eType = LGCVar_Int16;
+	Param.nInteger = 0;
+	LogicSetProgramInstruction(&RunTime, 0, 2, LGCIns_CmdLoad | LGCIns_ParamLocalVar, &Param);
+	
+	//Pop stack value and add it to local 0
+	Param.eType = LGCVar_Int16;
+	Param.nInteger = 0;
+	LogicSetProgramInstruction(&RunTime, 0, 3, LGCIns_CmdAdd | LGCIns_ParamLocalVar, &Param);
+	
+	//Return to end the program
+	Param.eType = LGCVar_Unspecified;
+	Param.nInteger = 0;
+	LogicSetProgramInstruction(&RunTime, 0, 3, LGCIns_CmdReturn | LGCIns_ParamConstNumber, &Param);
+	
+	eResult = LogicRunProgram(&RunTime, 0);
+	
+	printf("Done: %d\n", eResult);
+	printf("Local 0: %d\n", RunTime.aProgramUnits[0].aMemory[0].nInteger);
+	printf("Stack 0: %d %d\n", RunTime.aStack[0].eType, RunTime.aStack[0].nInteger);
 	
 	return 0;
 }
