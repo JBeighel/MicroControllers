@@ -41,6 +41,7 @@
 		LogicFail_ParamType		= -7,
 		LogicFail_InvalidInstr	= -8,
 		LogicFail_InvalidParam	= -9,
+		LogicFail_MemoryIndex	= -10,
 	} eLogicReturn_t;
 
 	typedef enum eLogicVarType_t {

@@ -121,12 +121,12 @@ int main(int nArgCnt, char **aArgVals) {
 	//Return to end the program
 	Param.eType = LGCVar_Unspecified;
 	Param.nInteger = 0;
-	LogicSetProgramInstruction(&RunTime, 0, 3, LGCIns_CmdReturn | LGCIns_ParamConstNumber, &Param);
+	LogicSetProgramInstruction(&RunTime, 0, 4, LGCIns_CmdReturn | LGCIns_ParamConstNumber, &Param);
 	
 	eResult = LogicRunProgram(&RunTime, 0);
 	
 	printf("Done: %d\n", eResult);
-	printf("Local 0: %d\n", RunTime.aProgramUnits[0].aMemory[0].nInteger);
+	printf("Local 0: %d %d\n", RunTime.aProgramUnits[0].aMemory[0].eType, RunTime.aProgramUnits[0].aMemory[0].nInteger);
 	printf("Stack 0: %d %d\n", RunTime.aStack[0].eType, RunTime.aStack[0].nInteger);
 	
 	return 0;

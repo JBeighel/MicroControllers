@@ -167,7 +167,9 @@ eLogicReturn_t LogicStackPush(sLogicRunTime_t *pRunTime, sLogicVariable_t *pValu
 eLogicReturn_t LogicRunInstruction(sLogicRunTime_t *pRunTime) {
 	sLogicInstruction_t *pInstr;
 	sLogicVariable_t *pParam;
+	sLogicVariable_t StackVal;
 	eLogicReturn_t eResult;
+	eLogicInstType_t eCmd, eVarType;
 	
 	if (pRunTime->pCurrProgram->nProgIdx >= LOGIC_PROGRAMINSTRS) {
 		//Ran out of instruction space without returning
@@ -181,21 +183,31 @@ eLogicReturn_t LogicRunInstruction(sLogicRunTime_t *pRunTime) {
 	pRunTime->pCurrProgram->nProgIdx += 1;
 	
 	//Pull out the parameter
-	switch (pInstr->eCommand & LGCIns_ParamTypeMask) {
+	eVarType = pInstr->eCommand & LGCIns_ParamTypeMask;
+	switch (eVarType) {
 		case LGCIns_ParamConstNumber: //Instruction parameter used as is
 			pParam = &(pInstr->Param);
 			break;
 		case LGCIns_ParamLocalVar: //Use program's local memory space
+			if (pInstr->Param.nInteger >= LOGIC_MEMBLOCKSIZE) {
+				return LogicFail_MemoryIndex;
+			}
+			
+			//The param has the index of local memory space
+			pParam = &(pRunTime->pCurrProgram->aMemory[pInstr->Param.nInteger]);
+			
+			break;
 		default:
 			return LogicFail_ParamType;
 	}
 	
 	//process the instruction
-	switch (pInstr->eCommand & LGCIns_CommandMask) {
+	eCmd = pInstr->eCommand & LGCIns_CommandMask;
+	switch (eCmd) {
 		case LGCIns_CmdNoOp: //No operation, do nothing
 			break;
 		case LGCIns_CmdLoad: //Push a value onto the stack
-			if ((pInstr->eCommand & LGCIns_ParamTypeMask) == LGCIns_ParamLabel) {
+			if (eVarType == LGCIns_ParamLabel) {
 				//Can't load a label into the stack
 				return LogicFail_InvalidParam;
 			}
@@ -207,7 +219,80 @@ eLogicReturn_t LogicRunInstruction(sLogicRunTime_t *pRunTime) {
 			}
 			
 			break;
+		case LGCIns_CmdStore: //Pop a value and put it in memory
+			if ((eVarType == LGCIns_ParamLabel) || (eVarType == LGCIns_ParamConstNumber)) {
+				//Can't store into labels or constants
+				return LogicFail_InvalidParam;
+			}
+		
+			//Get the stack value
+			eResult = LogicStackPop(pRunTime, &StackVal);
+			if (eResult != LogicSuccess) {
+				return eResult;
+			}
+			
+			//Copy it into the parameter
+			pParam->eType = StackVal.eType;
+			pParam->nInteger = StackVal.nInteger;
+			pParam->nDecimal = StackVal.nDecimal;
+			
+			break;
+		case LGCIns_CmdAdd:
+			if ((eVarType == LGCIns_ParamLabel) || (eVarType == LGCIns_ParamConstNumber)) {
+				//Can't store into labels or constants
+				return LogicFail_InvalidParam;
+			}
+			
+			//Get the stack value
+			eResult = LogicStackPop(pRunTime, &StackVal);
+			if (eResult != LogicSuccess) {
+				return eResult;
+			}
+			
+			//Add it into the parameter based on var type			
+			if (pParam->eType == LGCVar_Unspecified) { //No value type, just copy into
+				pParam->eType = StackVal.eType;
+				pParam->nInteger == StackVal.nInteger;
+				pParam->nDecimal == StackVal.nDecimal;
+			} else if (pParam->eType == LGCVar_Bool) {
+				//Adding to one remains true
+				if (pParam->nInteger == 0) {
+					if ((StackVal.eType == LGCVar_Decimal) && (StackVal.nDecimal != 0)) {
+						pParam->nInteger = 1;
+					} else if (StackVal.nInteger != 0) { //All other values are integer
+						pParam->nInteger = 1;
+					}
+				}
+			} else if (pParam->eType == LGCVar_Decimal) {
+				//Add to decimal value
+				if (StackVal.eType == LGCVar_Decimal) {
+					pParam->nDecimal += StackVal.nDecimal;
+				} else { //All other values are integer
+					pParam->nDecimal += StackVal.nInteger;
+				}
+			} else {
+				//Add to integer value
+				if (StackVal.eType == LGCVar_Decimal) {
+					pParam->nInteger += StackVal.nDecimal;
+				} else { //All other values are integer
+					pParam->nInteger += StackVal.nInteger;
+				}
+				
+				//Truncate small int types
+				if (pParam->eType == LGCVar_Int32) {
+					pParam->nInteger &= 0xFFFFFFFF;
+				} else if (pParam->eType == LGCVar_Int16) {
+					pParam->nInteger &= 0xFFFF;
+				} else if (pParam->eType == LGCVar_Int8) {
+					pParam->nInteger &= 0xFF;
+				}
+			}
+			
+			break;
 		default:
 			return LogicFail_InvalidInstr;
 	}
+	
+	//Command completed correctly
+	return LogicSuccess;
 }
