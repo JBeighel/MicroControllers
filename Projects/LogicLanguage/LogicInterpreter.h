@@ -59,6 +59,7 @@
 		LGCIns_CommandMask		= 0xFFF0,
 		LGCIns_ParamTypeMask	= 0x000F,
 		
+		LGCIns_ParamNone		= 0x0000,
 		LGCIns_ParamConstNumber	= 0x0001,
 		LGCIns_ParamRegister	= 0x0002,
 		LGCIns_ParamLabel		= 0x0003,

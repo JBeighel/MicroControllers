@@ -118,10 +118,20 @@ int main(int nArgCnt, char **aArgVals) {
 	Param.nInteger = 0;
 	LogicSetProgramInstruction(&RunTime, 0, 3, LGCIns_CmdAdd | LGCIns_ParamLocalVar, &Param);
 	
+	//Push constant 3 on the stack
+	Param.eType = LGCVar_Int16;
+	Param.nInteger = 3;
+	LogicSetProgramInstruction(&RunTime, 0, 4, LGCIns_CmdLoad | LGCIns_ParamConstNumber, &Param);
+	
+	//Pop stack value and subtract it from local 0
+	Param.eType = LGCVar_Int16;
+	Param.nInteger = 0;
+	LogicSetProgramInstruction(&RunTime, 0, 5, LGCIns_CmdSub | LGCIns_ParamLocalVar, &Param);
+	
 	//Return to end the program
 	Param.eType = LGCVar_Unspecified;
 	Param.nInteger = 0;
-	LogicSetProgramInstruction(&RunTime, 0, 4, LGCIns_CmdReturn | LGCIns_ParamConstNumber, &Param);
+	LogicSetProgramInstruction(&RunTime, 0, 6, LGCIns_CmdReturn | LGCIns_ParamNone, &Param);
 	
 	eResult = LogicRunProgram(&RunTime, 0);
 	

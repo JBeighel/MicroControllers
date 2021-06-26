@@ -26,6 +26,8 @@
 	eLogicReturn_t LogicRunInstruction(sLogicRunTime_t *pRunTime);
 	
 	eLogicReturn_t LogicVariableAdd(sLogicVariable_t *pAddendSum, sLogicVariable_t *pAddend);
+	
+	eLogicReturn_t LogicVariableSubtract(sLogicVariable_t *pDifference, sLogicVariable_t *pNumber);
 
 /*****	Functions	*****/
 eLogicReturn_t LogicRunTimeInitialize(sLogicRunTime_t *pRunTime) {
@@ -187,6 +189,13 @@ eLogicReturn_t LogicRunInstruction(sLogicRunTime_t *pRunTime) {
 	//Pull out the parameter
 	eVarType = pInstr->eCommand & LGCIns_ParamTypeMask;
 	switch (eVarType) {
+		case LGCIns_ParamNone: //No paramter, but don't leave invalid pointer
+			pParam = &StackVal;
+			StackVal.eType = LGCVar_Unspecified;
+			StackVal.nInteger = 0;
+			StackVal.nDecimal = 0;
+			
+			break;
 		case LGCIns_ParamConstNumber: //Instruction parameter used as is
 			pParam = &(pInstr->Param);
 			break;
@@ -239,7 +248,7 @@ eLogicReturn_t LogicRunInstruction(sLogicRunTime_t *pRunTime) {
 			pParam->nDecimal = StackVal.nDecimal;
 			
 			break;
-		case LGCIns_CmdAdd:
+		case LGCIns_CmdAdd: //Pop avalue and add it to param
 			if ((eVarType == LGCIns_ParamLabel) || (eVarType == LGCIns_ParamConstNumber)) {
 				//Can't store into labels or constants
 				return LogicFail_InvalidParam;
@@ -251,10 +260,38 @@ eLogicReturn_t LogicRunInstruction(sLogicRunTime_t *pRunTime) {
 				return eResult;
 			}
 			
-			//Add it into the parameter based on var type			
+			//Add it into the parameter based on var type
 			LogicVariableAdd(pParam, &StackVal);
 			
 			break;
+		case LGCIns_CmdSub: //Pop avalue and subtract it from param
+			if ((eVarType == LGCIns_ParamLabel) || (eVarType == LGCIns_ParamConstNumber)) {
+				//Can't store into labels or constants
+				return LogicFail_InvalidParam;
+			}
+			
+			//Get the stack value
+			eResult = LogicStackPop(pRunTime, &StackVal);
+			if (eResult != LogicSuccess) {
+				return eResult;
+			}
+			
+			//Add it into the parameter based on var type
+			LogicVariableSubtract(pParam, &StackVal);
+			
+			break;
+		case LGCIns_CmdReturn: //End this program unit and return to caller
+			pRunTime->pCurrProgram->nProgIdx = 0; //Reset index for next run
+			
+			if (pRunTime->pCurrProgram->pReturnTo == NULL) {
+				//In the original program unit, nothing to return to
+				pRunTime->pCurrProgram = NULL;
+				return LogicWarn_ProgramEnded;
+			} else {
+				//Update the current program
+				pRunTime->pCurrProgram = pRunTime->pCurrProgram->pReturnTo;
+				return LogicWarn_ProgramReturn;
+			}
 		default:
 			return LogicFail_InvalidInstr;
 	}
@@ -299,6 +336,49 @@ eLogicReturn_t LogicVariableAdd(sLogicVariable_t *pAddendSum, sLogicVariable_t *
 			pAddendSum->nInteger &= 0xFFFF;
 		} else if (pAddendSum->eType == LGCVar_Int8) {
 			pAddendSum->nInteger &= 0xFF;
+		}
+	}
+	
+	return LogicSuccess;
+}
+
+
+eLogicReturn_t LogicVariableSubtract(sLogicVariable_t *pDifference, sLogicVariable_t *pNumber) {
+	if (pDifference->eType == LGCVar_Unspecified) { //No value type, just copy into
+		pDifference->eType = pNumber->eType;
+		pDifference->nInteger == pNumber->nInteger;
+		pDifference->nDecimal == pNumber->nDecimal;
+	} else if (pDifference->eType == LGCVar_Bool) {
+		//Subttracting from zero remains false
+		if (pDifference->nInteger == 1) {
+			if ((pNumber->eType == LGCVar_Decimal) && (pNumber->nDecimal != 0)) {
+				pDifference->nInteger = 0;
+			} else if (pNumber->nInteger != 0) { //All other values are integer
+				pDifference->nInteger = 0;
+			}
+		}
+	} else if (pDifference->eType == LGCVar_Decimal) {
+		//Subtract from decimal value
+		if (pNumber->eType == LGCVar_Decimal) {
+			pDifference->nDecimal -= pNumber->nDecimal;
+		} else { //All other values are integer
+			pDifference->nDecimal -= pNumber->nInteger;
+		}
+	} else {
+		//Subtract from integer value
+		if (pNumber->eType == LGCVar_Decimal) {
+			pDifference->nInteger -= pNumber->nDecimal;
+		} else { //All other values are integer
+			pDifference->nInteger -= pNumber->nInteger;
+		}
+		
+		//Truncate small int types
+		if (pDifference->eType == LGCVar_Int32) {
+			pDifference->nInteger &= 0xFFFFFFFF;
+		} else if (pDifference->eType == LGCVar_Int16) {
+			pDifference->nInteger &= 0xFFFF;
+		} else if (pDifference->eType == LGCVar_Int8) {
+			pDifference->nInteger &= 0xFF;
 		}
 	}
 	
