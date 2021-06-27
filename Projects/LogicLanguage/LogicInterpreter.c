@@ -49,11 +49,51 @@
 	*/
 	eLogicReturn_t LogicRunInstruction(sLogicRunTime_t *pRunTime);
 	
+	/**	@brief		Add a pair of variables
+		@details	Adds the two variables passed in.  The sum is then stored
+			in the pAddendSum parameter.
+			For boolean variables the value is set true if the sum is  non-zero,
+			otherwise false.
+		@param		pAddendSum		First value to be added, also receives the 
+			result of the arithmetic
+		@param		pAddend			Second value to be added.
+		@return		LogicSuccess on successful completion, or an error code 
+			indicating the problem encountered
+		@ingroup	logic
+	*/
 	eLogicReturn_t LogicVariableAdd(sLogicVariable_t *pAddendSum, sLogicVariable_t *pAddend);
 	
+	/**	@brief		Subtract a pair of variables
+		@details	Subtracts the two variables passed in.  The sum is then 
+			stored in the pDifference parameter.
+			pDifference = pDifference - pNumber
+			For boolean variables the value is set true if the difference is
+			non-zero, otherwise false.
+		@param		pDifference		First value to be subtracted, also receives
+			the result of the arithmetic
+		@param		pNumber			Second value to be subtracted
+		@return		LogicSuccess on successful completion, or an error code 
+			indicating the problem encountered
+		@ingroup	logic
+	*/
 	eLogicReturn_t LogicVariableSubtract(sLogicVariable_t *pDifference, sLogicVariable_t *pNumber);
 	
+	/**	@brief		Multiplies a pair of variables
+		@details	Multiplies the two variables passed in.  The product is then 
+			stored in the pProduct parameter.
+			pProduct = pProduct * pNumber
+			For boolean variables the value is set true if the difference is
+			non-zero, otherwise false.
+		@param		pDifference		First value to be multiplied, also receives
+			the result of the arithmetic
+		@param		pNumber			Second value to be multiplied
+		@return		LogicSuccess on successful completion, or an error code 
+			indicating the problem encountered
+		@ingroup	logic
+	*/
 	eLogicReturn_t LogicVariableMultiply(sLogicVariable_t *pProduct, sLogicVariable_t *pNumber);
+	
+	eLogicReturn_t LogicVariableShift(sLogicVariable_t *pNumber, bool bShiftRight, uint64_t nShiftSpaces);
 
 /*****	Functions	*****/
 eLogicReturn_t LogicRunTimeInitialize(sLogicRunTime_t *pRunTime) {
@@ -322,6 +362,48 @@ eLogicReturn_t LogicRunInstruction(sLogicRunTime_t *pRunTime) {
 			LogicVariableMultiply(pParam, &StackVal);
 			
 			break;
+		case LGCIns_CmdRSh:
+			if ((eVarType == LGCIns_ParamLabel) || (eVarType == LGCIns_ParamConstNumber)) {
+				//Can't store into labels or constants
+				return LogicFail_InvalidParam;
+			}
+			
+			//Get the stack value
+			eResult = LogicStackPop(pRunTime, &StackVal);
+			if (eResult != LogicSuccess) {
+				return eResult;
+			}
+			
+			if (StackVal.eType == LGCVar_Decimal) {
+				//Can't shift by fractions
+				return LogicFail_InvalidParam;
+			}
+			
+			//Add it into the parameter based on var type
+			LogicVariableShift(pParam, true, StackVal.nInteger);
+			
+			break;
+		case LGCIns_CmdLSh:
+			if ((eVarType == LGCIns_ParamLabel) || (eVarType == LGCIns_ParamConstNumber)) {
+				//Can't store into labels or constants
+				return LogicFail_InvalidParam;
+			}
+			
+			//Get the stack value
+			eResult = LogicStackPop(pRunTime, &StackVal);
+			if (eResult != LogicSuccess) {
+				return eResult;
+			}
+			
+			if (StackVal.eType == LGCVar_Decimal) {
+				//Can't shift by fractions
+				return LogicFail_InvalidParam;
+			}
+			
+			//Add it into the parameter based on var type
+			LogicVariableShift(pParam, false, StackVal.nInteger);
+			
+			break;
 		case LGCIns_CmdReturn: //End this program unit and return to caller
 			pRunTime->pCurrProgram->nProgIdx = 0; //Reset index for next run
 			
@@ -463,6 +545,32 @@ eLogicReturn_t LogicVariableMultiply(sLogicVariable_t *pProduct, sLogicVariable_
 		} else if (pProduct->eType == LGCVar_Int8) {
 			pProduct->nInteger &= 0xFF;
 		}
+	}
+	
+	return LogicSuccess;
+}
+
+eLogicReturn_t LogicVariableShift(sLogicVariable_t *pNumber, bool bShiftRight, uint64_t nShiftSpaces) {
+	if (pNumber->eType == LGCVar_Decimal) { //Can't shift floats
+		return LogicFail_InvalidParam;
+	}
+	
+	if (bShiftRight == true) {
+		pNumber->nInteger >>= nShiftSpaces;
+	} else {
+		pNumber->nInteger <<= nShiftSpaces;
+	}
+	
+	if (pNumber->eType == LGCVar_Bool) {
+		if (pNumber->nInteger != 0) {
+			pNumber->nInteger = 1;
+		}
+	} else if (pNumber->eType == LGCVar_Int32) {
+		pNumber->nInteger &= 0xFFFFFFFF;
+	} else if (pNumber->eType == LGCVar_Int16) {
+		pNumber->nInteger &= 0xFFFF;
+	} else if (pNumber->eType == LGCVar_Int8) {
+		pNumber->nInteger &= 0xFF;
 	}
 	
 	return LogicSuccess;

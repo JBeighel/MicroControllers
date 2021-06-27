@@ -98,50 +98,40 @@ int main(int nArgCnt, char **aArgVals) {
 	
 	LogicRunTimeInitialize(&RunTime);
 	
-	//Push constant 5 on the stack
+	//Push constant 4 on the stack
 	Param.eType = LGCVar_Int16;
-	Param.nInteger = 5;
+	Param.nInteger = 4;
 	LogicSetProgramInstruction(&RunTime, 0, 0, LGCIns_CmdLoad | LGCIns_ParamConstNumber, &Param);
 	
-	//Pop stack value (5) into local variabble 0
+	//Pop stack value (4) into local variable 0
 	Param.eType = LGCVar_Int16;
 	Param.nInteger = 0;
 	LogicSetProgramInstruction(&RunTime, 0, 1, LGCIns_CmdStore | LGCIns_ParamLocalVar, &Param);
 	
-	//Push local variable 0 on the stack
+	//Push constant 1 on the stack
+	Param.eType = LGCVar_Int16;
+	Param.nInteger = 1;
+	LogicSetProgramInstruction(&RunTime, 0, 2, LGCIns_CmdLoad | LGCIns_ParamConstNumber, &Param);
+	
+	//Pop stack value (1) and left shift variable zero that far
 	Param.eType = LGCVar_Int16;
 	Param.nInteger = 0;
-	LogicSetProgramInstruction(&RunTime, 0, 2, LGCIns_CmdLoad | LGCIns_ParamLocalVar, &Param);
-	
-	//Pop stack value and add it to local 0
-	Param.eType = LGCVar_Int16;
-	Param.nInteger = 0;
-	LogicSetProgramInstruction(&RunTime, 0, 3, LGCIns_CmdAdd | LGCIns_ParamLocalVar, &Param);
-	
-	//Push constant 3 on the stack
-	Param.eType = LGCVar_Int16;
-	Param.nInteger = 3;
-	LogicSetProgramInstruction(&RunTime, 0, 4, LGCIns_CmdLoad | LGCIns_ParamConstNumber, &Param);
-	
-	//Pop stack value and subtract it from local 0
-	Param.eType = LGCVar_Int16;
-	Param.nInteger = 0;
-	LogicSetProgramInstruction(&RunTime, 0, 5, LGCIns_CmdSub | LGCIns_ParamLocalVar, &Param);
+	LogicSetProgramInstruction(&RunTime, 0, 3, LGCIns_CmdLSh | LGCIns_ParamLocalVar, &Param);
 	
 	//Push constant 2 on the stack
 	Param.eType = LGCVar_Int16;
 	Param.nInteger = 2;
-	LogicSetProgramInstruction(&RunTime, 0, 6, LGCIns_CmdLoad | LGCIns_ParamConstNumber, &Param);
+	LogicSetProgramInstruction(&RunTime, 0, 4, LGCIns_CmdLoad | LGCIns_ParamConstNumber, &Param);
 	
-	//Pop stack value and subtract it from local 0
+	//Pop stack value (2) and right shift variable zero that far
 	Param.eType = LGCVar_Int16;
 	Param.nInteger = 0;
-	LogicSetProgramInstruction(&RunTime, 0, 7, LGCIns_CmdMult | LGCIns_ParamLocalVar, &Param);
+	LogicSetProgramInstruction(&RunTime, 0, 5, LGCIns_CmdRSh | LGCIns_ParamLocalVar, &Param);
 	
 	//Return to end the program
 	Param.eType = LGCVar_Unspecified;
 	Param.nInteger = 0;
-	LogicSetProgramInstruction(&RunTime, 0, 8, LGCIns_CmdReturn | LGCIns_ParamNone, &Param);
+	LogicSetProgramInstruction(&RunTime, 0, 6, LGCIns_CmdReturn | LGCIns_ParamNone, &Param);
 	
 	eResult = LogicRunProgram(&RunTime, 0);
 	

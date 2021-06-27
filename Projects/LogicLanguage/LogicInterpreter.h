@@ -92,7 +92,7 @@
 		LGCIns_ParamGlobalVar	= 0x0005,	/**< Parameter is index of global memory to operate on */
 		
 		LGCIns_CmdNoOp			= 0x0000,	/**< No operation */
-		LGCIns_CmdLoad			= 0x0010,	/**< Load parameter value onto stack */ 
+		LGCIns_CmdLoad			= 0x0010,	/**< Push parameter value onto stack */ 
 		LGCIns_CmdStore			= 0x0020,	/**< Pop stack value into parameter */
 		LGCIns_CmdAdd			= 0x0030,	/**< Pop stack and add into parameter */
 		LGCIns_CmdSub			= 0x0040,	/**< Pop stack and subtract from parameter */
@@ -179,6 +179,15 @@
 
 
 /*****	Prototypes 	*****/
+	/**	@brief		Intializes a run time environment
+		@details	Sets all memory spaces as uninitialized and removes all 
+			instructions from the program space.  This makes the entire run 
+			time environment blank and available for use.
+		@param		pRunTime	Run time environment to prepare for use
+		@return		LogicSuccess on successful completion, or an error code 
+			indicating the problem encountered
+		@ingroup	logic
+	*/
 	eLogicReturn_t LogicRunTimeInitialize(sLogicRunTime_t *pRunTime);
 	
 	eLogicReturn_t LogicSetProgramInstruction(sLogicRunTime_t *pRunTime, uint32_t nProgramIdx, uint32_t nInstIdx, eLogicInstType_t eInst, sLogicVariable_t *pParam);
