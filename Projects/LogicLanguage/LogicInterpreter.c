@@ -19,8 +19,18 @@
 
 
 /*****	Prototypes 	*****/
+	/**	@brief		Pop a variable from the stack and into the variable space
+		@param		pRunTime	Run time execution environment to operate in
+		@param		pValue		Variable space to copy to popped value into
+		@ingroup	Logic
+	*/
 	eLogicReturn_t LogicStackPop(sLogicRunTime_t *pRunTime, sLogicVariable_t *pValue);
 	
+	/**	@brief		Push a variable onto the stack
+		@param		pRunTime	Run time execution environment to operate in
+		@param		pValue		Variable space to push onto the stack
+		@ingroup	Logic
+	*/
 	eLogicReturn_t LogicStackPush(sLogicRunTime_t *pRunTime, sLogicVariable_t *pValue);
 	
 	eLogicReturn_t LogicRunInstruction(sLogicRunTime_t *pRunTime);
@@ -28,6 +38,8 @@
 	eLogicReturn_t LogicVariableAdd(sLogicVariable_t *pAddendSum, sLogicVariable_t *pAddend);
 	
 	eLogicReturn_t LogicVariableSubtract(sLogicVariable_t *pDifference, sLogicVariable_t *pNumber);
+	
+	eLogicReturn_t LogicVariableMultiply(sLogicVariable_t *pProduct, sLogicVariable_t *pNumber);
 
 /*****	Functions	*****/
 eLogicReturn_t LogicRunTimeInitialize(sLogicRunTime_t *pRunTime) {
@@ -280,6 +292,22 @@ eLogicReturn_t LogicRunInstruction(sLogicRunTime_t *pRunTime) {
 			LogicVariableSubtract(pParam, &StackVal);
 			
 			break;
+		case LGCIns_CmdMult: //Pop avalue and subtract it from param
+			if ((eVarType == LGCIns_ParamLabel) || (eVarType == LGCIns_ParamConstNumber)) {
+				//Can't store into labels or constants
+				return LogicFail_InvalidParam;
+			}
+			
+			//Get the stack value
+			eResult = LogicStackPop(pRunTime, &StackVal);
+			if (eResult != LogicSuccess) {
+				return eResult;
+			}
+			
+			//Add it into the parameter based on var type
+			LogicVariableMultiply(pParam, &StackVal);
+			
+			break;
 		case LGCIns_CmdReturn: //End this program unit and return to caller
 			pRunTime->pCurrProgram->nProgIdx = 0; //Reset index for next run
 			
@@ -342,7 +370,6 @@ eLogicReturn_t LogicVariableAdd(sLogicVariable_t *pAddendSum, sLogicVariable_t *
 	return LogicSuccess;
 }
 
-
 eLogicReturn_t LogicVariableSubtract(sLogicVariable_t *pDifference, sLogicVariable_t *pNumber) {
 	if (pDifference->eType == LGCVar_Unspecified) { //No value type, just copy into
 		pDifference->eType = pNumber->eType;
@@ -379,6 +406,48 @@ eLogicReturn_t LogicVariableSubtract(sLogicVariable_t *pDifference, sLogicVariab
 			pDifference->nInteger &= 0xFFFF;
 		} else if (pDifference->eType == LGCVar_Int8) {
 			pDifference->nInteger &= 0xFF;
+		}
+	}
+	
+	return LogicSuccess;
+}
+
+eLogicReturn_t LogicVariableMultiply(sLogicVariable_t *pProduct, sLogicVariable_t *pNumber) {
+	if (pProduct->eType == LGCVar_Unspecified) { //No value type, just copy into
+		pProduct->eType = pNumber->eType;
+		pProduct->nInteger == pNumber->nInteger;
+		pProduct->nDecimal == pNumber->nDecimal;
+	} else if (pProduct->eType == LGCVar_Bool) {
+		//Miltiplying anything with zero remains false
+		if (pProduct->nInteger == 1) {
+			if ((pNumber->eType == LGCVar_Decimal) && (pNumber->nDecimal == 0)) {
+				pProduct->nInteger = 0;
+			} else if (pNumber->nInteger == 0) { //All other values are integer
+				pProduct->nInteger = 0;
+			}
+		}
+	} else if (pProduct->eType == LGCVar_Decimal) {
+		//Subtract from decimal value
+		if (pNumber->eType == LGCVar_Decimal) {
+			pProduct->nDecimal *= pNumber->nDecimal;
+		} else { //All other values are integer
+			pProduct->nDecimal *= pNumber->nInteger;
+		}
+	} else {
+		//Subtract from integer value
+		if (pNumber->eType == LGCVar_Decimal) {
+			pProduct->nInteger *= pNumber->nDecimal;
+		} else { //All other values are integer
+			pProduct->nInteger *= pNumber->nInteger;
+		}
+		
+		//Truncate small int types
+		if (pProduct->eType == LGCVar_Int32) {
+			pProduct->nInteger &= 0xFFFFFFFF;
+		} else if (pProduct->eType == LGCVar_Int16) {
+			pProduct->nInteger &= 0xFFFF;
+		} else if (pProduct->eType == LGCVar_Int8) {
+			pProduct->nInteger &= 0xFF;
 		}
 	}
 	
