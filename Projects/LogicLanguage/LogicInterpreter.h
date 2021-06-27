@@ -6,7 +6,7 @@
 	#File Information
 		File:	LogicInterpreter.h
 		Author:	J. Beighel
-		Date:	2021-06-24
+		Date:	2021-06-26
 */
 
 #ifndef __LOGICINTERPRETER_H
@@ -16,39 +16,55 @@
 	#include "CommonUtils.h"
 
 /*****	Defines		*****/
+	/** @brief		Number of variable spaces in a memory block
+		@ingroup	logic
+	*/
 	#define LOGIC_MEMBLOCKSIZE	16
 	
+	/** @brief		Number of register spaces
+		@details	Registers are intended for short term temporary value storage
+		@ingroup	logic
+	*/
 	#define LOGIC_REGISTERCOUNT	4
 	
+	/** @brief		Number of variable spaces in the stack
+		@ingroup	logic
+	*/
 	#define LOGIC_STACKDEPTH	64
-	
+
+	/** @brief		Number of program unit spaces in the runtime environment
+		@ingroup	logic
+	*/
 	#define LOGIC_PROGRAMUNITS	2
-	
+
+	/** @brief		Number of instruction spaces in each program unit
+		@ingroup	logic
+	*/
 	#define LOGIC_PROGRAMINSTRS	20
 
 /*****	Definitions	*****/
 	/**	@brief		Enumeration of all logic module return codes
-		@ingroup	Logic
+		@ingroup	logic
 	*/
 	typedef enum eLogicReturn_t {
+		LogicWarn_ProgramBranch	= 4,	/**< Execution branched into a new program unit */
 		LogicWarn_ProgramEnded	= 3,	/**< Return with no program unit to return to, execution ended */
 		LogicWarn_ProgramReturn	= 2,	/**< Current program unit returned to previous unit */
-		LogicWarn_Unknown		= 1,
-		LogicSuccess			= 0,
-		LogicFail_Unknown		= -1,
-		LogicFail_InvalidProg	= -2,	
-		LogicFail_InvalidVar	= -3,
-		LogicFail_StackUnderflow= -4,
-		LogicFail_StackOverflow	= -5,
-		LogicFail_NoReturn		= -6,	/**< Reached end of instruction space and did not return */
-		LogicFail_ParamType		= -7,
-		LogicFail_InvalidInstr	= -8,
-		LogicFail_InvalidParam	= -9,
-		LogicFail_MemoryIndex	= -10,
+		LogicWarn_Unknown		= 1,	/**< Unknown but recoverable error encountered */
+		LogicSuccess			= 0,	/**< Operation completed successfully */
+		LogicFail_Unknown		= -1,	/**< Unknown and unrecoverable error encountered */
+		LogicFail_InvalidProg	= -2,	/**< An invalid program unit was requested */
+		LogicFail_StackUnderflow= -3,	/**< A pop request failed because the stack was empty */
+		LogicFail_StackOverflow	= -4,	/**< A push request failed because all stack space was full */
+		LogicFail_NoReturn		= -5,	/**< Reached end of instruction space and did not return */
+		LogicFail_ParamType		= -6,	/**< An invalid parameter type was encountered */
+		LogicFail_InvalidInstr	= -7,	/**< An invalid command was provided in an instruction */
+		LogicFail_InvalidParam	= -8,	/**< An invalid parameter type was provided for an instruction */
+		LogicFail_MemoryIndex	= -9,	/**< An invalid memory index was provided */
 	} eLogicReturn_t;
 
 	/**	@brief		Enumeration of all program variable types
-		@ingroup	Logic
+		@ingroup	logic
 	*/
 	typedef enum eLogicVarType_t {
 		LGCVar_Unspecified,	/**< Unitialized memory space */
@@ -62,7 +78,7 @@
 	} eLogicVarType_t;
 	
 	/**	@brief		Enumeration of all instruction commands and parameter types
-		@ingroup	Logic
+		@ingroup	logic
 	*/
 	typedef enum eLogicInstType_t {
 		LGCIns_CommandMask		= 0xFFF0,	/**< Mask for command portion of instruction */
@@ -100,7 +116,7 @@
 	} eLogicInstType_t;
 	
 	/**	@brief		Structure to hold a program variable
-		@ingroup	Logic
+		@ingroup	logic
 	*/
 	typedef struct sLogicVariable_t {
 		eLogicVarType_t eType;	/**< Type of variable this is holding */
@@ -109,7 +125,7 @@
 	} sLogicVariable_t;
 	
 	/**	@brief		Structure to hold a program instruction
-		@ingroup	Logic
+		@ingroup	logic
 	*/
 	typedef struct sLogicInstruction_t {
 		eLogicInstType_t eCommand;	/**< Command and parameter type */
@@ -117,7 +133,7 @@
 	} sLogicInstruction_t;
 	
 	/**	@brief		Structure to hold a program unit memory environment
-		@ingroup	Logic
+		@ingroup	logic
 	*/
 	typedef struct sLogicProgEnv_t {
 		struct sLogicProgEnv_t *pReturnTo;	/**< Program unit to return to upon completion */
@@ -139,7 +155,7 @@
 	} sLogicProgEnv_t;
 	
 	/**	@brief		Structure to hold an program's memory space
-		@ingroup	Logic
+		@ingroup	logic
 	*/
 	typedef struct sLogicRunTime_t {
 		/**	Global variable space */

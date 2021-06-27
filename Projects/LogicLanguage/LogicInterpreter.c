@@ -1,6 +1,6 @@
 /**	File:	LogicInterpreter.c
 	Author:	J. Beighel
-	Date:	2021-06-24
+	Date:	2021-06-26
 */
 
 /*****	Includes	*****/
@@ -22,17 +22,31 @@
 	/**	@brief		Pop a variable from the stack and into the variable space
 		@param		pRunTime	Run time execution environment to operate in
 		@param		pValue		Variable space to copy to popped value into
-		@ingroup	Logic
+		@ingroup	logic
 	*/
 	eLogicReturn_t LogicStackPop(sLogicRunTime_t *pRunTime, sLogicVariable_t *pValue);
 	
 	/**	@brief		Push a variable onto the stack
 		@param		pRunTime	Run time execution environment to operate in
 		@param		pValue		Variable space to push onto the stack
-		@ingroup	Logic
+		@ingroup	logic
 	*/
 	eLogicReturn_t LogicStackPush(sLogicRunTime_t *pRunTime, sLogicVariable_t *pValue);
 	
+	/**	@brief		Run a single instruction
+		@details	Perform the command that is next to be executed.  All 
+			sections of the run time environment will be updated accordingly.
+		@param		pRunTime	Run time execution environment to operate in
+		@return		LogicSuccess if the command was an instruction that doesn't
+			change the program unit that is being executed.
+			LogicWarn_ProgramBranch if the command branches to a new program
+			unit.
+			LogicWarn_ProgramReturn if the command returns from the current 
+			program unit and resumes execution in the calling program unit
+			LogicWarn_ProgramEnded if the entry program unit returns and all 
+			execution is completed.
+		@ingroup	logic
+	*/
 	eLogicReturn_t LogicRunInstruction(sLogicRunTime_t *pRunTime);
 	
 	eLogicReturn_t LogicVariableAdd(sLogicVariable_t *pAddendSum, sLogicVariable_t *pAddend);
