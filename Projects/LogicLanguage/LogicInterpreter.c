@@ -162,6 +162,8 @@
 		@ingroup	logic
 	*/
 	eLogicReturn_t LogicLeaveProgramUnit(sLogicRunTime_t *pRunTime);
+	
+	eLogicReturn_t LogicExternalCommand(sLogicRunTime_t *pRunTime, uint64_t nExternIdx);
 
 /*****	Functions	*****/
 eLogicReturn_t LogicRunTimeInitialize(sLogicRunTime_t *pRunTime) {
@@ -212,6 +214,13 @@ eLogicReturn_t LogicRunTimeInitialize(sLogicRunTime_t *pRunTime) {
 		pRunTime->aStack[nMemCtr].nDecimal = 0;
 	}
 	pRunTime->nStackTopIdx = 0; //Nothing is on the stack
+	
+	//Wipe out the external handlers
+	for (nMemCtr = 0; nMemCtr < LOGIC_EXTERNSCOUNT; nMemCtr++) {
+		pRunTime->aExterns[nMemCtr].nNumInputs = 0;
+		pRunTime->aExterns[nMemCtr].nNumOutputs = 0;
+		pRunTime->aExterns[nMemCtr].pfExternHandler = NULL;
+	}
 	
 	//Set the current program to something
 	pRunTime->pCurrProgram = &(pRunTime->aProgramUnits[0]);
@@ -632,6 +641,13 @@ eLogicReturn_t LogicRunInstruction(sLogicRunTime_t *pRunTime) {
 			pRunTime->pCurrProgram->nProgIdx = 0; //Reset index for next run
 			
 			return LogicLeaveProgramUnit(pRunTime);
+		case LGCIns_CmdExternal: //Call an external handler
+			if (eVarType != LGCIns_ParamLabel) {
+				//Externals use indexes only
+				return LogicFail_InvalidParam;
+			}
+			
+			return LogicExternalCommand(pRunTime, pParam->nInteger);
 		default:
 			return LogicFail_InvalidInstr;
 	}
@@ -887,6 +903,42 @@ eLogicReturn_t LogicLeaveProgramUnit(sLogicRunTime_t *pRunTime) {
 		//Update the current program
 		pRunTime->pCurrProgram = pProg->pReturnTo;
 		return LogicWarn_ProgramReturn;
+	}
+	
+	return LogicSuccess;
+}
+
+eLogicReturn_t LogicExternalCommand(sLogicRunTime_t *pRunTime, uint64_t nExternIdx) {
+	sLogicExtension_t *pExtern;
+	uint32_t nCtr;
+	eLogicReturn_t eResult;
+	
+	if (nExternIdx >= LOGIC_EXTERNSCOUNT) {
+		return LogicFail_ExternIndex;
+	}
+	
+	pExtern = &(pRunTime->aExterns[nExternIdx]);
+	
+	//Get the inputs arranged in the register buffer (remember outpus before inputs)
+	for (nCtr = 0; nCtr < pExtern->nNumInputs; nCtr++) {
+		eResult = LogicStackPop(pRunTime, &(pRunTime->aRegisters[nCtr + pExtern->nNumOutputs]));
+		if (eResult != LogicSuccess) {
+			return eResult;
+		}
+	}
+	
+	//Call the handler
+	eResult = pExtern->pfExternHandler(&(pRunTime->aRegisters[pExtern->nNumOutputs]), pRunTime->aRegisters);
+	if (eResult != LogicSuccess) {
+		return eResult;
+	}
+	
+	//Push nNumOutputs from registers (start at zero) onto stack
+	for (nCtr = 0; nCtr < pExtern->nNumInputs; nCtr++) {
+		eResult = LogicStackPush(pRunTime, &(pRunTime->aRegisters[nCtr]));
+		if (eResult != LogicSuccess) {
+			return eResult;
+		}
 	}
 	
 	return LogicSuccess;

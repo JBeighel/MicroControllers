@@ -113,7 +113,7 @@ JMPZ	:	Jump to a new execution location if the first stack value is zero
 JMPNZ	:	Jump to a new execution location if the first stack value is non-zero
 BRANCH	:	Branch to a new programming unit and begin executing.  Stack pushes must be done
 RETURN		End executing this programming unit and return to previous.  Stack pushes must be done (no parameter)
-EXTERN	:	Call an external operation.  These are program extensions handled by objects outside the runtime.  The inputs and outputs are handled through the stack which must be dealt with before and after this command
+EXTERN	:	Call an external operation.  These are program extensions handled by objects outside the runtime.  The inputs and outputs are handled through the stack which must be dealt with before and after this command (Register memory block used to exchange these values, so contents of registers are not preserved through these commands)
 
 The commands will have a suffix to indicate the type of parameter it will accept.  This parameter may be a numeric value, character register, or string label or variable name.
 Expected suffixes:
