@@ -82,7 +82,7 @@
 		@details	Multiplies the two variables passed in.  The product is then 
 			stored in the pProduct parameter.
 			pProduct = pProduct * pNumber
-			For boolean variables the value is set true if the difference is
+			For boolean variables the value is set true if the product is
 			non-zero, otherwise false.
 		@param		pDifference		First value to be multiplied, also receives
 			the result of the arithmetic
@@ -93,7 +93,49 @@
 	*/
 	eLogicReturn_t LogicVariableMultiply(sLogicVariable_t *pProduct, sLogicVariable_t *pNumber);
 	
+	/**	@brief		Bit shifts a variable
+		@details	Bit shifts the integer vale of the variable passed in.  The
+			result is stored back in that variable.  The inserted bits will 
+			always be zeros.
+			Paramters can set the direction and number of bits to shift.  
+		@param		pNumber			The variable to operate on
+		@param		bShiftRight		True to right shift, false to left shift
+		@param		nShiftSpaces	Number of bits to shift
+		@return		LogicSuccess on successful completion, or an error code 
+			indicating the problem encountered
+		@ingroup	logic
+	*/
 	eLogicReturn_t LogicVariableShift(sLogicVariable_t *pNumber, bool bShiftRight, uint64_t nShiftSpaces);
+	
+	/**	@brief		Bitwise Ands a pair of variables
+		@details	Bitwise Ands the two variables passed in.  The result is then 
+			stored in the pOperand parameter.
+			pOperand = pOperand & pNumber
+			For boolean variables the value is set true if the result is
+			non-zero, otherwise false.
+		@param		pOperand		First value to be Anded, also receives
+			the result of the arithmetic
+		@param		pNumber			Second value to be Anded
+		@return		LogicSuccess on successful completion, or an error code 
+			indicating the problem encountered
+		@ingroup	logic
+	*/
+	eLogicReturn_t LogicVariableBitAnd(sLogicVariable_t *pOperand, sLogicVariable_t *pNumber);
+	
+	/**	@brief		Bitwise Ors a pair of variables
+		@details	Bitwise Ors the two variables passed in.  The result is then 
+			stored in the pOperand parameter.
+			pOperand = pOperand | pNumber
+			For boolean variables the value is set true if the result is
+			non-zero, otherwise false.
+		@param		pOperand		First value to be Ored, also receives
+			the result of the arithmetic
+		@param		pNumber			Second value to be Ored
+		@return		LogicSuccess on successful completion, or an error code 
+			indicating the problem encountered
+		@ingroup	logic
+	*/
+	eLogicReturn_t LogicVariableBitOr(sLogicVariable_t *pOperand, sLogicVariable_t *pNumber);
 
 /*****	Functions	*****/
 eLogicReturn_t LogicRunTimeInitialize(sLogicRunTime_t *pRunTime) {
@@ -274,6 +316,27 @@ eLogicReturn_t LogicRunInstruction(sLogicRunTime_t *pRunTime) {
 			pParam = &(pRunTime->pCurrProgram->aMemory[pInstr->Param.nInteger]);
 			
 			break;
+		case LGCIns_ParamGlobalVar: //Use runtime's global memory space
+			if (pInstr->Param.nInteger >= LOGIC_MEMBLOCKSIZE) {
+				return LogicFail_MemoryIndex;
+			}
+			
+			//The param has the index of global memory space
+			pParam = &(pRunTime->aGlobals[pInstr->Param.nInteger]);
+			
+			break;
+		case LGCIns_ParamRegister: //Use runtime's register memory space
+			if (pInstr->Param.nInteger >= LOGIC_REGISTERCOUNT) {
+				return LogicFail_MemoryIndex;
+			}
+			
+			//The param has the index of register memory space
+			pParam = &(pRunTime->aRegisters[pInstr->Param.nInteger]);
+			
+			break;
+		case LGCIns_ParamLabel: //Instruction parameter is execution index
+			pParam = &(pInstr->Param);
+			break;
 		default:
 			return LogicFail_ParamType;
 	}
@@ -362,7 +425,7 @@ eLogicReturn_t LogicRunInstruction(sLogicRunTime_t *pRunTime) {
 			LogicVariableMultiply(pParam, &StackVal);
 			
 			break;
-		case LGCIns_CmdRSh:
+		case LGCIns_CmdRSh: //Pop avalue and right shift param that many bits
 			if ((eVarType == LGCIns_ParamLabel) || (eVarType == LGCIns_ParamConstNumber)) {
 				//Can't store into labels or constants
 				return LogicFail_InvalidParam;
@@ -383,7 +446,7 @@ eLogicReturn_t LogicRunInstruction(sLogicRunTime_t *pRunTime) {
 			LogicVariableShift(pParam, true, StackVal.nInteger);
 			
 			break;
-		case LGCIns_CmdLSh:
+		case LGCIns_CmdLSh: //Pop avalue and left shift param that many bits
 			if ((eVarType == LGCIns_ParamLabel) || (eVarType == LGCIns_ParamConstNumber)) {
 				//Can't store into labels or constants
 				return LogicFail_InvalidParam;
@@ -402,6 +465,106 @@ eLogicReturn_t LogicRunInstruction(sLogicRunTime_t *pRunTime) {
 			
 			//Add it into the parameter based on var type
 			LogicVariableShift(pParam, false, StackVal.nInteger);
+			
+			break;
+		case LGCIns_CmdBitAnd: //Pop avalue and bit And it with param 
+			if ((eVarType == LGCIns_ParamLabel) || (eVarType == LGCIns_ParamConstNumber)) {
+				//Can't store into labels or constants
+				return LogicFail_InvalidParam;
+			}
+			
+			//Get the stack value
+			eResult = LogicStackPop(pRunTime, &StackVal);
+			if (eResult != LogicSuccess) {
+				return eResult;
+			}
+			
+			if (StackVal.eType == LGCVar_Decimal) {
+				//Can't bit operate on by fractions
+				return LogicFail_InvalidParam;
+			}
+			
+			//Add it into the parameter based on var type
+			LogicVariableBitAnd(pParam, &StackVal);
+			
+			break;
+		case LGCIns_CmdBitOr: //Pop a value and bit Or it with param 
+			if ((eVarType == LGCIns_ParamLabel) || (eVarType == LGCIns_ParamConstNumber)) {
+				//Can't store into labels or constants
+				return LogicFail_InvalidParam;
+			}
+			
+			//Get the stack value
+			eResult = LogicStackPop(pRunTime, &StackVal);
+			if (eResult != LogicSuccess) {
+				return eResult;
+			}
+			
+			if (StackVal.eType == LGCVar_Decimal) {
+				//Can't bit operate on by fractions
+				return LogicFail_InvalidParam;
+			}
+			
+			//Add it into the parameter based on var type
+			LogicVariableBitOr(pParam, &StackVal);
+			
+			break;
+		case LGCIns_CmdJump: //Move execution to param instruction index
+			if (eVarType != LGCIns_ParamLabel) {
+				//Can't jump to non-label parameters
+				return LogicFail_InvalidParam;
+			}
+			
+			if (pParam->nInteger >= LOGIC_PROGRAMINSTRS) {
+				return LogicFail_InstrIndex;
+			}
+			
+			//Change the program index to the index specified
+			pRunTime->pCurrProgram->nProgIdx = pParam->nInteger;
+			
+			break;
+		case LGCIns_CmdJumpZero: //If Popped value zero move execution to param instruction index
+			if (eVarType != LGCIns_ParamLabel) {
+				//Can't jump to non-label parameters
+				return LogicFail_InvalidParam;
+			}
+			
+			if (pParam->nInteger >= LOGIC_PROGRAMINSTRS) {
+				return LogicFail_InstrIndex;
+			}
+			
+			//Get the stack value
+			eResult = LogicStackPop(pRunTime, &StackVal);
+			if (eResult != LogicSuccess) {
+				return eResult;
+			}
+			
+			if (((StackVal.eType == LGCVar_Decimal) && (StackVal.nDecimal == 0)) || (StackVal.nInteger == 0)) {
+				//Change the program index to the index specified
+				pRunTime->pCurrProgram->nProgIdx = pParam->nInteger;
+			}
+			
+			break;
+		case LGCIns_CmdJumpNonZero: //If popped value nonzero move execution to param index
+			if (eVarType != LGCIns_ParamLabel) {
+				//Can't jump to non-label parameters
+				return LogicFail_InvalidParam;
+			}
+			
+			if (pParam->nInteger >= LOGIC_PROGRAMINSTRS) {
+				return LogicFail_InstrIndex;
+			}
+			
+			//Get the stack value
+			eResult = LogicStackPop(pRunTime, &StackVal);
+			if (eResult != LogicSuccess) {
+				return eResult;
+			}
+			
+			if (((StackVal.eType == LGCVar_Decimal) && (StackVal.nDecimal != 0)) || (StackVal.nInteger != 0)) {
+				//Change the program index to the index specified
+				pRunTime->pCurrProgram->nProgIdx = pParam->nInteger;
+			}
 			
 			break;
 		case LGCIns_CmdReturn: //End this program unit and return to caller
@@ -562,6 +725,50 @@ eLogicReturn_t LogicVariableShift(sLogicVariable_t *pNumber, bool bShiftRight, u
 	}
 	
 	if (pNumber->eType == LGCVar_Bool) {
+		if (pNumber->nInteger != 0) {
+			pNumber->nInteger = 1;
+		}
+	} else if (pNumber->eType == LGCVar_Int32) {
+		pNumber->nInteger &= 0xFFFFFFFF;
+	} else if (pNumber->eType == LGCVar_Int16) {
+		pNumber->nInteger &= 0xFFFF;
+	} else if (pNumber->eType == LGCVar_Int8) {
+		pNumber->nInteger &= 0xFF;
+	}
+	
+	return LogicSuccess;
+}
+
+eLogicReturn_t LogicVariableBitAnd(sLogicVariable_t *pOperand, sLogicVariable_t *pNumber) {
+	if (pOperand->eType == LGCVar_Decimal) { //Can't shift floats
+		return LogicFail_InvalidParam;
+	}
+	
+	pOperand->nInteger &= pNumber->nInteger;
+	
+	if (pOperand->eType == LGCVar_Bool) {
+		if (pNumber->nInteger != 0) {
+			pNumber->nInteger = 1;
+		}
+	} else if (pNumber->eType == LGCVar_Int32) {
+		pNumber->nInteger &= 0xFFFFFFFF;
+	} else if (pNumber->eType == LGCVar_Int16) {
+		pNumber->nInteger &= 0xFFFF;
+	} else if (pNumber->eType == LGCVar_Int8) {
+		pNumber->nInteger &= 0xFF;
+	}
+	
+	return LogicSuccess;
+}
+
+eLogicReturn_t LogicVariableBitOr(sLogicVariable_t *pOperand, sLogicVariable_t *pNumber) {
+	if (pOperand->eType == LGCVar_Decimal) { //Can't shift floats
+		return LogicFail_InvalidParam;
+	}
+	
+	pOperand->nInteger |= pNumber->nInteger;
+	
+	if (pOperand->eType == LGCVar_Bool) {
 		if (pNumber->nInteger != 0) {
 			pNumber->nInteger = 1;
 		}

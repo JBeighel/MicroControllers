@@ -61,6 +61,7 @@
 		LogicFail_InvalidInstr	= -7,	/**< An invalid command was provided in an instruction */
 		LogicFail_InvalidParam	= -8,	/**< An invalid parameter type was provided for an instruction */
 		LogicFail_MemoryIndex	= -9,	/**< An invalid memory index was provided */
+		LogicFail_InstrIndex	= -10,	/**< An invalid instruction index was provided */
 	} eLogicReturn_t;
 
 	/**	@brief		Enumeration of all program variable types
@@ -190,6 +191,21 @@
 	*/
 	eLogicReturn_t LogicRunTimeInitialize(sLogicRunTime_t *pRunTime);
 	
+	/**	@brief		Stores an instruction into the runtim environment
+		@details	Places one instruction into a program unit of the run time
+			environment.  Calling this function repeatedly will allow the 
+			loading of an entire program to execute.
+		@param		pRunTime		Runtim environment to inster the instruction
+		@param		nProgramIdx		Program unt to place the instruction in
+		@param		nInstIdx		Instruction index to store the instruction in
+		@param		eInst			Instruction to insert, expects command bit 
+			Ored with parameter type
+		@param		pParam			Pointer to variable to copy into the parameter
+			for this instruction
+		@return		LogicSuccess on successful completion, or an error code 
+			indicating the problem encountered
+		@ingroup	logic
+	*/
 	eLogicReturn_t LogicSetProgramInstruction(sLogicRunTime_t *pRunTime, uint32_t nProgramIdx, uint32_t nInstIdx, eLogicInstType_t eInst, sLogicVariable_t *pParam);
 	
 	eLogicReturn_t LogicRunProgram(sLogicRunTime_t *pRunTime, uint32_t nProgramIdx);
@@ -198,4 +214,3 @@
 
 
 #endif
-
