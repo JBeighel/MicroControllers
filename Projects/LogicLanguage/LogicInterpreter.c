@@ -136,6 +136,32 @@
 		@ingroup	logic
 	*/
 	eLogicReturn_t LogicVariableBitOr(sLogicVariable_t *pOperand, sLogicVariable_t *pNumber);
+	
+	/**	@brief		Updates runtime to begin executing a new program unit
+		@details	Will update all bookkeeping necessary to enter the new 
+			program unit.  In addition will pop all input values from the stack
+			into the correct local variable memory space.
+		@param		pRunTime	The run time environment to update
+		@param		nProgIdx	Index of the programming unit to enter
+		@return		LogicSuccess on successful completion, or an error code 
+			indicating the problem encountered
+		@ingroup	logic
+	*/
+	eLogicReturn_t LogicEnterProgramUnit(sLogicRunTime_t *pRunTime, uint64_t nProgIdx);
+	
+	/**	@brief		Updates runtime to end execution in the current new program unit
+		@details	Will update the runtime environment to stop executing the 
+			current program unit and return to the calling program unit.
+			It will push all output variables from local memory onto the stack.
+			The return will be LogicWarn_ProgramEnded if the entry program has 
+			returned.  Or LogicWarn_ProgramReturn if execution returned to 
+			a calling program unit.
+		@param		pRunTime	The run time environment to update
+		@return		LogicSuccess on successful completion, or an error code 
+			indicating the problem encountered
+		@ingroup	logic
+	*/
+	eLogicReturn_t LogicLeaveProgramUnit(sLogicRunTime_t *pRunTime);
 
 /*****	Functions	*****/
 eLogicReturn_t LogicRunTimeInitialize(sLogicRunTime_t *pRunTime) {
@@ -193,7 +219,30 @@ eLogicReturn_t LogicRunTimeInitialize(sLogicRunTime_t *pRunTime) {
 	return LogicSuccess;
 }
 
+eLogicReturn_t LogicSetProgramIOCounts(sLogicRunTime_t *pRunTime, uint32_t nProgramIdx, uint32_t nInputs, uint32_t nOutputs) {
+	if (nProgramIdx >= LOGIC_PROGRAMUNITS) {
+		return LogicFail_InvalidProg;
+	}
+	
+	if (nInputs + nOutputs >= LOGIC_PROGRAMINSTRS) {
+		return LogicFail_InstrIndex;
+	}
+	
+	pRunTime->aProgramUnits[nProgramIdx].nNumInputs = nInputs;
+	pRunTime->aProgramUnits[nProgramIdx].nNumOutputs = nOutputs;
+	
+	return LogicSuccess;
+}
+
 eLogicReturn_t LogicSetProgramInstruction(sLogicRunTime_t *pRunTime, uint32_t nProgramIdx, uint32_t nInstIdx, eLogicInstType_t eInst, sLogicVariable_t *pParam) {
+	if (nProgramIdx >= LOGIC_PROGRAMUNITS) {
+		return LogicFail_InvalidProg;
+	}
+	
+	if (nInstIdx >= LOGIC_PROGRAMINSTRS) {
+		return LogicFail_InstrIndex;
+	}
+	
 	pRunTime->aProgramUnits[nProgramIdx].aProgram[nInstIdx].eCommand = eInst;
 	pRunTime->aProgramUnits[nProgramIdx].aProgram[nInstIdx].Param.eType = pParam->eType;
 	pRunTime->aProgramUnits[nProgramIdx].aProgram[nInstIdx].Param.nInteger = pParam->nInteger;
@@ -229,7 +278,7 @@ eLogicReturn_t LogicRunProgram(sLogicRunTime_t *pRunTime, uint32_t nProgramIdx) 
 	
 	//Program space should be ready, start running instructions
 	eResult = LogicSuccess;
-	while ((eResult == LogicSuccess) || (eResult == LogicWarn_ProgramReturn)) {
+	while ((eResult == LogicSuccess) || (eResult == LogicWarn_ProgramReturn) || (eResult == LogicWarn_ProgramBranch)) {
 		eResult = LogicRunInstruction(pRunTime);
 	}
 	
@@ -567,18 +616,22 @@ eLogicReturn_t LogicRunInstruction(sLogicRunTime_t *pRunTime) {
 			}
 			
 			break;
+		case LGCIns_CmdBranch: //Move execution to a new program unit
+			if (eVarType != LGCIns_ParamLabel) {
+				//Can't jump to non-label parameters
+				return LogicFail_InvalidParam;
+			}
+		
+			eResult = LogicEnterProgramUnit(pRunTime, pParam->nInteger);
+			if (eResult != LogicSuccess) {
+				return eResult;
+			} else {
+				return LogicWarn_ProgramBranch;
+			}
 		case LGCIns_CmdReturn: //End this program unit and return to caller
 			pRunTime->pCurrProgram->nProgIdx = 0; //Reset index for next run
 			
-			if (pRunTime->pCurrProgram->pReturnTo == NULL) {
-				//In the original program unit, nothing to return to
-				pRunTime->pCurrProgram = NULL;
-				return LogicWarn_ProgramEnded;
-			} else {
-				//Update the current program
-				pRunTime->pCurrProgram = pRunTime->pCurrProgram->pReturnTo;
-				return LogicWarn_ProgramReturn;
-			}
+			return LogicLeaveProgramUnit(pRunTime);
 		default:
 			return LogicFail_InvalidInstr;
 	}
@@ -778,6 +831,62 @@ eLogicReturn_t LogicVariableBitOr(sLogicVariable_t *pOperand, sLogicVariable_t *
 		pNumber->nInteger &= 0xFFFF;
 	} else if (pNumber->eType == LGCVar_Int8) {
 		pNumber->nInteger &= 0xFF;
+	}
+	
+	return LogicSuccess;
+}
+
+eLogicReturn_t LogicEnterProgramUnit(sLogicRunTime_t *pRunTime, uint64_t nProgIdx) {
+	uint32_t nCtr;
+	eLogicReturn_t eResult;
+	sLogicProgEnv_t *pProg;
+	
+	//Find the program unit we're entering
+	if (nProgIdx >= LOGIC_PROGRAMUNITS) {
+		return LogicFail_InvalidProg;
+	}
+	pProg = &(pRunTime->aProgramUnits[nProgIdx]);
+	
+	//Do all the bookeeping
+	pProg->nProgIdx = 0; //Start executing from first instruction
+	pProg->pReturnTo = pRunTime->pCurrProgram; //Mark where we came from
+	pRunTime->pCurrProgram = pProg; //Set where we moved to
+	
+	//Pop all inputs from the stack
+	for (nCtr = 0; nCtr < pProg->nNumInputs; nCtr++) {
+		//Outputs are first in local memory, then inputs
+		eResult = LogicStackPop(pRunTime, &(pProg->aMemory[nCtr + pProg->nNumOutputs]));
+		if (eResult != LogicSuccess) {
+			return eResult;
+		}
+	}
+	
+	return LogicSuccess;
+}
+	
+eLogicReturn_t LogicLeaveProgramUnit(sLogicRunTime_t *pRunTime) {
+	uint32_t nCtr;
+	eLogicReturn_t eResult;
+	sLogicProgEnv_t *pProg;
+	
+	pProg = pRunTime->pCurrProgram;
+	
+	//Push all outputs onto the stack
+	for (nCtr = 0; nCtr < pProg->nNumOutputs; nCtr++) {
+		eResult = LogicStackPush(pRunTime, &(pProg->aMemory[nCtr]));
+		if (eResult != LogicSuccess) {
+			return eResult;
+		}
+	}
+	
+	if (pProg->pReturnTo == NULL) {
+		//In the original program unit, nothing to return to
+		pRunTime->pCurrProgram = NULL;
+		return LogicWarn_ProgramEnded;
+	} else {
+		//Update the current program
+		pRunTime->pCurrProgram = pProg->pReturnTo;
+		return LogicWarn_ProgramReturn;
 	}
 	
 	return LogicSuccess;

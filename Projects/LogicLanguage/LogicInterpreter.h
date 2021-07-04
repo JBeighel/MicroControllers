@@ -191,6 +191,20 @@
 	*/
 	eLogicReturn_t LogicRunTimeInitialize(sLogicRunTime_t *pRunTime);
 	
+	/**	@brief		Specifies the number of inputs and outps in a  programming unit
+		@details	The number of inputs will be popped from the stack when 
+			this program unit begins execution.  The number of outputs will 
+			be pushed to the stack when this program unit returns.
+		@param		pRunTime		The run tim environment to update
+		@param		nProgramIdx		Index of the programming unit to update
+		@param		nInputs 		Number of inputs this program unit will expect
+		@param		nOutputs 		Number of outputs this program unit will provide
+		@return		LogicSuccess on successful completion, or an error code 
+			indicating the problem encountered
+		@ingroup	logic
+	*/
+	eLogicReturn_t LogicSetProgramIOCounts(sLogicRunTime_t *pRunTime, uint32_t nProgramIdx, uint32_t nInputs, uint32_t nOutputs);
+	
 	/**	@brief		Stores an instruction into the runtim environment
 		@details	Places one instruction into a program unit of the run time
 			environment.  Calling this function repeatedly will allow the 
@@ -208,6 +222,14 @@
 	*/
 	eLogicReturn_t LogicSetProgramInstruction(sLogicRunTime_t *pRunTime, uint32_t nProgramIdx, uint32_t nInstIdx, eLogicInstType_t eInst, sLogicVariable_t *pParam);
 	
+	/**	@brief		Excute the program stored in the runtime envitronment
+		@param		pRunTime		The runtime environment to execute
+		@param		nProgramIdx		Index of the program unit to use as the 
+			entry point
+		@return		LogicSuccess on successful completion, or an error code 
+			indicating the problem encountered
+		@ingroup	logic
+	*/
 	eLogicReturn_t LogicRunProgram(sLogicRunTime_t *pRunTime, uint32_t nProgramIdx);
 
 /*****	Functions	*****/
