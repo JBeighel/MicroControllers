@@ -219,7 +219,7 @@ eLogicReturn_t LogicRunTimeInitialize(sLogicRunTime_t *pRunTime) {
 	for (nMemCtr = 0; nMemCtr < LOGIC_EXTERNSCOUNT; nMemCtr++) {
 		pRunTime->aExterns[nMemCtr].nNumInputs = 0;
 		pRunTime->aExterns[nMemCtr].nNumOutputs = 0;
-		pRunTime->aExterns[nMemCtr].pfExternHandler = NULL;
+		pRunTime->aExterns[nMemCtr].pfHandler = NULL;
 	}
 	
 	//Set the current program to something
@@ -256,6 +256,22 @@ eLogicReturn_t LogicSetProgramInstruction(sLogicRunTime_t *pRunTime, uint32_t nP
 	pRunTime->aProgramUnits[nProgramIdx].aProgram[nInstIdx].Param.eType = pParam->eType;
 	pRunTime->aProgramUnits[nProgramIdx].aProgram[nInstIdx].Param.nInteger = pParam->nInteger;
 	pRunTime->aProgramUnits[nProgramIdx].aProgram[nInstIdx].Param.nDecimal = pParam->nDecimal;
+	
+	return LogicSuccess;
+}
+
+eLogicReturn_t LogicAddExternal(sLogicRunTime_t *pRunTime, uint32_t nExternIdx, pfExternHandler_t pfExtern, uint32_t nInputs, uint32_t nOutputs) {
+	if (nExternIdx >= LOGIC_EXTERNSCOUNT) {
+		return LogicFail_ExternIndex;
+	}
+	
+	if (nInputs + nOutputs >= LOGIC_REGISTERCOUNT) {
+		return LogicFail_MemoryIndex;
+	}
+	
+	pRunTime->aExterns[nExternIdx].nNumInputs = nInputs;
+	pRunTime->aExterns[nExternIdx].nNumOutputs = nOutputs;
+	pRunTime->aExterns[nExternIdx].pfHandler = pfExtern;
 	
 	return LogicSuccess;
 }
@@ -928,7 +944,7 @@ eLogicReturn_t LogicExternalCommand(sLogicRunTime_t *pRunTime, uint64_t nExternI
 	}
 	
 	//Call the handler
-	eResult = pExtern->pfExternHandler(&(pRunTime->aRegisters[pExtern->nNumOutputs]), pRunTime->aRegisters);
+	eResult = pExtern->pfHandler(&(pRunTime->aRegisters[pExtern->nNumOutputs]), pRunTime->aRegisters);
 	if (eResult != LogicSuccess) {
 		return eResult;
 	}

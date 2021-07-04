@@ -43,7 +43,7 @@
 	sUDPClient_t gUDPClient;
 	
 /*****	Prototypes 	*****/
-
+	eLogicReturn_t LogicExtern(sLogicVariable_t *pInputs, sLogicVariable_t *pOutputs);
 
 /*****	Functions	*****/
 eReturn_t BoardInit(void) {
@@ -131,10 +131,20 @@ int main(int nArgCnt, char **aArgVals) {
 	Param.nInteger = 0;
 	LogicSetProgramInstruction(&RunTime, 0, 5, LGCIns_CmdAdd | LGCIns_ParamLocalVar, &Param);
 	
+	//Push constant on the stack
+	Param.eType = LGCVar_Int16;
+	Param.nInteger = 57;
+	LogicSetProgramInstruction(&RunTime, 0, 6, LGCIns_CmdLoad | LGCIns_ParamConstNumber, &Param);
+	
+	//Call the external handler
+	Param.eType = LGCVar_Int16;
+	Param.nInteger = 0;
+	LogicSetProgramInstruction(&RunTime, 0, 7, LGCIns_CmdExternal | LGCIns_ParamLabel, &Param);
+	
 	//Return to end the program
 	Param.eType = LGCVar_Unspecified;
 	Param.nInteger = 0;
-	LogicSetProgramInstruction(&RunTime, 0, 6, LGCIns_CmdReturn | LGCIns_ParamNone, &Param);
+	LogicSetProgramInstruction(&RunTime, 0, 8, LGCIns_CmdReturn | LGCIns_ParamNone, &Param);
 	
 	//Program 1: if param 0 == 0 then return 10 else return 5
 	LogicSetProgramIOCounts(&RunTime, 1, 1, 1);
@@ -179,12 +189,24 @@ int main(int nArgCnt, char **aArgVals) {
 	Param.nInteger = 0;
 	LogicSetProgramInstruction(&RunTime, 1, 7, LGCIns_CmdReturn | LGCIns_ParamNone, &Param);
 	
+	//Register externals
+	LogicAddExternal(&RunTime, 0, &LogicExtern, 1, 1);
+	
 	eResult = LogicRunProgram(&RunTime, 0);
 	
 	printf("Done: %d\n", eResult);
-	printf("Local 0: %d %d\n", RunTime.aProgramUnits[0].aMemory[0].eType, RunTime.aProgramUnits[0].aMemory[0].nInteger);
+	printf("Local 0: %d %d\n", RunTime.aProgramUnits[0].aMemory[0].eType, (uint32_t)RunTime.aProgramUnits[0].aMemory[0].nInteger);
 	printf("Stack Size: %d\n", RunTime.nStackTopIdx);
-	printf("Stack 0: %d %d\n", RunTime.aStack[0].eType, RunTime.aStack[0].nInteger);
+	printf("Stack 0: %d %d\n", RunTime.aStack[0].eType, (uint32_t)RunTime.aStack[0].nInteger);
 	
 	return 0;
+}
+
+eLogicReturn_t LogicExtern(sLogicVariable_t *pInputs, sLogicVariable_t *pOutputs) {
+	printf("Extern Function!  Parameter = %d\n", (uint32_t)pInputs[0].nInteger);
+	
+	pOutputs[0].eType = LGCVar_Int32;
+	pOutputs[0].nInteger = 32;
+	
+	return LogicSuccess;
 }

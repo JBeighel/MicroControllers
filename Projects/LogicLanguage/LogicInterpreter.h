@@ -161,34 +161,37 @@
 		uint32_t nNumOutputs;		/**< Number of outputs to push onto the stack */
 	} sLogicProgEnv_t;
 	
+	/**	@brief		Pointer to function to handle external call
+		@details	This functio nwill be implemented outside of the logic
+			interpreter.  This extension object will be registerd with the
+			logic interpreter so that it can prepare the data objects being
+			exchanged (setting up the inputs and positioning the outputs).
+			
+			The runtime registers memory block will be used to hold the 
+			input and output variables.  The pointers will be to first 
+			element of that type.  The intpreter will pop the expected 
+			number of values from the stack to the input values space.  
+			When the external call returns all of the expected output 
+			values will be pushed onto the stack.
+			
+			This means that the values of the Input array will be defined 
+			as the values passed to this handler in the order they were 
+			placed on the stack.  The outputs will not have their values 
+			defined, and are expected to be set before the handler returns.
+		@param		pInputs		Array of variables holding the inputs of 
+			the external command handler
+		@param		pOutputs	Array of variables to store the outputs of 
+			the external command handler
+		@return		LogicSuccess on successful completion, or an error code 
+			indicating the problem encountered
+	*/
+	typedef eLogicReturn_t (*pfExternHandler_t)(sLogicVariable_t *pInputs, sLogicVariable_t *pOutputs);
+	
 	typedef struct sLogicExtension_t {
 		uint32_t nNumInputs;	/**< Expected number of inputs for this handler */
 		uint32_t nNumOutputs;	/**< Expected number of outputs for this handler */
-		/**	@brief		Pointer to function to handle external call
-			@details	This functio nwill be implemented outside of the logic
-				interpreter.  This extension object will be registerd with the
-				logic interpreter so that it can prepare the data objects being
-				exchanged (setting up the inputs and positioning the outputs).
-				
-				The runtime registers memory block will be used to hold the 
-				input and output variables.  The pointers will be to first 
-				element of that type.  The intpreter will pop the expected 
-				number of values from the stack to the input values space.  
-				When the external call returns all of the expected output 
-				values will be pushed onto the stack.
-				
-				This means that the values of the Input array will be defined 
-				as the values passed to this handler in the order they were 
-				placed on the stack.  The outputs will not have their values 
-				defined, and are expected to be set before the handler returns.
-			@param		pInputs		Array of variables holding the inputs of 
-				the external command handler
-			@param		pOutputs	Array of variables to store the outputs of 
-				the external command handler
-			@return		LogicSuccess on successful completion, or an error code 
-				indicating the problem encountered
-		*/
-		eLogicReturn_t (*pfExternHandler)(sLogicVariable_t *pInputs, sLogicVariable_t *pOutputs);
+		
+		pfExternHandler_t pfHandler;
 	} sLogicExtension_t;
 	
 	/**	@brief		Structure to hold an program's memory space
@@ -268,6 +271,8 @@
 		@ingroup	logic
 	*/
 	eLogicReturn_t LogicRunProgram(sLogicRunTime_t *pRunTime, uint32_t nProgramIdx);
+
+	eLogicReturn_t LogicAddExternal(sLogicRunTime_t *pRunTime, uint32_t nExternIdx, pfExternHandler_t pfExtern, uint32_t nInputs, uint32_t nOutputs);
 
 /*****	Functions	*****/
 
