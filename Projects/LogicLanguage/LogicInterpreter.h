@@ -117,9 +117,9 @@
 		LGCIns_CmdJump			= 0x0100,	/**< Jump to the instruction index in parameter */
 		LGCIns_CmdJumpZero		= 0x0110,	/**< Pop stack and if its zero jump to instruction index in parameter */
 		LGCIns_CmdJumpNonZero	= 0x0120,	/**< Pop stack and if its non-zero jump to instruction index in parameter */
-		LGCIns_CmdBranch		= 0x0130,
-		LGCIns_CmdReturn		= 0x0140,
-		LGCIns_CmdExternal		= 0x0150,
+		LGCIns_CmdBranch		= 0x0130,	/**< Move execution to a new program unit */
+		LGCIns_CmdReturn		= 0x0140,	/**< End the current program unit and resume execution in the calling program unit */
+		LGCIns_CmdExternal		= 0x0150,	/**< Call an external command handler */
 	} eLogicInstType_t;
 	
 	/**	@brief		Structure to hold a program variable
@@ -207,8 +207,9 @@
 		*/
 		sLogicVariable_t aStack[LOGIC_STACKDEPTH];
 		uint32_t nStackTopIdx;			/**< Index of the top of the stack */
-		/**< Array of program units that can be run */
+		/** Array of program units that can be run */
 		sLogicProgEnv_t aProgramUnits[LOGIC_PROGRAMUNITS];
+		/** Array of registered external command handlers */
 		sLogicExtension_t aExterns[LOGIC_EXTERNSCOUNT];
 		sLogicProgEnv_t *pCurrProgram;	/**< Pointer to current program being executed */
 	} sLogicRunTime_t;
@@ -272,6 +273,16 @@
 	*/
 	eLogicReturn_t LogicRunProgram(sLogicRunTime_t *pRunTime, uint32_t nProgramIdx);
 
+	/**	@brief		Register an handler for an exernal command
+		@param		pRunTime		Rntime environment to register with
+		@param		nExternIdx		Index of the external handler to update
+		@param		pfExtern		Handler function to carry out the command
+		@param		nInputs			Number of inputs this command expects
+		@param		nOutputs		Number of outputs this command provides
+		@return		LogicSuccess on successful completion, or an error code 
+			indicating the problem encountered
+		@ingroup	logic
+	*/	
 	eLogicReturn_t LogicAddExternal(sLogicRunTime_t *pRunTime, uint32_t nExternIdx, pfExternHandler_t pfExtern, uint32_t nInputs, uint32_t nOutputs);
 
 /*****	Functions	*****/

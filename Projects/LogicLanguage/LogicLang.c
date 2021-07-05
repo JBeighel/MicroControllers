@@ -26,7 +26,34 @@
 
 
 /*****	Definitions	*****/
+	typedef enum eLineType_t {
+		Line_ProgUnitStart,
+		Line_InstrInfo,
+	} eLineType_t;
 
+	typedef struct sProgUnitInfo_t {
+		uint32_t nIndex;
+		uint32_t nNumInputs;
+		uint32_t nNumOutputs;
+		uint32_t nNumInstr;
+	} sProgUnitInfo_t;
+	
+	typedef struct sInstrInfo_t {
+		eLogicInstType_t eCmd;
+		sLogicVariable_t Param;
+	} sInstrInfo_t;
+
+	typedef struct sLineInfo_t {
+		eLineType_t eType;
+		
+		uint8_t aReserved[2];
+		
+		union {
+			sProgUnitInfo_t Prog;
+			sInstrInfo_t Instr; 
+			uint8_t aSize[29];
+		} Data;
+	} sLineInfo_t;
 
 /*****	Constants	*****/
 
@@ -44,6 +71,8 @@
 	
 /*****	Prototypes 	*****/
 	eLogicReturn_t LogicExtern(sLogicVariable_t *pInputs, sLogicVariable_t *pOutputs);
+	
+	bool LoadLogicProgram(const char *strFileName);
 
 /*****	Functions	*****/
 eReturn_t BoardInit(void) {
@@ -209,4 +238,31 @@ eLogicReturn_t LogicExtern(sLogicVariable_t *pInputs, sLogicVariable_t *pOutputs
 	pOutputs[0].nInteger = 32;
 	
 	return LogicSuccess;
+}
+
+bool LoadLogicProgram(const char *strFileName) {
+	FILE *fdLoad;
+	sLineInfo_t Line;
+	uint32_t nRead;
+	
+	//Open the program file
+	fLoad = open(strFileName, "r");
+	if (fLoad == NULL) {
+		return false;
+	}
+	
+	//Load all data from the file
+	while (feof(fLoad) == 0) {
+		nRead = fread(&Line, sizeof(sLineInfo_t), 1, fLoad);
+		if (nRead != 1) { //Failed to read a record
+			return false;
+		}
+		
+		//Process the read data
+	}
+
+	//Close the file
+	fclose(fLoad);
+	
+	return true;
 }

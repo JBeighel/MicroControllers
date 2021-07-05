@@ -127,3 +127,19 @@ Register values are not guaranteed to be preserved through branch commands.  It 
 Stack contents will be modified by branch and extern commands.  They should pop off and push a predetermined number of values, all other contents should be preserved.  After a branch or extern command values pushed to the stack must be popped off, even if the values are discarded.  This is necessary to retain stack integrity through multiple return instructions.
 
 The programming unit will record its entry point when it begins execution.  This way the return can go back to the correct location.  Each programming unit invocation will create new local space for execution that includes this return point.
+
+File Format:
+Start information on program units
+How many there are
+Index, 		Input count,	Output count,	and instruction count for each
+uint32_t,	uint32_t,		uint32_t, 		uint32_t
+4 bytes 	+ 4 bytes		+ 4 bytes		+ 4 bytes = 16 bytes
+
+instruction list for each progrm unit
+Index, 		Command/param eLogicInstType_t, eLogicVarType_t,	nInteger, nDecimal
+uint32_t,	uint32_t, 						uint32_t,			uint64_t, double
+4 bytes 	+ 4 bytes						+ 2 bytes			+ 8 bytes + 8 bytes = 26 bytes
+
+32 byte lines
+1 byte line type, 2 bytes reserved, 16 bytes Program Unit Info/Start (32 - 3 - 16 unused)
+1 byte line type, 2 bytes reserved, 26 bytes instruction info (32 - 3 - 26 unused)
