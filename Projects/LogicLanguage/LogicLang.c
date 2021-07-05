@@ -28,24 +28,24 @@
 
 
 /*****	Definitions	*****/
-	typedef enum eLineType_t {
+	typedef enum __attribute__((__packed__)) eLineType_t {
 		Line_ProgUnitStart,
 		Line_InstrInfo,
 	} eLineType_t;
 
-	typedef struct sProgUnitInfo_t {
+	typedef struct __attribute__((__packed__)) sProgUnitInfo_t {
 		uint32_t nIndex;
 		uint32_t nNumInputs;
 		uint32_t nNumOutputs;
 		uint32_t nNumInstr;
 	} sProgUnitInfo_t;
 	
-	typedef struct sInstrInfo_t {
+	typedef struct __attribute__((__packed__)) sInstrInfo_t {
 		eLogicInstType_t eCmd;
 		sLogicVariable_t Param;
 	} sInstrInfo_t;
 
-	typedef struct sLineInfo_t {
+	typedef struct __attribute__((__packed__)) sLineInfo_t {
 		eLineType_t eType;
 		
 		uint8_t aReserved[2];
@@ -56,6 +56,8 @@
 			uint8_t aSize[29];
 		} Data;
 	} sLineInfo_t;
+	
+	STATIC_ASSERT(LineIfo32Bytes, sizeof(sLineInfo_t) == 32);
 
 /*****	Constants	*****/
 

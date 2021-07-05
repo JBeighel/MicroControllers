@@ -126,9 +126,9 @@
 		@ingroup	logic
 	*/
 	typedef struct sLogicVariable_t {
-		eLogicVarType_t eType;	/**< Type of variable this is holding */
 		uint64_t nInteger;		/**< Integer or Date value */
 		double nDecimal;		/**< Decimal value */
+		eLogicVarType_t eType;	/**< Type of variable this is holding */
 	} sLogicVariable_t;
 	
 	/**	@brief		Structure to hold a program instruction
