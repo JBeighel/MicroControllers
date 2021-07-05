@@ -4,6 +4,8 @@
 */
 
 /*****	Includes	*****/
+	#include <stdio.h>
+
 	//Genereral use libraries
 	#include "CommonUtils.h"
 	#include "TimeGeneralInterface.h"
@@ -72,7 +74,7 @@
 /*****	Prototypes 	*****/
 	eLogicReturn_t LogicExtern(sLogicVariable_t *pInputs, sLogicVariable_t *pOutputs);
 	
-	bool LoadLogicProgram(const char *strFileName);
+	bool LoadLogicProgram(const char *strFileName, sLogicRunTime_t *pRunTime);
 
 /*****	Functions	*****/
 eReturn_t BoardInit(void) {
@@ -240,29 +242,52 @@ eLogicReturn_t LogicExtern(sLogicVariable_t *pInputs, sLogicVariable_t *pOutputs
 	return LogicSuccess;
 }
 
-bool LoadLogicProgram(const char *strFileName) {
+bool LoadLogicProgram(const char *strFileName, sLogicRunTime_t *pRunTime) {
 	FILE *fdLoad;
 	sLineInfo_t Line;
-	uint32_t nRead;
+	uint32_t nRead, nProgIdx = LOGIC_PROGRAMUNITS, nInstrIdx;
+	bool bRetVal = true;
 	
 	//Open the program file
-	fLoad = open(strFileName, "r");
-	if (fLoad == NULL) {
+	fdLoad = fopen(strFileName, "r");
+	if (fdLoad == NULL) {
 		return false;
 	}
 	
 	//Load all data from the file
-	while (feof(fLoad) == 0) {
-		nRead = fread(&Line, sizeof(sLineInfo_t), 1, fLoad);
+	while (feof(fdLoad) == 0) {
+		nRead = fread(&Line, sizeof(sLineInfo_t), 1, fdLoad);
 		if (nRead != 1) { //Failed to read a record
-			return false;
+			bRetVal = false;
+			break;
 		}
 		
 		//Process the read data
+		if (Line.eType == Line_ProgUnitStart) {
+			//Beginning a new program unit
+			nProgIdx = Line.Data.Prog.nIndex;
+			
+			nInstrIdx = 0; //Start with first instruction
+			
+			//Create new program unit
+			LogicSetProgramIOCounts(pRunTime, Line.Data.Prog.nIndex, Line.Data.Prog.nNumInputs, Line.Data.Prog.nNumOutputs);
+		} else if (Line.eType == Line_InstrInfo) {
+			if (nProgIdx >= LOGIC_PROGRAMUNITS) {
+				bRetVal = false;
+				break;
+			}
+			
+			//Add instruction to program
+			LogicSetProgramInstruction(pRunTime, nProgIdx, nInstrIdx, Line.Data.Instr.eCmd, &(Line.Data.Instr.Param));
+			nInstrIdx += 1;
+		} else {
+			bRetVal = false;
+			break;
+		}
 	}
 
 	//Close the file
-	fclose(fLoad);
+	fclose(fdLoad);
 	
-	return true;
+	return bRetVal;
 }
