@@ -77,6 +77,8 @@
 	eLogicReturn_t LogicExtern(sLogicVariable_t *pInputs, sLogicVariable_t *pOutputs);
 	
 	bool LoadLogicProgram(const char *strFileName, sLogicRunTime_t *pRunTime);
+	
+	bool WriteLogicProgram(const char *strFileName);
 
 /*****	Functions	*****/
 eReturn_t BoardInit(void) {
@@ -121,7 +123,6 @@ eReturn_t BoardInit(void) {
 
 int main(int nArgCnt, char **aArgVals) {
 	sLogicRunTime_t RunTime;
-	sLogicVariable_t Param;
 	eLogicReturn_t eResult;
 	
 	if ((false) && (BoardInit() != Success)) {
@@ -131,99 +132,11 @@ int main(int nArgCnt, char **aArgVals) {
 	
 	LogicRunTimeInitialize(&RunTime);
 	
-	//Program 1: entry point for testing
-	LogicSetProgramIOCounts(&RunTime, 0, 0, 0);
-	
-	//Push constant 6 on the stack
-	Param.eType = LGCVar_Int16;
-	Param.nInteger = 6;
-	LogicSetProgramInstruction(&RunTime, 0, 0, LGCIns_CmdLoad | LGCIns_ParamConstNumber, &Param);
-	
-	//Branch to new program (pops inptus from stack, pushes outputs to stack)
-	Param.eType = LGCVar_Int32;
-	Param.nInteger = 1;
-	LogicSetProgramInstruction(&RunTime, 0, 1, LGCIns_CmdBranch | LGCIns_ParamLabel, &Param);
-	
-	//Pop stack value into local variable 0
-	Param.eType = LGCVar_Int16;
-	Param.nInteger = 0;
-	LogicSetProgramInstruction(&RunTime, 0, 2, LGCIns_CmdStore | LGCIns_ParamLocalVar, &Param);
-	
-	//Push constant 0 on the stack
-	Param.eType = LGCVar_Int16;
-	Param.nInteger = 0;
-	LogicSetProgramInstruction(&RunTime, 0, 3, LGCIns_CmdLoad | LGCIns_ParamConstNumber, &Param);
-	
-	//Branch to new program (pops inptus from stack, pushes outputs to stack)
-	Param.eType = LGCVar_Int32;
-	Param.nInteger = 1;
-	LogicSetProgramInstruction(&RunTime, 0, 4, LGCIns_CmdBranch | LGCIns_ParamLabel, &Param);
-	
-	//Pop stack value and add it to local variable 0
-	Param.eType = LGCVar_Int16;
-	Param.nInteger = 0;
-	LogicSetProgramInstruction(&RunTime, 0, 5, LGCIns_CmdAdd | LGCIns_ParamLocalVar, &Param);
-	
-	//Push constant on the stack
-	Param.eType = LGCVar_Int16;
-	Param.nInteger = 57;
-	LogicSetProgramInstruction(&RunTime, 0, 6, LGCIns_CmdLoad | LGCIns_ParamConstNumber, &Param);
-	
-	//Call the external handler
-	Param.eType = LGCVar_Int16;
-	Param.nInteger = 0;
-	LogicSetProgramInstruction(&RunTime, 0, 7, LGCIns_CmdExternal | LGCIns_ParamLabel, &Param);
-	
-	//Return to end the program
-	Param.eType = LGCVar_Unspecified;
-	Param.nInteger = 0;
-	LogicSetProgramInstruction(&RunTime, 0, 8, LGCIns_CmdReturn | LGCIns_ParamNone, &Param);
-	
-	//Program 1: if param 0 == 0 then return 10 else return 5
-	LogicSetProgramIOCounts(&RunTime, 1, 1, 1);
-	
-	//Push local variable 1 (program input) on the stack
-	Param.eType = LGCVar_Int16;
-	Param.nInteger = 1;
-	LogicSetProgramInstruction(&RunTime, 1, 0, LGCIns_CmdLoad | LGCIns_ParamLocalVar, &Param);
-	
-	//Pop stack value if zero Jump to new instruction index
-	Param.eType = LGCVar_Int16;
-	Param.nInteger = 5;
-	LogicSetProgramInstruction(&RunTime, 1, 1, LGCIns_CmdJumpZero | LGCIns_ParamLabel, &Param);
-	
-	//Push constant on the stack
-	Param.eType = LGCVar_Int16;
-	Param.nInteger = 5;
-	LogicSetProgramInstruction(&RunTime, 1, 2, LGCIns_CmdLoad | LGCIns_ParamConstNumber, &Param);
-	
-	//Pop stack value into local variable 0 (program output)
-	Param.eType = LGCVar_Int16;
-	Param.nInteger = 0;
-	LogicSetProgramInstruction(&RunTime, 1, 3, LGCIns_CmdStore | LGCIns_ParamLocalVar, &Param);
-	
-	//Return to end the program
-	Param.eType = LGCVar_Unspecified;
-	Param.nInteger = 0;
-	LogicSetProgramInstruction(&RunTime, 1, 4, LGCIns_CmdReturn | LGCIns_ParamNone, &Param);
-	
-	//Push constant on the stack
-	Param.eType = LGCVar_Int16;
-	Param.nInteger = 10;
-	LogicSetProgramInstruction(&RunTime, 1, 5, LGCIns_CmdLoad | LGCIns_ParamConstNumber, &Param);
-	
-	//Pop stack value into local variable 0 (program output)
-	Param.eType = LGCVar_Int16;
-	Param.nInteger = 0;
-	LogicSetProgramInstruction(&RunTime, 1, 6, LGCIns_CmdStore | LGCIns_ParamLocalVar, &Param);
-	
-	//Return to end the program
-	Param.eType = LGCVar_Unspecified;
-	Param.nInteger = 0;
-	LogicSetProgramInstruction(&RunTime, 1, 7, LGCIns_CmdReturn | LGCIns_ParamNone, &Param);
-	
 	//Register externals
 	LogicAddExternal(&RunTime, 0, &LogicExtern, 1, 1);
+	
+	WriteLogicProgram("TestProg.dat");
+	LoadLogicProgram("TestProg.dat", &RunTime);
 	
 	eResult = LogicRunProgram(&RunTime, 0);
 	
@@ -293,3 +206,161 @@ bool LoadLogicProgram(const char *strFileName, sLogicRunTime_t *pRunTime) {
 	
 	return bRetVal;
 }
+
+bool WriteLogicProgram(const char *strFileName) {
+	sLineInfo_t Line;
+	FILE *fdSave;
+	
+	//Open the program file
+	fdSave = fopen(strFileName, "w");
+	if (fdSave == NULL) {
+		return false;
+	}
+	
+	//Program 0: entry point for testing
+	Line.eType = Line_ProgUnitStart;
+	Line.Data.Prog.nIndex = 0;
+	Line.Data.Prog.nNumInputs = 0;
+	Line.Data.Prog.nNumOutputs = 0;
+	Line.Data.Prog.nNumInstr = 0; //need a better way of setting this
+	fwrite(&Line, sizeof(sLineInfo_t), 1, fdSave);
+	
+	//Prigram 0 instrucions
+	Line.eType = Line_InstrInfo;
+	
+	//Push constant onto stack
+	Line.Data.Instr.eCmd = LGCIns_CmdLoad | LGCIns_ParamConstNumber;
+	Line.Data.Instr.Param.eType = LGCVar_Int32;
+	Line.Data.Instr.Param.nInteger = 6;
+	Line.Data.Instr.Param.nDecimal = 0;
+	fwrite(&Line, sizeof(sLineInfo_t), 1, fdSave);
+	
+	//Branch to new program (pops inptus from stack, pushes outputs to stack)
+	Line.Data.Instr.eCmd = LGCIns_CmdBranch | LGCIns_ParamLabel;
+	Line.Data.Instr.Param.eType = LGCVar_Int32;
+	Line.Data.Instr.Param.nInteger = 1;
+	Line.Data.Instr.Param.nDecimal = 0;
+	fwrite(&Line, sizeof(sLineInfo_t), 1, fdSave);
+	
+	//Pop stack value into local variable 0
+	Line.Data.Instr.eCmd = LGCIns_CmdStore | LGCIns_ParamLocalVar;
+	Line.Data.Instr.Param.eType = LGCVar_Int32;
+	Line.Data.Instr.Param.nInteger = 0;
+	Line.Data.Instr.Param.nDecimal = 0;
+	fwrite(&Line, sizeof(sLineInfo_t), 1, fdSave);
+	
+	//Push constant onto stack
+	Line.Data.Instr.eCmd = LGCIns_CmdLoad | LGCIns_ParamConstNumber;
+	Line.Data.Instr.Param.eType = LGCVar_Int32;
+	Line.Data.Instr.Param.nInteger = 0;
+	Line.Data.Instr.Param.nDecimal = 0;
+	fwrite(&Line, sizeof(sLineInfo_t), 1, fdSave);
+	
+	//Branch to new program (pops inptus from stack, pushes outputs to stack)
+	Line.Data.Instr.eCmd = LGCIns_CmdBranch | LGCIns_ParamLabel;
+	Line.Data.Instr.Param.eType = LGCVar_Int32;
+	Line.Data.Instr.Param.nInteger = 1;
+	Line.Data.Instr.Param.nDecimal = 0;
+	fwrite(&Line, sizeof(sLineInfo_t), 1, fdSave);
+	
+	//Pop stack value and add it to local variable 0
+	Line.Data.Instr.eCmd = LGCIns_CmdAdd | LGCIns_ParamLocalVar;
+	Line.Data.Instr.Param.eType = LGCVar_Int32;
+	Line.Data.Instr.Param.nInteger = 0;
+	Line.Data.Instr.Param.nDecimal = 0;
+	fwrite(&Line, sizeof(sLineInfo_t), 1, fdSave);
+	
+	//Push constant onto stack
+	Line.Data.Instr.eCmd = LGCIns_CmdLoad | LGCIns_ParamConstNumber;
+	Line.Data.Instr.Param.eType = LGCVar_Int32;
+	Line.Data.Instr.Param.nInteger = 57;
+	Line.Data.Instr.Param.nDecimal = 0;
+	fwrite(&Line, sizeof(sLineInfo_t), 1, fdSave);
+	
+	//Call the external handler
+	Line.Data.Instr.eCmd = LGCIns_CmdExternal | LGCIns_ParamLabel;
+	Line.Data.Instr.Param.eType = LGCVar_Int32;
+	Line.Data.Instr.Param.nInteger = 0;
+	Line.Data.Instr.Param.nDecimal = 0;
+	fwrite(&Line, sizeof(sLineInfo_t), 1, fdSave);
+	
+	//Return to end the program
+	Line.Data.Instr.eCmd = LGCIns_CmdReturn | LGCIns_ParamNone;
+	Line.Data.Instr.Param.eType = LGCVar_Unspecified;
+	Line.Data.Instr.Param.nInteger = 0;
+	Line.Data.Instr.Param.nDecimal = 0;
+	fwrite(&Line, sizeof(sLineInfo_t), 1, fdSave);
+	
+	//Program 1: if param 0 == 0 then return 10 else return 5
+	Line.eType = Line_ProgUnitStart;
+	Line.Data.Prog.nIndex = 1;
+	Line.Data.Prog.nNumInputs = 1;
+	Line.Data.Prog.nNumOutputs = 1;
+	Line.Data.Prog.nNumInstr = 0; //need a better way of setting this
+	fwrite(&Line, sizeof(sLineInfo_t), 1, fdSave);
+	
+	//Prigram 1 instrucions
+	Line.eType = Line_InstrInfo;
+	
+	//Push local variable 1 (program input) onto stack
+	Line.Data.Instr.eCmd = LGCIns_CmdLoad | LGCIns_ParamLocalVar;
+	Line.Data.Instr.Param.eType = LGCVar_Int32;
+	Line.Data.Instr.Param.nInteger = 1;
+	Line.Data.Instr.Param.nDecimal = 0;
+	fwrite(&Line, sizeof(sLineInfo_t), 1, fdSave);
+	
+	//Pop stack value if zero Jump to new instruction index
+	Line.Data.Instr.eCmd = LGCIns_CmdJumpZero | LGCIns_ParamLabel;
+	Line.Data.Instr.Param.eType = LGCVar_Int32;
+	Line.Data.Instr.Param.nInteger = 5;
+	Line.Data.Instr.Param.nDecimal = 0;
+	fwrite(&Line, sizeof(sLineInfo_t), 1, fdSave);
+	
+	//Push constant onto stack
+	Line.Data.Instr.eCmd = LGCIns_CmdLoad | LGCIns_ParamConstNumber;
+	Line.Data.Instr.Param.eType = LGCVar_Int32;
+	Line.Data.Instr.Param.nInteger = 5;
+	Line.Data.Instr.Param.nDecimal = 0;
+	fwrite(&Line, sizeof(sLineInfo_t), 1, fdSave);
+	
+	//Pop stack value into local variable 0 (program output)
+	Line.Data.Instr.eCmd = LGCIns_CmdStore | LGCIns_ParamLocalVar;
+	Line.Data.Instr.Param.eType = LGCVar_Int32;
+	Line.Data.Instr.Param.nInteger = 0;
+	Line.Data.Instr.Param.nDecimal = 0;
+	fwrite(&Line, sizeof(sLineInfo_t), 1, fdSave);
+	
+	//Return to end the program
+	Line.Data.Instr.eCmd = LGCIns_CmdReturn | LGCIns_ParamNone;
+	Line.Data.Instr.Param.eType = LGCVar_Unspecified;
+	Line.Data.Instr.Param.nInteger = 0;
+	Line.Data.Instr.Param.nDecimal = 0;
+	fwrite(&Line, sizeof(sLineInfo_t), 1, fdSave);
+	
+	//Push constant onto stack
+	Line.Data.Instr.eCmd = LGCIns_CmdLoad | LGCIns_ParamConstNumber;
+	Line.Data.Instr.Param.eType = LGCVar_Int32;
+	Line.Data.Instr.Param.nInteger = 10;
+	Line.Data.Instr.Param.nDecimal = 0;
+	fwrite(&Line, sizeof(sLineInfo_t), 1, fdSave);
+	
+	//Pop stack value into local variable 0 (program output)
+	Line.Data.Instr.eCmd = LGCIns_CmdStore | LGCIns_ParamLocalVar;
+	Line.Data.Instr.Param.eType = LGCVar_Int32;
+	Line.Data.Instr.Param.nInteger = 0;
+	Line.Data.Instr.Param.nDecimal = 0;
+	fwrite(&Line, sizeof(sLineInfo_t), 1, fdSave);
+	
+	//Return to end the program
+	Line.Data.Instr.eCmd = LGCIns_CmdReturn | LGCIns_ParamNone;
+	Line.Data.Instr.Param.eType = LGCVar_Unspecified;
+	Line.Data.Instr.Param.nInteger = 0;
+	Line.Data.Instr.Param.nDecimal = 0;
+	fwrite(&Line, sizeof(sLineInfo_t), 1, fdSave);
+	
+	//Close the program file
+	fclose(fdSave);
+	
+	return true;
+}
+

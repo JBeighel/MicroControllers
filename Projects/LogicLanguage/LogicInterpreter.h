@@ -68,6 +68,7 @@
 		LogicFail_MemoryIndex	= -9,	/**< An invalid memory index was provided */
 		LogicFail_InstrIndex	= -10,	/**< An invalid instruction index was provided */
 		LogicFail_ExternIndex	= -11,	/**< An invalid external command index was provided */
+		LogicFail_InvalidExtern	= -12,	/**< Request to run an invalid external command */
 	} eLogicReturn_t;
 
 	/**	@brief		Enumeration of all program variable types

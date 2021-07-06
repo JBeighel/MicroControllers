@@ -935,6 +935,10 @@ eLogicReturn_t LogicExternalCommand(sLogicRunTime_t *pRunTime, uint64_t nExternI
 	
 	pExtern = &(pRunTime->aExterns[nExternIdx]);
 	
+	if (pExtern->pfHandler == NULL) { //Using unregistered external
+		return LogicFail_InvalidExtern;
+	}
+	
 	//Get the inputs arranged in the register buffer (remember outpus before inputs)
 	for (nCtr = 0; nCtr < pExtern->nNumInputs; nCtr++) {
 		eResult = LogicStackPop(pRunTime, &(pRunTime->aRegisters[nCtr + pExtern->nNumOutputs]));
