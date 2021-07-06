@@ -75,14 +75,14 @@
 		@ingroup	logic
 	*/
 	typedef enum eLogicVarType_t {
-		LGCVar_Unspecified,	/**< Unitialized memory space */
-		LGCVar_Bool,		/**< Boolean value, true or false only */
-		LGCVar_Int8,		/**< 8 bit signed integer */
-		LGCVar_Int16,		/**< 16 bit signed integer */
-		LGCVar_Int32,		/**< 32 bit signed integer */
-		LGCVar_Int64,		/**< 64 bit signed integer */
-		LGCVar_Decimal,		/**< Floating point decimal value */
-		LGCVar_Date,		/**< Time and date, microseconds since Jan 1, 1970 */
+		LGCVar_Unspecified	= 0,	/**< Unitialized memory space */
+		LGCVar_Bool			= 1,	/**< Boolean value, true or false only */
+		LGCVar_Int8			= 2,	/**< 8 bit signed integer */
+		LGCVar_Int16		= 3,	/**< 16 bit signed integer */
+		LGCVar_Int32		= 4,	/**< 32 bit signed integer */
+		LGCVar_Int64		= 5,	/**< 64 bit signed integer */
+		LGCVar_Decimal		= 6,	/**< Floating point decimal value */
+		LGCVar_Date			= 7,	/**< Time and date, microseconds since Jan 1, 1970 */
 	} eLogicVarType_t;
 	
 	/**	@brief		Enumeration of all instruction commands and parameter types
