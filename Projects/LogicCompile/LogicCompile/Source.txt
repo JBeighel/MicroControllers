@@ -1,0 +1,19 @@
+﻿PROGRAM EntryPoint
+	CODE
+		st #72
+		branch :WriteValue
+		return
+	END_CODE
+END_PROGRAM
+
+PROGRAM WriteValue
+	VAR_INPUT
+		ValToWrite : Int64
+	END_VAR_INPUT
+	CODE
+		st $ValToWrite
+		extern :0
+		ld %0
+		return
+	END_CODE
+END_PROGRAM

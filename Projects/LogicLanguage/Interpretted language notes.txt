@@ -25,11 +25,11 @@ Example:
 Short : Int8 := 5
 Long : Int32 := 1000
 
-LD$ Short
-ADD$ Long // 1000 + 5 = 1005 stored in $Long
+LD $Short
+ADD $Long // 1000 + 5 = 1005 stored in $Long
 
-LD$ Long
-ADD$ Short // 1005 + 5 = 1010 (0x03F2) truncates to 242 (0x00F2) stored in $Short
+LD $Long
+ADD $Short // 1005 + 5 = 1010 (0x03F2) truncates to 242 (0x00F2) stored in $Short
 
 
 Memory Blocks:

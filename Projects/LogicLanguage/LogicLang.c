@@ -29,8 +29,8 @@
 
 /*****	Definitions	*****/
 	typedef enum __attribute__((__packed__)) eLineType_t {
-		Line_ProgUnitStart,
-		Line_InstrInfo,
+		Line_ProgUnitStart	= 0,
+		Line_InstrInfo		= 1,
 	} eLineType_t;
 
 	typedef struct __attribute__((__packed__)) sProgUnitInfo_t {

@@ -3,3 +3,5 @@ ArduinoHeaders/MDLN-StringClass.cpp
 ArduinoHeaders/MDLN-StringClass.h
 *.bak
 *.o
+Projects/LogicCompile/LogicCompile/bin/
+Projects/LogicCompile/LogicCompile/obj/

@@ -1,0 +1,61 @@
+﻿<tokens>
+	<!-- All test regexes will have \s inserted  -->
+	
+	<!-- Sections will determine what tokens are looked for -->
+	<section name="programstart" test="PROGRAM\s+([A-Za-z][A-Za-z0-9_]+)" valuegroup="1" />
+	<section name="globalliststart" test="VAR_GLOBAL" />
+	<section name="inputliststart" test="VAR_INPUT" />
+	<section name="outputliststart" test="VAR_OUTPUT" />
+	<section name="localliststart" test="VAR_LOCAL" />
+	<section name="codestart" test="CODE" />
+	<section name="globallistend" test="END_VAR_GLOBAL" />
+	<section name="inputlistend" test="END_VAR_INPUT" />
+	<section name="outputlistend" test="END_VAR_OUTPUT" />
+	<section name="locallistend" test="END_VAR_LOCAL" />
+	<section name="codeend" test="END_CODE" />
+	<section name="programend" test="END_PROGRAM" />
+
+	<!-- Global, Input, Output, and Local sections -->
+	<definition name="varname" test="([A-Za-z][A-Za-z0-9_]+)" valuegroup="1" />
+	<definition name="vartypebool" test=":\s+[Bb](ool|OOL)" />
+	<definition name="vartypeint8" test=":\s+[Ii](nt|NT)8" />
+	<definition name="vartypeint16" test=":\s+[Ii](nt|NT)16" />
+	<definition name="vartypeint32" test=":\s+[Ii](nt|NT)32" />
+	<definition name="vartypeint64" test=":\s+[Ii](nt|NT)64" />
+	<definition name="vartypedec" test=":\s+[Dd](ecimal|ECIMAL)" />
+	<definition name="vartypedate" test=":\s+[Dd](ate|ATE)" />
+	<definition name="assignment" test=":=\s+(-?[0-9]+(\.[0-9]+))" valuegroup="1" />
+	
+	<!-- Code sections -->
+ 	<command name="noop" test="(nop|NOP)" code="0000" param="none" />
+	<command name="load" test="(LD|ld)" code="0010" param="localvar,globalvar,register,constnum" />
+	<command name="store" test="(st|ST)" code="0020" param="globalvar,register,constnum" />
+	<command name="add" test="(add|ADD)" code="0030" param="globalvar,register,constnum" />
+	<command name="subtract" test="(sub|SUB)" code="0040" param="globalvar,register,constnum" />
+	<command name="multiply" test="(mult|MULT)" code="0050" param="globalvar,register,constnum" />
+	<command name="divide" test="(div|DIV)" code="0060" param="globalvar,register,constnum" />
+	<command name="rshift" test="(rsh|RSH)" code="0070" param="globalvar,register,constnum" />
+	<command name="lshift" test="(rsh|LSH)" code="0080" param="globalvar,register,constnum" />
+	<command name="and" test="(and|AND)" code="0090" param="globalvar,register,constnum" />
+	<command name="or" test="(or|OR)" code="00A0" param="globalvar,register,constnum" />
+	<command name="xor" test="(xor|XOR)" code="00B0" param="globalvar,register,constnum" />
+	<command name="negate" test="(neg|NEG)" code="00C0" param="globalvar,register,constnum" />
+	<command name="logicand" test="(logand|LOGAND)" code="00D0" param="globalvar,register,constnum" />
+	<command name="logicor" test="(logor|LOGOR)" code="00E0" param="globalvar,register,constnum" />
+	<command name="logicnegate" test="(logneg|LOGNEG)" code="00F0" param="globalvar,register,constnum" />
+	<command name="jump" test="(jmp|JMP)" code="0100" param="label" />
+	<command name="jumpzero" test="(jmpz|JMPZ)" code="0110" param="label" />
+	<command name="jumpnonzero" test="(jmpnz|JMPNZ)" code="0120" param="label" />
+	<command name="branch" test="(branch|BRANCH)" code="0130" param="label" />
+	<command name="return" test="(return|RETURN)" code="0140" param="none" />
+	<command name="external" test="(extern|EXTERN)" code="0150" param="label" />
+	<command name="labelposition" test=":[A-Za-z][A-Za-z0-9_]+" code="0000" param="none" />
+
+	<!-- Code sections -->
+	<param name="none" test="" code="04" />
+	<param name="localvar" test="\$([A-Za-z][A-Za-z0-9_]+)" code="04" valuegroup="1" />
+	<param name="globalvar" test="&amp;([A-Za-z][A-Za-z0-9_]+)" code="05" valuegroup="1" />
+	<param name="register" test="%([0-9]+)" code="02" valuegroup="1" />
+	<param name="label" test=":([A-Za-z][A-Za-z0-9_]+)" code="03" valuegroup="1" />
+	<param name="constnum" test="#(-?[0-9]+(\.[0-9]+))" code="01" valuegroup="1" />
+</tokens>
