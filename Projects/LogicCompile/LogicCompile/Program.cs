@@ -2,13 +2,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml;
 
 namespace LogicCompile
 {
-	class Program
-	{
+	class Program {
 		private enum eTokenType_t {
 			Unknown,
 			Section,
@@ -50,11 +50,26 @@ namespace LogicCompile
 			public eSections_t eSection;
 		}
 
+		private struct sProgramLines_t {
+			public string strName;
+			public UInt32 nIndex;
+			public UInt32 nNumInputs;
+			public UInt32 nNumOutputs;
+			public UInt32 nNumLocals;
+			public List<sLine_t> aInputsLines;
+			public List<sLine_t> aOutputsLines;
+			public List<sLine_t> aLocalsLines;
+			public List<sLine_t> aCodeLines;
+		}
+
 		static List<sTokenDef_t> caSectionDefs;
 		static List<sTokenDef_t> caDefinitionDefs;
 		static List<sTokenDef_t> caCommandDefs;
 		static List<sTokenDef_t> caParamDefs;
 		static List<sLine_t> caSrcLines;
+
+		static Dictionary<string, sProgramLines_t> aPrograms;
+		static List<sLine_t> caGlobalsLines;
 
 		static string cstrTokenXMLFile = "Tokens.xml";
 
@@ -65,6 +80,8 @@ namespace LogicCompile
 			caDefinitionDefs = new List<sTokenDef_t>();
 			caCommandDefs = new List<sTokenDef_t>();
 			caParamDefs = new List<sTokenDef_t>();
+			aPrograms = new Dictionary<string, sProgramLines_t>();
+			caGlobalsLines = new List<sLine_t>();
 
 			caSrcLines = new List<sLine_t>();
 
@@ -83,11 +100,14 @@ namespace LogicCompile
 			//No preprocessor without section tags for it
 			//Break into Program sections (should contain all other sections)
 			CreateProgramLines(strSourceFile);
+			SourceToSections(caSrcLines, caGlobalsLines, aPrograms);
 
 			//Tokenizer
 
 			//For each program...
 			//Break into sections
+			//Tokenize lines that match sections
+			//Use those to say what section type we're in
 
 			//For each section...
 			//Tokenize each line based on section type (stores type and text/value)
@@ -132,7 +152,7 @@ namespace LogicCompile
 
 				if (Tag.Attributes["test"] != null) {
 					NewToken.strRegEx = Tag.Attributes["test"].InnerText;
-				} else { 
+				} else {
 					throw new Exception("Found section tag with no test attribute.  Unable to load token XML");
 				}
 
@@ -199,7 +219,7 @@ namespace LogicCompile
 				if (Tag.Attributes["param"] != null) {
 					NewToken.aParamNames = new List<string>(Tag.Attributes["param"].InnerText.Split(','));
 
-					for(int nCtr = 0; nCtr < NewToken.aParamNames.Count; nCtr++) {
+					for (int nCtr = 0; nCtr < NewToken.aParamNames.Count; nCtr++) {
 						NewToken.aParamNames[nCtr] = NewToken.aParamNames[nCtr].Trim();
 					}
 				} else {
@@ -292,6 +312,94 @@ namespace LogicCompile
 			}
 
 			return;
+		}
+
+		static void SourceToSections(List<sLine_t> aSrcLines, List<sLine_t> aGlobals, Dictionary<string, sProgramLines_t> aPrograms) {
+			int nSrcCtr, nDefCtr;
+			Regex rxTest;
+			Match mResult;
+			string strLine;
+			eSections_t eCurrSection, ePriorSection;
+			sToken_t NewToken;
+			sProgramLines_t NewProg = new sProgramLines_t(); ;
+
+			eCurrSection = eSections_t.Unknown;
+			ePriorSection = eSections_t.Unknown;
+
+			for (nSrcCtr = 0; nSrcCtr < aSrcLines.Count; nSrcCtr++) {
+				strLine = aSrcLines[nSrcCtr].strLine;
+
+				//Check to see if it represents a section
+				for (nDefCtr = 0; nDefCtr < caSectionDefs.Count; nDefCtr++) {
+					//Add the anchor to be sure we match the start of the line
+					rxTest = new Regex(@"^\s*" + caSectionDefs[nDefCtr].strRegEx);
+
+					mResult = rxTest.Match(strLine);
+
+					if (mResult.Success == true) {
+						//Cut the matched text from the line
+						strLine.Substring(mResult.Index + mResult.Length);
+
+						//Pull out the token information and add it to the line's token list
+						NewToken = new sToken_t();
+
+						NewToken.eType = eTokenType_t.Section;
+						NewToken.strName = caSectionDefs[nDefCtr].strName;
+						NewToken.nCode = caSectionDefs[nDefCtr].nCode;
+						if (caSectionDefs[nDefCtr].nValGroup > 0) {
+							NewToken.strValue = mResult.Groups[(int)caSectionDefs[nDefCtr].nValGroup].Value;
+						}
+						
+						aSrcLines[nSrcCtr].aTokens.Add(NewToken);
+
+						//Lets update the section information
+						switch (caSectionDefs[nDefCtr].strName) {
+						case "programstart":
+							if (eCurrSection != eSections_t.Unknown) {
+								//Programs can't be nested in other sections
+								throw new Exception(String.Format("Found program section named {0} nested inside a {1} section on line {2}", NewToken.strValue, eCurrSection, aSrcLines[nSrcCtr].nLineNum));
+							}
+
+							//Starting a new program
+							eCurrSection = eSections_t.Program;
+							NewProg = new sProgramLines_t();
+							NewProg.aCodeLines = new List<sLine_t>();
+							NewProg.aInputsLines = new List<sLine_t>();
+							NewProg.aLocalsLines = new List<sLine_t>();
+							NewProg.aOutputsLines = new List<sLine_t>();
+							NewProg.nIndex = (UInt32)aPrograms.Count;
+							NewProg.strName = NewToken.strValue;
+
+							break;
+						case "programend":
+							if (eCurrSection != eSections_t.Program) {
+								throw new Exception("Found end program when not in a program section on line " + aSrcLines[nSrcCtr].nLineNum);
+							}
+
+							//Close out the program and add it to the list
+							aPrograms.Add(NewProg.strName, NewProg);
+							eCurrSection = ePriorSection;
+							ePriorSection = eSections_t.Unknown;
+
+							break;
+						case "globalliststart":
+						case "globallistend":
+						case "inputliststart":
+						case "inputlistend":
+						case "outputliststart":
+						case "outputlistend":
+						case "localliststart":
+						case "locallistend":
+						case "codestart":
+						case "codeend":
+						default:
+							throw new Exception(String.Format("Found unrecognized section type {0} in definitions", caSectionDefs[nDefCtr].strName));
+						}
+
+						nDefCtr += caSectionDefs.Count; //Stop checking definitions
+					}
+				}
+			}
 		}
 	}
 }

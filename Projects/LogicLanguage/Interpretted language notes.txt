@@ -52,13 +52,16 @@ ADD% A //Add a stack value with register A, puit the result in register ADD
 LD% A //Load register A's value onto the stack
 ST$ nNumber //Store a stack value into variable nNumber
 
-Programming units:
-These are essentially functions.  They will stipulate a number of expected parameters to be placed in order on the stack.  Upon return the stipulated values will also be pushed onto the stack.
-//Variables are mapped to indexes in some memory block.  Names are only known by the compiler
+Global Section:
 VAR_GLOBAL
 	nSetting : Int16 := 803
 	nOnOff : Bool := False
 END_GLOBAL
+These represent variables available in all programming units.  There should only be 1 global section for the entire program.
+
+Programming units:
+These are essentially functions.  They will stipulate a number of expected parameters to be placed in order on the stack.  Upon return the stipulated values will also be pushed onto the stack.
+//Variables are mapped to indexes in some memory block.  Names are only known by the compiler
 VAR_INPUT
 	//Var name : type := initial value (:= for assignment)
 	//Inputs don't get a default value, only locals
@@ -83,8 +86,6 @@ END_CODE
 As shown the syntax is:
 <variable name> : <type> [:= <initial value>]
 The initial value will only be honored in the Global and Local variable sections.  Inputs and outputs are expected to be initialized in the code.
-
-The Global variables listed in any programming unit will be added to the Global list if they do not exist.  If they already exist then the initial value will be verified against what is already specified.
 
 The CODE/END_CODE section holds all the commands to carry out.  The commands needed to pop input values from the stack and place them in local variables will be inserted by the compiler.  Similarly the commands to push local variables onto the stack as output values will be inserted by the compiler.
 Branching to functions or calling external functions will not have their necessary push/pop operations inserted by the compiler.
