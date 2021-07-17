@@ -6,7 +6,7 @@
 	#File Information
 		File:	Network_RaspberryPi.h
 		Author:	J. Beighel
-		Date:	12-30-2020
+		Date:	2021-04-18
 */
 
 #ifndef __RASPINETWORK_H
@@ -17,6 +17,7 @@
 	
 	#include <unistd.h>
     #include <sys/socket.h>
+	#include <sys/time.h>
     #include <netinet/in.h>
 	#include <errno.h>
 	

@@ -8,6 +8,9 @@ Collection of headder files written specifically for arduino.
 
 Includes some convenience objects and interfaces intended to simplify firmware creation.
 
+# Fritzing Parts
+PCBs designed through Fritzing are being used to test these drivers and work on the projects.  Customized parts for these circuit boards are stroed in this directory.
+
 # GenIface Drivers
 One of the projects underway is a set of generic C interfaces to use to communicate with peripherals.  These interfaces stipulate a minimum set of functionality that the bus can provide in a standard set of functions.  Peripheral drivers are built upon this interface to abstract them from microprocessor specific code.  The end goal was to have a set of drivers that can be quickly brought from processor to processor.
 

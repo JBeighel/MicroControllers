@@ -1,6 +1,6 @@
 /**	@defgroup	w5500driver
 	@brief		Driver for the Wizner W5500 Ethernet device
-	@details	v0.1
+	@details	v0.4
 	# Description #
 		This is an ethernet device that includes buffers for transmit/receive as well as includes
 		the entire Ethernet stack.  It will allow 8 sockets to be used for Ethernet communication
@@ -15,11 +15,13 @@
 		Socket Listen and Socket Connect functions will create sockets as client or server for 
 		a specified protocol (TCP or UDP).  The Socket number can be used in Socket Status to
 		see the condition of the socker.
+		
+		The part requires SPI Mode 0 or 3
 	
 	# File Info #
 		File:	W5500Driver.c
 		Author:	J. Beighel
-		Date:	08-27-2020
+		Date:	2021-05-02
 */
 
 #ifndef __W5500DRIVER
@@ -32,17 +34,38 @@
 	#include "CommonUtils.h"
 	#include "GPIOGeneralInterface.h"
 	#include "SPIGeneralInterface.h"
+	#include "NetworkGeneralInterface.h"
 
 /***** Definitions	*****/
+	/**	@brief		TCP Server interface capabilites available
+		@ingroup	w5500driver
+	*/
+	#define W5500_TCPSERVCAPS		((eTCPServerCapabilities_t)(TCPServ_Bind | TCPServ_CloseHost | TCPServ_CloseClient | TCPServ_AcceptConn | TCPServ_Receive | TCPServ_Send))
+	
+	/**	@brief		TCP Client interface capabilites available
+		@ingroup	w5500driver
+	*/
+	#define W5500_TCPCLIENTCAPS		((eTCPClientCapabilities_t)(TCPClient_None))
+	
+	/**	@brief		UDP Server interface capabilites available
+		@ingroup	w5500driver
+	*/
+	#define W5500_UDPSERVCAPS		((eUDPServerCapabilities_t)(UDPServ_None))
+	
+	/**	@brief		UDP Client interface capabilites available
+		@ingroup	w5500driver
+	*/
+	#define W5500_TCPCLIENTCAPS		((eUDPClientCapabilities_t)(UDPClient_None))
+
 	/**	@brief		W5500 Version register always indicates version 0x04
 		@ingroup	w5500driver
 	*/
-	#define W5500_VERSION		0x04
+	#define W5500_VERSION			0x04
 	
 	/**	@breif		Number of sockets the ethernet device supports
 		@ingroup	w5500driver
 	*/
-	#define W5500_NUMSOCKETS	8
+	#define W5500_NUMSOCKETS		8
 	
 	/**	@brief		The number of microseconds the chip select pin must remain high
 		@details	Data sheet says the minimum time is 30 nanoSeconds
@@ -67,7 +90,8 @@
 		W5500Fail_Unsupported	= -4,	/**< A request for an unsupported protocol or socket type */
 		W5500Fail_NoSockets		= -5,	/**< Unable to create a socket, all are in use */
 		W5500Fail_InvalidSocket	= -6,	/**< A request was made for an invalid socket number */
-		W5500Fail_TXFreeSpace	= -7	/**< Transmit data size was too large */
+		W5500Fail_TXFreeSpace	= -7,	/**< Transmit data size was too large */
+		W5500Fail_SpiMode		= -8,	/**< SPI Mode is incorrect for this device */
 	} eW5500Return_t;
 	
 	/**	@brief		Control codes for area of memory in W5500 to access
@@ -316,7 +340,7 @@
 		W5500Phy_CfgAllCapAuto	= 0x38,	/**< Set Phy to allow all capabilities and auto-negotiation enabled */
 	} eW5500PhyCfg_t;
 	
-	/**< @brief		Individual socket transmit an recieve buffer size values
+	/**	@brief		Individual socket transmit an recieve buffer size values
 		@ingroup	w5500driver
 	*/
 	typedef enum eW5500SckBuffSz_t {
@@ -338,7 +362,9 @@
 		IPPROTO_INVALID,	/**< Unknown or invalid protocol */
 	} eW5500SckProt_t;
 	
-	/**< @brief		Object representing the W5500 device
+	/**	@brief		Object representing the W5500 device
+		@ingroup	w5500driver
+	*/
 	typedef struct sW5500Obj_t {
 		sGPIOIface_t *pGPIO;		/**< Pointer to GPIO module for Chip Select and Interrupt */
 		uint8_t nChipSelectPin;		/**< Chip select pin in the GPIO module */
@@ -524,11 +550,27 @@
 
 	eW5500Return_t W5500SocketUDPSend(sW5500Obj_t *pDev, uint8_t nSocket, IN_ADDR *pAddr, uint16_t nPort, uint8_t *pBuff, uint16_t nBuffSize);
 	
+	/**	@brief		Closes down a client socket
+		@param		pTCPServ		Pointer to the Wiznet5500 TCP server interface object
+		@param		nSocket			Socket to close
+		@return		Net_Success on success, or a code indicating the failure
+		@ingroup	w5500driver
+	*/
 	eW5500Return_t W5500CloseSocket(sW5500Obj_t *pDev, uint8_t nSocket);
 	
-	eW5500Return_t W5500ReadData(sW5500Obj_t *pDev, uint16_t nAddress, eW5500Control_t eControl, uint8_t *pBuff, uint8_t nBytes);
-	eW5500Return_t W5500WriteData(sW5500Obj_t *pDev, uint16_t nAddress, eW5500Control_t eControl, const uint8_t *pBuff, uint8_t nBytes);
-
+	/**	@brief		Create a TCP Server interface object through the Wiznet 5500
+		@details	Establishes an implementation of the TCP Server Network Interface
+			using the Ethernet connection provided by the Wiznet 5500 peripheral.
+		@param		pDev		Pointer to the Wiznet 5500 device object
+		@param		pTCPServ	TCP Server interface structure to put the implementation in
+		@return		W5500_Success if the port is interface is created, an error or warning code
+			will be provided to indicate the failure
+		@ingroup	w5500driver
+	*/
+	eW5500Return_t W5500CreateTCPServer(sW5500Obj_t *pDev, sTCPServ_t *pTCPServ);
+	
+	eW5500Return_t W5500CreateTCPClient(sW5500Obj_t *pDev, sTCPClient_t *pTCPClient);
+	
 /***** Functions	*****/
 
 #endif
