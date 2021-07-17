@@ -11,7 +11,7 @@
 	# File Information #
 		File:	RC522Driver.h
 		Author:	J. Beighel
-		Created:09-04-2020
+		Created:2021-07-22
 */
 
 #ifndef __RC522DRIVER_H

@@ -6,40 +6,33 @@
 /*****	Includes	*****/
 	//Genereral use libraries
 	#include "CommonUtils.h"
-	#include "TimeGeneralInterface.h"
 	#include "GPIOGeneralInterface.h"
 	#include "I2CGeneralInterface.h"
 	#include "SPIGeneralInterface.h"
-	#include "UARTGeneralInterface.h"
-	#include "NetworkGeneralInterface.h"
 
 	#include "GPIO_RaspberryPi.h"
 	#include "I2C_RaspberryPi.h"
 	#include "SPI_RaspberryPi.h"
-	#include "UART_RaspberryPi.h"
-	#include "Network_RaspberryPi.h"
 	
 	//Driver libraries
+	#include "RC522Driver.h"
 	
 /*****	Defines		*****/
 
 
 /*****	Definitions	*****/
-
+	#define RC500_CSPIN		18
+	#define RC500_RSTPIN	17
 
 /*****	Constants	*****/
 
 
 /*****	Globals		*****/
-	sTimeIface_t gTime;
 	sGPIOIface_t gGPIO;
 	sI2CIface_t gI2C;
 	sSPIIface_t gSPI;
-	sUARTIface_t gUART;
-	sTCPServ_t gTCPServ;
-	sTCPClient_t gTCPClient;
-	sUDPServ_t gUDPServ;
-	sUDPClient_t gUDPClient;
+	
+	sRC522Obj_t gRC522;
 	
 /*****	Prototypes 	*****/
 
@@ -49,11 +42,6 @@ eReturn_t BoardInit(void) {
 	int eResult;
 	
 	//Init processor (pin support work)
-	eResult = TIME_INIT(&gTime);
-	if (eResult != Success) {
-		return Fail_Unknown;
-	}
-	
 	eResult = GPIO_INIT(&gGPIO, GPIO_HWINFO);
 	if (eResult != Success) {
 		return Fail_Unknown;
@@ -69,18 +57,15 @@ eReturn_t BoardInit(void) {
 		return Fail_Unknown;
 	}
 	
-	eResult = UART_INIT(&gUART, 9600, UART_8None1, UART_1_HWINFO);
-	if (eResult != UART_Success) {
+	//Init peripherals (board support work)
+	eResult = RC522InitializeSPI(&gRC522, &gSPI, &gGPIO, RC500_CSPIN);
+	
+	//eResult = RC522InitializeI2C(&gRC522, &gI2C, RC522AddrBase);
+	
+	if (eResult != RC522_Success) {
+		printf("RC522 Initialization Fail %d\n", eResult);
 		return Fail_Unknown;
 	}
-	
-	TCPSERV_INIT(&gTCPServ);
-	TCPCLIENT_INIT(&gTCPClient);
-	UDPSERV_INIT(&gUDPServ);
-	UDPCLIENT_INIT(&gUDPClient);
-	
-	//Init peripherals (board support work)
-	
 	
 	return Success;
 }

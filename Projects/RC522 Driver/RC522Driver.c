@@ -1,7 +1,7 @@
 /*
 		File:	RC522Driver.c
 		Author:	J. Beighel
-		Created:09-04-2020
+		Created:2021-07-22
 */
 
 /*****	Includes	*****/
@@ -53,7 +53,7 @@ eRC522Return_t RC522InitializeSPI(sRC522Obj_t *pRC522, sSPIIface_t *pSpiObj, sGP
 }
 
 eRC522Return_t RC522InitializeI2C(sRC522Obj_t *pRC522, sI2CIface_t *pI2CObj, eRC522Addr_t eAddrPins) {
-	eI2CReturns_t eReturn;
+	eI2CReturn_t eReturn;
 	uint8_t nRegVal;
 
 	pRC522->pGPIO = NULL;
