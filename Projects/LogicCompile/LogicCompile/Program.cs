@@ -383,7 +383,23 @@ namespace LogicCompile
 
 							break;
 						case "globalliststart":
+							if (eCurrSection != eSections_t.Unknown) {
+								//Global lists can't be nested in other sections
+								throw new Exception(String.Format("Found global list section nested inside a {0} section on line {1}", eCurrSection, aSrcLines[nSrcCtr].nLineNum));
+							}
+
+							ePriorSection = eCurrSection;
+							eCurrSection = eSections_t.GlobalVars;
+
+							break;
 						case "globallistend":
+							if (eCurrSection != eSections_t.GlobalVars) {
+								throw new Exception("Found end global list when not in a global list section on line " + aSrcLines[nSrcCtr].nLineNum);
+							}
+
+							eCurrSection = ePriorSection;
+							ePriorSection = eSections_t.Unknown;
+							break;
 						case "inputliststart":
 						case "inputlistend":
 						case "outputliststart":
