@@ -1,3 +1,9 @@
+/* #File Information
+		File:	GPIO_NucleoL412KB.c
+		Author:	J. Beighel
+		Date:	2021-03-07
+*/
+
 /***** Includes		*****/
 	#include "GPIO_NucleoL412KB.h"
 
@@ -8,94 +14,66 @@
 
 
 /***** Constants	*****/
-	/** @brief		Constant array of all pin numbers to use for GPIO
-		@details	There are 22 potential GPIO pins, owever 7 are used by the peripheral buses
-			Pin 0 and 1 are used for the UART.
-			Pin 11 is MOSI, Pin 12 is MIS and Pin 13 are SCK; reserved for SPI
-			Pin 18/A4 is SDA and Pin 19/A5 is SCL; reserved for I2C
-		@ingroup	gpionucleo
-	*/
-	const NUCLEO_PININFOTYPE gNucleoGPIOAList[] = { PA0_A0_CS_Pin, }; //All in GPIOA
 
-	const NUCLEO_PININFOTYPE gNucleoGPIOBList[] = { PB3_D13_LED_Pin, PB6_D5_YELLOW_Pin,	PB7_D4_RED_Pin, }; //All in GPIOB
-
-	/** @brief		Constant array of all pin numbers that support Analog Input
-		@ingroup	gpionucleo
-	*/
-	const NUCLEO_PININFOTYPE gNucleoADCList[] = { };
-
-	/** @brief		Constant array of all pin numbers that support Analog Ouput
-		@ingroup	gpionucleo
-	*/
-	const NUCLEO_PININFOTYPE gNucleoDACList[] = { };
-
-	/** @brief		Constant array of all pin numbers that support PWM Output
-		@ingroup	gpionucleo
-	*/
-	const NUCLEO_PININFOTYPE gNucleoPWMList[] = { };
 
 /***** Globals		*****/
+	sNucleoGPIOPortInfo_t gGPIOPortA = { .pPort = GPIOA };
+	sNucleoGPIOPortInfo_t gGPIOPortB = { .pPort = GPIOB };
+	sNucleoGPIOPortInfo_t gGPIOPortC = { .pPort = GPIOC };
+	sNucleoGPIOPortInfo_t gGPIOPortH = { .pPort = GPIOH };
 
+	sNucleoTimerInfo_t gTimer2Ch1 = { .pHWTimer = &htim2, .nChannel = TIM_CHANNEL_1, .pfHandler = NULL, .pParam = NULL };
 
 /***** Prototypes 	*****/
-
+	void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin);
 
 /***** Functions	*****/
 
 eGPIOReturn_t NucleoGPIOPortInitialize(sGPIOIface_t *pIface, void *pHWInfo) {
-	uint32_t nCtr, nPinCnt;
-	const NUCLEO_PININFOTYPE *pPinList;
+	uint32_t nCtr;
+	sNucleoGPIOPortInfo_t *pCurrPort = (sNucleoGPIOPortInfo_t *)pHWInfo;
 
-	if (pHWInfo == GPIO_A_HWINFO) {
-		pPinList = gNucleoGPIOAList;
-		nPinCnt = NUCLEO_GPIOACNT;
-	} else {
-		pPinList = gNucleoGPIOBList;
-		nPinCnt = NUCLEO_GPIOBCNT;
-	}
+	//All of this is handled by the STM Cube built project, just fill out the object here
 
-	//All of this is handled by the STM Cube built project, os just fill out the object
-
-	GPIOInterfaceInitialize(pIface); //Set a base sanity for the interface
-	pIface->pHWInfo = pHWInfo;
+	GPIOInterfaceInitialize(pIface); //Set a sane base for the interface
+	pIface->pHWInfo = pHWInfo; //HW info is the port the pin is on
 
 	//Set pointers for all supported functions
 	pIface->pfPortInit = &NucleoGPIOPortInitialize;
 	pIface->pfSetModeByPin = &NucleoGPIOSetModeByPin;
 	pIface->pfDigitalWriteByPin = &NucleoGPIODigitalWriteByPin;
 	pIface->pfDigitalReadByPin = &NucleoGPIODigitalReadByPin;
+	pIface->pfSetInterrupt = &NucleoGPIOSetInterrupt;
 
 	//Provide the capabilities of the available GPIO
 	pIface->nPWMBitDepth = NUCLEO_PWMBITDEPTH;
 	pIface->nAnaInBitDepth = NUCLEO_ADCBITDEPTH;
 	pIface->nAnaOutBitDepth = NUCLEO_DACBITDEPTH;
 
-	if (GPIO_IOCNT < nPinCnt) { //Can't provide more IO than the interface allows
+	if (GPIO_IOCNT < NUCLEO_GPIOCNT) { //Can't provide more IO than the interface allows
 		pIface->nGPIOCnt = GPIO_IOCNT;
 	} else {
-		pIface->nGPIOCnt = nPinCnt;
+		pIface->nGPIOCnt = NUCLEO_GPIOCNT;
 	}
 
 	pIface->pHWInfo = pHWInfo;
+	pIface->ePortCapabilities = GPIO_CAPS;
 
-	//Set the capabilities of all the IO points
+	//Set the capabilities of all the IO points (even if they aren't configured to be IO)
 	for (nCtr = 0; nCtr < pIface->nGPIOCnt; nCtr++) {
 		pIface->aGPIO[nCtr].eCapabilities = (eGPIOModes_t)(GPIO_DigitalInput | GPIO_DigitalOutput | GPIO_InputPullup);
 
-		if (NumberInArray_u16(pPinList[nCtr], gNucleoPWMList, NUCLEO_PWMCNT) == true) {
-			pIface->aGPIO[nCtr].eCapabilities = (eGPIOModes_t)(pIface->aGPIO[nCtr].eCapabilities | GPIO_OutputPWM);
-		}
-
-		if (NumberInArray_u16(pPinList[nCtr], gNucleoADCList, NUCLEO_ADCCNT) == true) {
-			pIface->aGPIO[nCtr].eCapabilities = (eGPIOModes_t)(pIface->aGPIO[nCtr].eCapabilities | GPIO_AnalogInput);
-		}
-
-		if (NumberInArray_u16(pPinList[nCtr], gNucleoDACList, NUCLEO_DACCNT) == true) {
-			pIface->aGPIO[nCtr].eCapabilities = (eGPIOModes_t)(pIface->aGPIO[nCtr].eCapabilities | GPIO_AnalogOutput);
-		}
-
 		pIface->aGPIO[nCtr].eMode = GPIO_None;
-		pIface->aGPIO[nCtr].pHWInfo = (void *)((uint32_t)pPinList[nCtr]);
+		pIface->aGPIO[nCtr].pHWInfo = NULL;
+	}
+
+	//Set the interrupts to disabled for all pins
+	pCurrPort->pIface = pIface;
+
+	for (nCtr = 0; nCtr < NUCLEO_GPIOCNT; nCtr++) {
+		pCurrPort->aIntInfo[nCtr].bIntEnable = false;
+		pCurrPort->aIntInfo[nCtr].pParam = NULL;
+		pCurrPort->aIntInfo[nCtr].pfIntFunc = NULL;
 	}
 
 	return GPIO_Success;
@@ -107,15 +85,11 @@ eGPIOReturn_t NucleoGPIOSetModeByPin(sGPIOIface_t *pIface, uint16_t nGPIOPin, eG
 }
 	
 eGPIOReturn_t NucleoGPIODigitalWriteByPin(sGPIOIface_t *pIface, uint16_t nGPIOPin, bool bState) {
-	uint32_t nIdx;
+	sNucleoGPIOPortInfo_t *pCurrPort = (sNucleoGPIOPortInfo_t *)(pIface->pHWInfo);
 	GPIO_PinState eState;
 	
-	nIdx = IndexInArray_u16(nGPIOPin, gNucleoGPIOAList, NUCLEO_GPIOACNT);
-	if (nIdx >= NUCLEO_GPIOACNT) { //Not in port A, try B
-		uint32_t nIdx = IndexInArray_u16(nGPIOPin, gNucleoGPIOBList, NUCLEO_GPIOBCNT);
-		if (nIdx >= NUCLEO_GPIOBCNT) { //Not in either port
-			return GPIOFail_InvalidPin;
-		}
+	if (nGPIOPin >= NUCLEO_GPIOCNT) {
+		return GPIOFail_InvalidPin;
 	}
 
 	//Should check that its an output first
@@ -126,13 +100,15 @@ eGPIOReturn_t NucleoGPIODigitalWriteByPin(sGPIOIface_t *pIface, uint16_t nGPIOPi
 		eState = GPIO_PIN_RESET;
 	}
 
-	HAL_GPIO_WritePin(pIface->pHWInfo, nGPIOPin, eState);
+	HAL_GPIO_WritePin(pCurrPort->pPort, nGPIOPin, eState);
 	
 	return GPIO_Success;
 }
 
 eGPIOReturn_t NucleoGPIODigitalReadByPin(sGPIOIface_t *pIface, uint16_t nGPIOPin, bool *bState) {
-	if (HAL_GPIO_ReadPin(pIface->pHWInfo, nGPIOPin) == GPIO_PIN_SET) {
+	sNucleoGPIOPortInfo_t *pCurrPort = (sNucleoGPIOPortInfo_t *)(pIface->pHWInfo);
+
+	if (HAL_GPIO_ReadPin(pCurrPort->pPort, nGPIOPin) == GPIO_PIN_SET) {
 		*bState = true;
 	} else {
 		*bState = false;
@@ -141,3 +117,245 @@ eGPIOReturn_t NucleoGPIODigitalReadByPin(sGPIOIface_t *pIface, uint16_t nGPIOPin
 	return GPIO_Success;
 }
 
+eGPIOReturn_t NucleoGPIOSetInterrupt(sGPIOIface_t *pIface, GPIOID_t nGPIOPin, pfGPIOInterrupt_t pHandler, bool bEnable, void *pParam) {
+	uint16_t nIdx;
+	sNucleoGPIOPortInfo_t *pCurrPort = (sNucleoGPIOPortInfo_t *)(pIface->pHWInfo);
+
+	//Determine the index of the pin interrupt information
+	switch (nGPIOPin) {
+		case (GPIO_PIN_0) :
+			nIdx = 0;
+			break;
+		case (GPIO_PIN_1) :
+			nIdx = 1;
+			break;
+		case (GPIO_PIN_2) :
+			nIdx = 2;
+			break;
+		case (GPIO_PIN_3) :
+			nIdx = 3;
+			break;
+		case (GPIO_PIN_4) :
+			nIdx = 4;
+			break;
+		case (GPIO_PIN_5) :
+			nIdx = 5;
+			break;
+		case (GPIO_PIN_6) :
+			nIdx = 6;
+			break;
+		case (GPIO_PIN_7) :
+			nIdx = 7;
+			break;
+		case (GPIO_PIN_8) :
+			nIdx = 8;
+			break;
+		case (GPIO_PIN_9) :
+			nIdx = 9;
+			break;
+		case (GPIO_PIN_10) :
+			nIdx = 10;
+			break;
+		case (GPIO_PIN_11) :
+			nIdx = 11;
+			break;
+		case (GPIO_PIN_12) :
+			nIdx = 12;
+			break;
+		case (GPIO_PIN_13) :
+			nIdx = 13;
+			break;
+		case (GPIO_PIN_14) :
+			nIdx = 14;
+			break;
+		case (GPIO_PIN_15) :
+			nIdx = 15;
+			break;
+		default:
+			return GPIOFail_InvalidPin;
+	}
+
+	//Setup the interrupt details for this pin
+	pCurrPort->aIntInfo[nIdx].bIntEnable = bEnable;
+	pCurrPort->aIntInfo[nIdx].pfIntFunc = pHandler;
+	pCurrPort->aIntInfo[nIdx].pParam = pParam;
+
+	return GPIO_Success;
+}
+
+eReturn_t NucleoTimeInitialize(sTimeIface_t *pIface) {
+	TimeInterfaceInitialize(pIface);
+
+	pIface->pfGetTicks = &NucleoGetCurrentTicks;
+	pIface->pfDelaySeconds = &NucleoTimeDelaySeconds;
+	pIface->pfDelayMilliSeconds = &NucleoTimeDelayMilliSeconds;
+
+	pIface->pfWatchdogRefresh = &NucleoWatchdogRefresh;
+
+	pIface->pfInterruptStart = &NucleoTimerStart;
+	pIface->pfInterruptStop = &NucleoTimerStop;
+	pIface->pfInterruptSetMilliseconds = &NucleoTimerSetMilliseconds;
+	pIface->pfInterruptSetHandler = &NucleoIntSetHandler;
+
+	pIface->eCapabilities = TIME_CAPS;
+
+	return Success;
+}
+
+uint32_t NucleoGetCurrentTicks(void) {
+	#if NUCLEO_TIMESRC == NUCLEO_TIMESRC_RTOS
+		return xTaskGetTickCount();
+	#elif #if NUCLEO_TIMESRC == NUCLEO_TIMESRC_HAL
+		return HAL_GetTick();
+	#endif
+}
+
+eReturn_t NucleoTimeDelaySeconds(uint32_t nDelayAmount) {
+	#if NUCLEO_TIMESRC == NUCLEO_TIMESRC_RTOS
+		vTaskDelay(nDelayAmount * 1000);
+	#elif #if NUCLEO_TIMESRC == NUCLEO_TIMESRC_HAL
+		HAL_Delay(nDelayAmount * 1000);
+	#endif
+
+	return Success;
+}
+
+eReturn_t NucleoTimeDelayMilliSeconds(uint32_t nDelayAmount) {
+	#if NUCLEO_TIMESRC == NUCLEO_TIMESRC_RTOS
+		vTaskDelay(nDelayAmount);
+	#elif #if NUCLEO_TIMESRC == NUCLEO_TIMESRC_HAL
+		HAL_Delay(nDelayAmount);
+	#endif
+
+	return Success;
+}
+
+eReturn_t NucleoWatchdogRefresh(void) {
+	HAL_IWDG_Refresh(&hiwdg);
+	return Success;
+}
+
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
+	uint16_t nIdx;
+
+	//Determine the index of the pin interrupt information
+	switch (GPIO_Pin) {
+		case (GPIO_PIN_0) :
+			nIdx = 0;
+			break;
+		case (GPIO_PIN_1) :
+			nIdx = 1;
+			break;
+		case (GPIO_PIN_2) :
+			nIdx = 2;
+			break;
+		case (GPIO_PIN_3) :
+			nIdx = 3;
+			break;
+		case (GPIO_PIN_4) :
+			nIdx = 4;
+			break;
+		case (GPIO_PIN_5) :
+			nIdx = 5;
+			break;
+		case (GPIO_PIN_6) :
+			nIdx = 6;
+			break;
+		case (GPIO_PIN_7) :
+			nIdx = 7;
+			break;
+		case (GPIO_PIN_8) :
+			nIdx = 8;
+			break;
+		case (GPIO_PIN_9) :
+			nIdx = 9;
+			break;
+		case (GPIO_PIN_10) :
+			nIdx = 10;
+			break;
+		case (GPIO_PIN_11) :
+			nIdx = 11;
+			break;
+		case (GPIO_PIN_12) :
+			nIdx = 12;
+			break;
+		case (GPIO_PIN_13) :
+			nIdx = 13;
+			break;
+		case (GPIO_PIN_14) :
+			nIdx = 14;
+			break;
+		case (GPIO_PIN_15) :
+			nIdx = 15;
+			break;
+		default:
+			return;
+	}
+
+	//Look for the GPIO that caused the interrupt
+	if ((gGPIOPortA.aIntInfo[nIdx].bIntEnable == true) && (gGPIOPortA.aIntInfo[nIdx].pfIntFunc != NULL)) {
+		gGPIOPortA.aIntInfo[nIdx].pfIntFunc(gGPIOPortA.pIface, GPIO_Pin, gGPIOPortA.aIntInfo[nIdx].pParam);
+		return;
+	}
+
+	if ((gGPIOPortB.aIntInfo[nIdx].bIntEnable == true) && (gGPIOPortB.aIntInfo[nIdx].pfIntFunc != NULL)) {
+		gGPIOPortB.aIntInfo[nIdx].pfIntFunc(gGPIOPortB.pIface, GPIO_Pin, gGPIOPortB.aIntInfo[nIdx].pParam);
+		return;
+	}
+
+	if ((gGPIOPortH.aIntInfo[nIdx].bIntEnable == true) && (gGPIOPortH.aIntInfo[nIdx].pfIntFunc != NULL)) {
+		gGPIOPortH.aIntInfo[nIdx].pfIntFunc(gGPIOPortH.pIface, GPIO_Pin, gGPIOPortH.aIntInfo[nIdx].pParam);
+		return;
+	}
+
+	return;
+}
+
+eReturn_t NucleoTimerStart(void *pTimerHW) {
+	sNucleoTimerInfo_t *pTimer = (sNucleoTimerInfo_t *)pTimerHW;
+	HAL_TIM_OC_Start_IT(pTimer->pHWTimer, pTimer->nChannel);
+
+	return Success;
+}
+
+eReturn_t NucleoTimerStop(void *pTimerHW) {
+	sNucleoTimerInfo_t *pTimer = (sNucleoTimerInfo_t *)pTimerHW;
+	HAL_TIM_OC_Stop_IT(pTimer->pHWTimer, pTimer->nChannel);
+
+	return Success;
+}
+
+eReturn_t NucleoTimerSetMilliseconds(void *pTimerHW, uint32_t nCountVal) {
+	float nClockCnt;
+	sNucleoTimerInfo_t *pTimer = (sNucleoTimerInfo_t *)pTimerHW;
+
+	//TimerPeriod = ((ARR + 1) * (PSC + 1)) / ClkFreq
+	//So ARR = ((ClkFreq * TimerPeriod) / (PSC + 1)) - 1
+	nClockCnt = TIME_TIMERCLKFREQ * ((float)nCountVal / 1000);
+	nClockCnt /= pTimer->pHWTimer->Instance->PSC + 1;
+	nClockCnt -= 1;
+
+	//Calculate how many clocks to reach that
+	pTimer->pHWTimer->Init.Period = (uint32_t)nClockCnt;
+	pTimer->pHWTimer->Instance->ARR = pTimer->pHWTimer->Init.Period;
+
+	return Success;
+}
+
+eReturn_t NucleoIntSetHandler(void *pTimerHW, pfTimerInterruptHandler_t pfHandler, void *pParam) {
+	sNucleoTimerInfo_t *pTimer = (sNucleoTimerInfo_t *)pTimerHW;
+
+	pTimer->pfHandler = pfHandler;
+	pTimer->pParam = pParam;
+
+	return Success;
+}
+
+//Timer 2 Channel 1 counter call back (auto resets to trigger again)
+void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef *htim) {
+	if (gTimer2Ch1.pHWTimer == htim) {
+		gTimer2Ch1.pfHandler((void *)&gTimer2Ch1, gTimer2Ch1.pParam);
+	}
+
+	return;
+}
