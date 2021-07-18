@@ -26,7 +26,7 @@
 	eRC522Return_t RC522AntennaEnable(sRC522Obj_t *pRC522, bool bTurnOn);
 
 /*****	Functions	*****/
-eRC522Return_t RC522InitializeSPI(sRC522Obj_t *pRC522, sSPIIface_t *pSpiObj, sGPIOIface_t *pGPIOObj, uint16_t nChipSelectPin) {
+eRC522Return_t RC522InitializeSPI(sRC522Obj_t *pRC522, sSPIIface_t *pSpiObj, sGPIOIface_t *pGPIOObj, uint16_t nChipSelectPin, GPIOID_t nResetPin) {
 	eRC522Return_t eReturn;
 	uint8_t nRegVal;
 
@@ -34,7 +34,9 @@ eRC522Return_t RC522InitializeSPI(sRC522Obj_t *pRC522, sSPIIface_t *pSpiObj, sGP
 	pRC522->pSpi = pSpiObj;
 	pRC522->pI2C = NULL;
 	pRC522->nCSPin = nChipSelectPin;
+	pRC522->nRstPin = nResetPin;
 
+	pRC522->pGPIO->pfDigitalWriteByPin(pRC522->pGPIO, pRC522->nRstPin, true); //Positive edge to power on
 	pRC522->pGPIO->pfDigitalWriteByPin(pRC522->pGPIO, pRC522->nCSPin, true); //Chip select is normally high
 
 	//Check the device version
@@ -52,16 +54,18 @@ eRC522Return_t RC522InitializeSPI(sRC522Obj_t *pRC522, sSPIIface_t *pSpiObj, sGP
 	return RC522InitDevice(pRC522);
 }
 
-eRC522Return_t RC522InitializeI2C(sRC522Obj_t *pRC522, sI2CIface_t *pI2CObj, eRC522Addr_t eAddrPins) {
+eRC522Return_t RC522InitializeI2C(sRC522Obj_t *pRC522, sI2CIface_t *pI2CObj, sGPIOIface_t *pGPIOObj, eRC522Addr_t eAddrPins, GPIOID_t nResetPin) {
 	eI2CReturn_t eReturn;
 	uint8_t nRegVal;
 
-	pRC522->pGPIO = NULL;
+	pRC522->pGPIO = pGPIOObj;
 	pRC522->pSpi = NULL;
 	pRC522->pI2C = pI2CObj;
 	pRC522->nCSPin = 0;
+	pRC522->nRstPin = nResetPin;
 	pRC522->nI2CAddr = RC522AddrBase | eAddrPins;
 
+	pRC522->pGPIO->pfDigitalWriteByPin(pRC522->pGPIO, pRC522->nRstPin, true); //Positive edge to power on
 	eReturn = pRC522->pI2C->pfI2CReadUint8Reg(pRC522->pI2C, pRC522->nI2CAddr, RC522Reg_Version, &nRegVal);
 	if (eReturn != I2C_Success) {
 		return RC522Fail_BusFailure;

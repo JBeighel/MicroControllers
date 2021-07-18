@@ -161,7 +161,8 @@
 		sSPIIface_t *pSpi;
 		sI2CIface_t *pI2C;
 		sGPIOIface_t *pGPIO;
-		uint16_t nCSPin;
+		GPIOID_t nCSPin;
+		GPIOID_t nRstPin;
 		uint8_t nI2CAddr;
 	} sRC522Obj_t;
 
@@ -172,9 +173,9 @@
 
 
 /*****	Prototypes 	*****/
-	eRC522Return_t RC522InitializeSPI(sRC522Obj_t *pRC522, sSPIIface_t *pSpiObj, sGPIOIface_t *pGPIOObj, uint16_t nChipSelectPin);
+	eRC522Return_t RC522InitializeSPI(sRC522Obj_t *pRC522, sSPIIface_t *pSpiObj, sGPIOIface_t *pGPIOObj, GPIOID_t nChipSelectPin, GPIOID_t nResetPin);
 
-	eRC522Return_t RC522InitializeI2C(sRC522Obj_t *pRC522, sI2CIface_t *pI2CObj, eRC522Addr_t eAddrPins);
+	eRC522Return_t RC522InitializeI2C(sRC522Obj_t *pRC522, sI2CIface_t *pI2CObj, sGPIOIface_t *pGPIOObj, eRC522Addr_t eAddrPins, GPIOID_t nResetPin);
 
 	//PICC_IsNewCardPresent
 	eRC522Return_t RC522IsNewCardPreset(sRC522Obj_t *pRC522, bool *bIsCardPresent);

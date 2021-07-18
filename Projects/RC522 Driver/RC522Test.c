@@ -58,9 +58,23 @@ eReturn_t BoardInit(void) {
 	}
 	
 	//Init peripherals (board support work)
-	eResult = RC522InitializeSPI(&gRC522, &gSPI, &gGPIO, RC500_CSPIN);
+	eResult = gGPIO.pfSetModeByPin(&gGPIO, RC500_CSPIN, GPIO_DigitalOutput);
+	if (eResult != GPIO_Success) {
+		printf("Failed to set CS Pin Mode: %d\n", eResult);
+		return Fail_Unknown;
+	}
 	
-	//eResult = RC522InitializeI2C(&gRC522, &gI2C, RC522AddrBase);
+	eResult = gGPIO.pfSetModeByPin(&gGPIO, RC500_RSTPIN, GPIO_DigitalOutput);
+	if (eResult != GPIO_Success) {
+		printf("Failed to set Reset Pin Mode: %d\n", eResult);
+		return Fail_Unknown;
+	}
+	
+	gGPIO.pfDigitalWriteByPin(&gGPIO, RC500_RSTPIN, true);
+	
+	eResult = RC522InitializeSPI(&gRC522, &gSPI, &gGPIO, RC500_CSPIN, RC500_RSTPIN);
+	
+	//eResult = RC522InitializeI2C(&gRC522, &gI2C, RC522AddrBase, RC500_RSTPIN);
 	
 	if (eResult != RC522_Success) {
 		printf("RC522 Initialization Fail %d\n", eResult);
@@ -77,5 +91,6 @@ int main(int nArgCnt, char **aArgVals) {
 		return 1;
 	}
 	
+	printf("Exit with no errors?\n");
 	return 0;
 }
