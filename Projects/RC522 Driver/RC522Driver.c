@@ -24,6 +24,8 @@
 	eRC522Return_t RC522InitDevice(sRC522Obj_t *pRC522);
 
 	eRC522Return_t RC522AntennaEnable(sRC522Obj_t *pRC522, bool bTurnOn);
+	
+	eRC522Return_t RC522PerformCommand(sRC522Obt_t *pRC522, eRC522RegCmd_t eCmd, eRC522RegComIrq_t eDoneIRQ, uint8_t *pSendData, uint8_t nSendDataLen, uint8_t pReadData, uint8_t nReadDataLen, bool bCheckCRC);
 
 /*****	Functions	*****/
 eRC522Return_t RC522InitializeSPI(sRC522Obj_t *pRC522, sSPIIface_t *pSpiObj, sGPIOIface_t *pGPIOObj, uint16_t nChipSelectPin, GPIOID_t nResetPin) {
@@ -113,7 +115,39 @@ eRC522Return_t RC522WriteRegister(sRC522Obj_t *pRC522, uint8_t nRegAddr, uint8_t
 
 		pRC522->pSpi->pfTransferByte(pRC522->pSpi, nRegAddr, &nReadByte);
 		pRC522->pSpi->pfTransferByte(pRC522->pSpi, nRegVal, &nReadByte);
-		pRC522->pSpi->pfTransferByte(pRC522->pSpi, 0x00, &nReadByte); //The device continually reads registers until it gets 0x00
+
+		pRC522->pSpi->pfEndTransfer(pRC522->pSpi);
+		pRC522->pGPIO->pfDigitalWriteByPin(pRC522->pGPIO, pRC522->nCSPin, true);
+
+		if (nReadByte != nRegVal) {
+			return RC522Fail_WriteVerify;
+		}
+	} else if (pRC522->pI2C != NULL) {
+		pRC522->pI2C->pfI2CWriteUint8Reg(pRC522->pI2C, pRC522->nI2CAddr, nRegAddr, nRegVal);
+	} else {
+		return RC522Fail_BusFailure;
+	}
+
+	return RC522_Success;
+}
+
+eRC522Return_t RC522WriteRegisterData(sRC522Obj_t *pRC522, uint8_t nRegAddr, uint8_t nDataLen, uint8_t *pData) {
+	uint8_t nReadByte, nCtr;
+
+	if (pRC522->pSpi != NULL) {
+		//If I2C/UART the register address is unchanged, for SPI some extra framing is needed
+		nRegAddr = RC522Reg_SPIWrite | (nRegAddr << RC522Reg_SPILShift);
+
+		pRC522->pGPIO->pfDigitalWriteByPin(pRC522->pGPIO, pRC522->nCSPin, false);
+		pRC522->pSpi->pfBeginTransfer(pRC522->pSpi);
+
+		//Write the address
+		pRC522->pSpi->pfTransferByte(pRC522->pSpi, nRegAddr, &nReadByte);
+		
+		//Write all the data bytes
+		for (nCtr = 0; nCtr < nDataLen; nCtr++) {
+			pRC522->pSpi->pfTransferByte(pRC522->pSpi, pData[nCtr], &nReadByte);
+		}
 
 		pRC522->pSpi->pfEndTransfer(pRC522->pSpi);
 		pRC522->pGPIO->pfDigitalWriteByPin(pRC522->pGPIO, pRC522->nCSPin, true);
@@ -135,7 +169,7 @@ eRC522Return_t RC522InitDevice(sRC522Obj_t *pRC522) {
 	RC522WriteRegister(pRC522, RC522Reg_TxMode, RC522RegTxRxMode_106kBd);
 	RC522WriteRegister(pRC522, RC522Reg_TxMode, RC522RegTxRxMode_106kBd);
 
-	RC522WriteRegister(pRC522, RC522Reg_ModWidth, 0x26); //Sets the modulation width
+	RC522WriteRegister(pRC522, RC522Reg_ModWidth, RC522_DEFMODWIDTH); //Sets the modulation width
 
 	// When communicating with a PICC we need a timeout if something goes wrong.
 	// Timer = 13.56 MHz / (2 * PreScaler + 1)
@@ -160,10 +194,44 @@ eRC522Return_t RC522AntennaEnable(sRC522Obj_t *pRC522, bool bTurnOn) {
 	RC522ReadRegister(pRC522, RC522Reg_TxControl, &nRegVal);
 
 	if (bTurnOn == true) {
-		nRegVal |= 0x03;
+		nRegVal |= RC522RegTxCtrl_Tx2RFEn | RC522RegTxCtrl_Tx1RFEn;
 	} else {
-		nRegVal &= ~0x03;
+		nRegVal &= ~(RC522RegTxCtrl_Tx2RFEn | RC522RegTxCtrl_Tx1RFEn);
 	}
 
 	return RC522WriteRegister(pRC522, RC522Reg_TxControl, nRegVal);
+}
+
+eRC522Return_t RC522IsCardPresent(sRC522Obj_t *pRC522, bool *pbCardDetected) {
+	uint8_t aATQABuff[2];
+	
+	
+	//Reset baud rates and mod width
+	RC522WriteRegister(pRC522, RC522Reg_TxMode, RC522RegTxRxMode_106kBd);
+	RC522WriteRegister(pRC522, RC522Reg_RxMode, RC522RegTxRxMode_106kBd);
+	
+	RC522WriteRegister(pRC522, RC522Reg_ModWidth, RC522_DEFMODWIDTH);
+	
+	
+}
+
+eRC522Return_t RC522PerformCommand(sRC522Obt_t *pRC522, eRC522RegCmd_t eCmd, eRC522RegComIrq_t eDoneIRQ, uint8_t *pSendData, uint8_t nSendDataLen, uint8_t pReadData, uint8_t nReadDataLen, bool bCheckCRC) {
+	//Cancel any current commands
+	RC522WriteRegister(pRC522, RC522Reg_Command, RC522RegCmd_CmdIdle);
+	//Clear all interrupts so they can detect command completion
+	RC522WriteRegister(pRC522, RC522Reg_ComIrq, RC522RegComIrq_AllIrq);
+	//Clear the FIFO for command data
+	RC522WriteRegister(pRC522, RC522Reg_FIFOLevel, RC522RegFIFOLvl_FlushBuff);
+	//Write the requested data into the FIFO
+	RC522WriteRegisterData(pRC522, RC522Reg_FIFOData, nSendDataLen, pSendData);
+	//Clear out any bit alignment
+	RC522WriteRegisterData(pRC522, RC522Reg_BitFraming, RC522RegBitFrm_TxRx8Bits);
+	
+	//Everything is reset, issue the command
+	RC522WriteRegister(pRC522, RC522Reg_Command, eCmd);
+	if (eCmd == RC522RegCmd_CmdTransceive) { //Make sure transceive starts
+		RC522WriteRegisterData(pRC522, RC522Reg_BitFraming, RC522RegBitFrm_StartSend);
+	}
+	
+	//Now wait until the command to complete
 }

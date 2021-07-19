@@ -26,7 +26,9 @@
 	/**	@brief		SPI interface capabilities required by the RC522 driver
 		@ingroup	rc522driver
 	*/
-	#define RC522_SPICAPS	(SPI_BeginTransfer | SPI_EndTransfer | SPI_BiDir1Byte)
+	#define RC522_SPICAPS		(SPI_BeginTransfer | SPI_EndTransfer | SPI_BiDir1Byte)
+	
+	#define RC522_DEFMODWIDTH	0x26
 
 	typedef enum eRC522Return_t {
 		RC522Warn_Unknown		= 1,	/**< An unknown but recoverable error happened during the operation */
@@ -48,29 +50,32 @@
 		RC522Addr5				= 0x20,	/**< Only valid if pin EA is high */
 	} eRC522Addr_t;
 
+	/**	@brief		Enumeration of all registers in the RFRC522 peripheral
+		@ingroup	rc522driver
+	*/
 	typedef enum eRC522Reg_t {
 		//Command and status
-		RC522Reg_Command		= 0x01,
+		RC522Reg_Command		= 0x01, /**< Issue commands, start and stop execution */
 		RC522Reg_ComIEn			= 0x02,
 		RC522Reg_DivIEn			= 0x03,
-		RC522Reg_ComIrq			= 0x04,
+		RC522Reg_ComIrq			= 0x04,	/**< Command IRQ flags */
 		RC522Reg_DivIrq			= 0x05,
 		RC522Reg_Error			= 0x06,
 		RC522Reg_Status1		= 0x07,
 		RC522Reg_Status2		= 0x08,
-		RC522Reg_FIFOData		= 0x09,
-		RC522Reg_FIFOLevel		= 0x0A,
+		RC522Reg_FIFOData		= 0x09,	/**< Used to read/write data to 64 byte FIFO */
+		RC522Reg_FIFOLevel		= 0x0A,	/**< Number of bytes in the FIFO */
 		RC522Reg_WaterLevel		= 0x0B,
 		RC522Reg_Control		= 0x0C,
-		RC522Reg_BitFraming		= 0x0D,
+		RC522Reg_BitFraming		= 0x0D,	/**< Adjustments for bit-oriented frames */
 		RC522Reg_Coll			= 0x0E,
 
 		//Command
 		RC522Reg_Mode			= 0x11,
-		RC522Reg_TxMode			= 0x12,
-		RC522Reg_RxMode			= 0x13,
-		RC522Reg_TxControl		= 0x14,
-		RC522Reg_TxASK			= 0x15,
+		RC522Reg_TxMode			= 0x12,	/**< Transmission mode settings */
+		RC522Reg_RxMode			= 0x13,	/**< Receive mode settings */
+		RC522Reg_TxControl		= 0x14,	/**< Controls logical behavior of antenna pins */
+		RC522Reg_TxASK			= 0x15,	/**< Transmit and modulation settings */
 		RC522Reg_TxSel			= 0x16,
 		RC522Reg_RxSel			= 0x17,
 		RC522Reg_RxThreshold	= 0x18,
@@ -85,16 +90,16 @@
 		RC522Reg_CRCMSB			= 0x21,
 		RC522Reg_CRCLSB			= 0x22,
 
-		RC522Reg_ModWidth		= 0x24,
+		RC522Reg_ModWidth		= 0x24,	/**< Sets modulation width */
 
 		RC522Reg_RFCfg			= 0x26,
 		RC522Reg_GsN			= 0x27,
 		RC522Reg_CWGsP			= 0x28,
 		RC522Reg_ModGsP			= 0x29,
-		RC522Reg_TMode			= 0x2A,
+		RC522Reg_TMode			= 0x2A,	/**< Timer and Prescaler register */
 		RC522Reg_TPrescaler		= 0x2B,
-		RC522Reg_TReloadMSB		= 0x2C,
-		RC522Reg_TReloadLSB		= 0x2D,
+		RC522Reg_TReloadMSB		= 0x2C,	/**< 16 bit timer reload value, most significant bits */
+		RC522Reg_TReloadLSB		= 0x2D,	/**< 16 bit timer reload value, least significant bits */
 		RC522Reg_TCntrValMSB	= 0x2E,
 		RC522Reg_TCntrValLSB	= 0x2F,
 
@@ -116,6 +121,9 @@
 		RC522Reg_SPILShift		= 1,
 	} eRC522Reg_t;
 
+	/**	@brief		Enumeration of all values in the version register
+		@ingroup	rc522driver
+	*/
 	typedef enum eRC522RegVersion_t {
 		RC522RegVer_ChipMask	= 0xF0,
 		RC522RegVer_ChipMFRC522	= 0x90,
@@ -125,15 +133,22 @@
 		RC522RegVer_SWVer2		= 0x02,
 	} eRC522RegVersion_t;
 
+	/**	@brief		Values in the Transmission mode register
+		@ingroup	rc522driver
+	*/
 	typedef enum eRC522RegTxRxMode_t {
 		RC522RegTxRxMode_CRC	= 0x80,	/**< Enables CRC calculation, can only be 0 at 106kBd */
 		RC522RegTxRxMode_106kBd	= 0x00,	/**< Radio communication at 106kBd */
 		RC522RegTxRxMode_212kBd	= 0x10,	/**< Radio communication at 212kBd */
 		RC522RegTxRxMode_424kBd	= 0x20,	/**< Radio communication at 424kBd */
 		RC522RegTxRxMode_848kBd	= 0x30,	/**< Radio communication at 848kBd */
-		RC522RegTxRxMode_InvMod	= 0x04,	/**< Invert modulation of data */
+		RC522RegTxRxMode_InvMod	= 0x04,	/**< Invert modulation of data (TxMode only) */
+		RC522RegTxRxMode_RxNoErr= 0x04,	/**< Invalid received data stream (less than 4 bits) will be ignored */
 	} eRC522RegTxRxMode_t;
 
+	/**	@brief		Values in the timer and prescaler mode register
+		@ingroup	rc522driver
+	*/
 	typedef enum eRC522RegTMode_t {
 		RC522RegTMode_Auto		= 0x80,	/**< Timer restarts at end of transmission */
 		RC522RegTMode_NonGated	= 0x00,
@@ -143,6 +158,9 @@
 		RC522RegTMode_PrescaleHighMask= 0x0F,	/**< Mask for the high bits of the prescaler value */
 	} eRC522RegTMode_t;
 
+	/**	@brief		Transmit and modulation settings in TxASK register
+		@ingroup	rc522driver
+	*/
 	typedef enum eRC522RegTxASK_t {
 		RC522RegTxASK_Force100ASK	= 0x40,	/**< Force 100% ASK modulation */
 	} eRC522RegTxASK_t;
@@ -156,6 +174,71 @@
 		RC522RegMode_CRCPreA671	= 0x10,
 		RC522RegMode_CRCPreFFFF	= 0x11,
 	} eRC522RegMode_t;
+	
+	/**	@brief		Values in the TxControl register, behavior of antenna driver pins
+		@ingroup	rc522driver
+	*/
+	typedef enum eRC522RegTxCtrl_t {
+		RC522RegTxCtrl_InvTx2RFOn	= 0x80,	/**< Output signal on TX2 Inverted when driver TX2 enabled */
+		RC522RegTxCtrl_InvTx1RFOn	= 0x40,	/**< Output signal on TX1 Inverted when driver TX1 enabled */
+		RC522RegTxCtrl_InvTx2RFOff	= 0x20,	/**< Output signal on TX2 Inverted when driver TX2 disabled */
+		RC522RegTxCtrl_InvTx1RFOff	= 0x10,	/**< Output signal on TX1 Inverted when driver TX1 disabled */
+		RC522RegTxCtrl_Tx2CW		= 0x08,	/**< Output signal on TX2 continuously delivers unmodulated 13.56 MHz energy carrier */
+		RC522RegTxCtrl_Tx2RFEn		= 0x02,	/**< Output signal on pin TX2 delivers the 13.56 MHz energy carrier odulated by the transmission data */
+		RC522RegTxCtrl_Tx1RFEn		= 0x01,	/**< Output signal on pin TX1 delivers the 13.56 MHz energy carrier odulated by the transmission data */
+	} eRC522RegTxCtrl_t;
+	
+	/**	@brief		Values in the command register
+		@ingroup	rc522driver
+	*/
+	typedef enum eRC522RegCmd_t {
+		RC522RegCmd_RcvOff			= 0x20,	/**< Switch off analog part of receiver */
+		RC522RegCmd_PowerDown		= 0x10,	/**< Enter soft power-down mode */
+		
+		RC522RegCmd_CmdMask			= 0x0F,	/**< Mask of all bits used by commands */
+		
+		RC522RegCmd_CmdIdle			= 0x00,	/**< Cancel current command, no action */
+		RC522RegCmd_CmdMem			= 0x01,	/**< Stores 25 bytes into internal buffer */
+		RC522RegCmd_CmdGenRndID		= 0x02,	/**< Generate random 10 byte ID number */
+		RC522RegCmd_CmdCalcCRC		= 0x03,	/**< Activate CRC coprocessor or perform self test */
+		RC522RegCmd_CmdTransmit		= 0x04,	/**< Transmit data from FIFO buffer */
+		RC522RegCmd_CmdNoCmdChg		= 0x07,	/**< No command change, modify bits in command register */
+		RC522RegCmd_CmdReceive		= 0x08,	/**< Activates the receiver circuit */
+		RC522RegCmd_CmdTransceive	= 0x0C,	/**< Transmits data from FIFo buffer then antenna and activates receiver */
+		RC522RegCmd_CmdMFAuthent	= 0x0E,	/**< Performs MIFARE standard authentication as a reader */
+		RC522RegCmd_CmdSoftReset	= 0x0F,	/**< Resets the MFRC522 */
+	} eRC522RegCmd_t;
+	
+	/**	@brief		Values in the ComIrq register, interrupt request bits
+		@ingroup	rc522driver
+	*/
+	typedef enum eRC522RegComIrq_t {
+		RC522RegComIrq_AllIrq	= 0x7F, /**< Mask of all IRQ bits */
+		RC522RegComIrq_Set1		= 0x80,	/**< 1 indicates set bits are set, 0 inidcates set bits are clear */
+		RC522RegComIrq_Tx		= 0x40,	/**< Last bit of transmitted data was sent */
+		RC522RegComIrq_Rx		= 0x20,	/**< Receiver detected valid data stream */
+		RC522RegComIrq_Idle		= 0x10,	/**< Command terminates, entered Idle */
+		RC522RegComIrq_HiAlert	= 0x08,	/**< Stats1Reg's HiAlert bit is set */
+		RC522RegComIrq_LoAlert	= 0x04,	/**< Stats1Reg's LoAlert bit is set */
+		RC522RegComIrq_Err		= 0x02,	/**< Any bit in ErrorReg is set */
+		RC522RegComIrq_Timer	= 0x01,	/**< Timer coutner has decremented to zero */
+	} eRC522RegComIrq_t;
+	
+	/**	@brief		Values in the FIFO Level register, FIFO data levels
+		@ingroup	rc522driver
+	*/
+	typedef enum eRC522RegFIFOLvl_t {
+		RC522RegFIFOLvl_FlushBuff	= 0x80, /**< Clears internal FIFO buffer and flag bits */
+		RC522RegFIFOLvl_LvlMask		= 0x7F, /**< Mask of all bits used to report bytes stored i FIFO */
+	} eRC522RegFIFOLvl_t;
+	
+	typedef enum eRC522RegBitFrm_t {
+		RC522RegBitFrm_StartSend	= 0x80,	/**< Starts trnsmission of data (tranceive cmd only ) */
+		RC522RegBitFrm_RxAlignMask	= 0x70,	/**< Bits used to hold first bit position of received data in FIFO */
+		RC522RegBitFrm_RxAlignShift	= 4,	/**< Number of bits to shift decimal value into RX Align space */
+		RC522RegBitFrm_TxLastBitsMask= 0x07,/**< Number of bits to transmit in the last byte (0 for all 8) */
+		RC522RegBitFrm_TxRx8Bits	= 0x00,	/**< Used to set all 8 bits used for TX and RX data */
+	} eRC522RegBitFrm_t;
 
 	typedef struct sRC522Obj_t {
 		sSPIIface_t *pSpi;
@@ -178,10 +261,10 @@
 	eRC522Return_t RC522InitializeI2C(sRC522Obj_t *pRC522, sI2CIface_t *pI2CObj, sGPIOIface_t *pGPIOObj, eRC522Addr_t eAddrPins, GPIOID_t nResetPin);
 
 	//PICC_IsNewCardPresent
-	eRC522Return_t RC522IsNewCardPreset(sRC522Obj_t *pRC522, bool *bIsCardPresent);
+	eRC522Return_t RC522IsCardPresent(sRC522Obj_t *pRC522, bool *pbCardDetected);
 
 	//asume 4 byte serial; PICC_ReadCardSerial
-	eRC522Return_t RC522IReadCardSerial(sRC522Obj_t *pRC522, uint8_t *paSerial);
+	eRC522Return_t RC522ReadCardSerial(sRC522Obj_t *pRC522, uint8_t *paSerial);
 
 /*****	Functions	*****/
 
