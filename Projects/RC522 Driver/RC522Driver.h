@@ -18,6 +18,7 @@
 	#define __RC522DRIVER_H
 
 /*****	Includes	*****/
+	#include "CommonUtils.h"
 	#include "GPIOGeneralInterface.h"
 	#include "SPIGeneralInterface.h"
 	#include "I2CGeneralInterface.h"
@@ -37,6 +38,10 @@
 		RC522Fail_NotFound		= -2,	/**< The device did not respond to self identification requests */
 		RC522Fail_BusFailure	= -3,	/**< The communications bus reported a failure */
 		RC522Fail_WriteVerify	= -4,	/**< The device did no properly store a written value */
+		RC522Fail_Timeout	 	= -5,	/**< Timeout while waiting for a command to complete */
+		RC522Fail_DeviceError	= -6,	/**< The peripheral device reported an error */
+		RC522Fail_BuffSize		= -7,	/**< A buffer was too small to hold the requested data */
+		RC522Fail_CRC			= -8,	/**< Received CRC does not match calculated CRC */
 	} eRC522Return_t;
 
 	typedef enum eRC522Addr_t {
@@ -59,14 +64,14 @@
 		RC522Reg_ComIEn			= 0x02,
 		RC522Reg_DivIEn			= 0x03,
 		RC522Reg_ComIrq			= 0x04,	/**< Command IRQ flags */
-		RC522Reg_DivIrq			= 0x05,
-		RC522Reg_Error			= 0x06,
+		RC522Reg_DivIrq			= 0x05,	/**< Additional IRQ bits */
+		RC522Reg_Error			= 0x06,	/**< Errors detected during last command */
 		RC522Reg_Status1		= 0x07,
 		RC522Reg_Status2		= 0x08,
 		RC522Reg_FIFOData		= 0x09,	/**< Used to read/write data to 64 byte FIFO */
 		RC522Reg_FIFOLevel		= 0x0A,	/**< Number of bytes in the FIFO */
 		RC522Reg_WaterLevel		= 0x0B,
-		RC522Reg_Control		= 0x0C,
+		RC522Reg_Control		= 0x0C,	/**< Control bits */
 		RC522Reg_BitFraming		= 0x0D,	/**< Adjustments for bit-oriented frames */
 		RC522Reg_Coll			= 0x0E,
 
@@ -87,8 +92,8 @@
 		RC522Reg_SerialSpeed	= 0x1F,
 
 		//Configuration
-		RC522Reg_CRCMSB			= 0x21,
-		RC522Reg_CRCLSB			= 0x22,
+		RC522Reg_CRCMSB			= 0x21,	/**< MSB of CRC calculation */
+		RC522Reg_CRCLSB			= 0x22,	/**< LSB of CRC calculation */
 
 		RC522Reg_ModWidth		= 0x24,	/**< Sets modulation width */
 
@@ -218,11 +223,17 @@
 		RC522RegComIrq_Tx		= 0x40,	/**< Last bit of transmitted data was sent */
 		RC522RegComIrq_Rx		= 0x20,	/**< Receiver detected valid data stream */
 		RC522RegComIrq_Idle		= 0x10,	/**< Command terminates, entered Idle */
-		RC522RegComIrq_HiAlert	= 0x08,	/**< Stats1Reg's HiAlert bit is set */
-		RC522RegComIrq_LoAlert	= 0x04,	/**< Stats1Reg's LoAlert bit is set */
+		RC522RegComIrq_HiAlert	= 0x08,	/**< Status1Reg's HiAlert bit is set */
+		RC522RegComIrq_LoAlert	= 0x04,	/**< Status1Reg's LoAlert bit is set */
 		RC522RegComIrq_Err		= 0x02,	/**< Any bit in ErrorReg is set */
 		RC522RegComIrq_Timer	= 0x01,	/**< Timer coutner has decremented to zero */
 	} eRC522RegComIrq_t;
+	
+	typedef enum eRC522RegDivIrq_t {
+		RC522RegDivIrq_Set2			= 0x80,	/**< 1 indicates set bits are set, 0 inidcates set bits are clear */
+		RC522RegDivIrq_MfinActive	= 0x10,	/**< MFIN active, set when rising of falling edge detected */
+		RC522RegDivIrq_CRC			= 0x04,	/**< The CalcCRC command is complete */
+	} eRC522RegDivIrq_t;
 	
 	/**	@brief		Values in the FIFO Level register, FIFO data levels
 		@ingroup	rc522driver
@@ -239,6 +250,28 @@
 		RC522RegBitFrm_TxLastBitsMask= 0x07,/**< Number of bits to transmit in the last byte (0 for all 8) */
 		RC522RegBitFrm_TxRx8Bits	= 0x00,	/**< Used to set all 8 bits used for TX and RX data */
 	} eRC522RegBitFrm_t;
+	
+	/**	@brief		Error conditions detected when carrying out commands
+		@ingroup	rc522driver
+	*/
+	typedef enum eRC522RegErr_t {
+		RC522RegErr_Write		= 0x80,	/**< Darta written to FIFO by host during receive */
+		RC522RegErr_Temp		= 0x40,	/**< Internal temperature sensor detects over heating */
+		RC522RegErr_BuffOverFl	= 0x10,	/**< FIFO buffer overflow */
+		RC522RegErr_Collision	= 0x08,	/**< Bit-collision dtected */
+		RC522RegErr_CRC			= 0x04,	/**< CRC calculation failed */
+		RC522RegErr_Parity		= 0x02,	/**< Parity check failed */
+		RC522RegErr_Protocol	= 0x01,	/**< RF protocol error detected */
+	} eRC522RegErr_t;
+
+	/**	@brief		Mescellaneous control registers
+		@ingroup	rc522driver
+	*/
+	typedef enum eRC522RegCtrl_t {
+		RC522RegCtrl_TStopNow	= 0x80,	/**< Timer stops immediately */
+		RC522RegCtrl_TStartNow	= 0x40,	/**< Timer starts immediately */
+		RC522RegCtrl_RxLastBits = 0x07,	/**< Indicates number of valid bits in the last RX byte, 0 means all 8 */
+	} eRC522RegCtrl_t;
 
 	typedef struct sRC522Obj_t {
 		sSPIIface_t *pSpi;

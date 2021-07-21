@@ -25,7 +25,21 @@
 
 	eRC522Return_t RC522AntennaEnable(sRC522Obj_t *pRC522, bool bTurnOn);
 	
-	eRC522Return_t RC522PerformCommand(sRC522Obt_t *pRC522, eRC522RegCmd_t eCmd, eRC522RegComIrq_t eDoneIRQ, uint8_t *pSendData, uint8_t nSendDataLen, uint8_t pReadData, uint8_t nReadDataLen, bool bCheckCRC);
+	/**	@brief		Issue a command to the peripheral and await completion
+		@param		pRC522			Pointer to RC522 device object to use
+		@param		eCmd			The command to tel lthe device to carry out
+		@param		eDoneIRQ		Mask of any IRQ bits that indicate the command is complete
+		@param		pSendData		Pointer to buffer of data bytes to write to FIFO
+		@param		nSendDataLen	Number of data bytes to write to the FIFO
+		@param		pReadData		Buffer to store data read from FIFO (null to skip FIFO read)
+		@param		pnReadDataLen	Number of bytes of space in pReadData buffer (zero to skip
+			FIFO read).  Also used to return number of bytes read from FIFO
+		@param		bCheckCRC		Perform a CRC check on the data received by the device
+		@return		RC522_Success on successful completion, or an error code describing the 
+			failure detected
+		@ingroup	rc522driver
+	*/
+	eRC522Return_t RC522PerformCommand(sRC522Obt_t *pRC522, eRC522RegCmd_t eCmd, eRC522RegComIrq_t eDoneIRQ, uint8_t *pSendData, uint8_t nSendDataLen, uint8_t *pReadData, uint8_t *pnReadDataLen, bool bCheckCRC);
 
 /*****	Functions	*****/
 eRC522Return_t RC522InitializeSPI(sRC522Obj_t *pRC522, sSPIIface_t *pSpiObj, sGPIOIface_t *pGPIOObj, uint16_t nChipSelectPin, GPIOID_t nResetPin) {
@@ -215,7 +229,10 @@ eRC522Return_t RC522IsCardPresent(sRC522Obj_t *pRC522, bool *pbCardDetected) {
 	
 }
 
-eRC522Return_t RC522PerformCommand(sRC522Obt_t *pRC522, eRC522RegCmd_t eCmd, eRC522RegComIrq_t eDoneIRQ, uint8_t *pSendData, uint8_t nSendDataLen, uint8_t pReadData, uint8_t nReadDataLen, bool bCheckCRC) {
+eRC522Return_t RC522PerformCommand(sRC522Obt_t *pRC522, eRC522RegCmd_t eCmd, eRC522RegComIrq_t eDoneIRQ, uint8_t *pSendData, uint8_t nSendDataLen, uint8_t *pReadData, uint8_t *pnReadDataLen, bool bCheckCRC) {
+	int16_t nCtr, nCRC;
+	uint8_t nReadVal;
+	
 	//Cancel any current commands
 	RC522WriteRegister(pRC522, RC522Reg_Command, RC522RegCmd_CmdIdle);
 	//Clear all interrupts so they can detect command completion
@@ -225,7 +242,7 @@ eRC522Return_t RC522PerformCommand(sRC522Obt_t *pRC522, eRC522RegCmd_t eCmd, eRC
 	//Write the requested data into the FIFO
 	RC522WriteRegisterData(pRC522, RC522Reg_FIFOData, nSendDataLen, pSendData);
 	//Clear out any bit alignment
-	RC522WriteRegisterData(pRC522, RC522Reg_BitFraming, RC522RegBitFrm_TxRx8Bits);
+	RC522WriteRegister(pRC522, RC522Reg_BitFraming, RC522RegBitFrm_TxRx8Bits);
 	
 	//Everything is reset, issue the command
 	RC522WriteRegister(pRC522, RC522Reg_Command, eCmd);
@@ -234,4 +251,98 @@ eRC522Return_t RC522PerformCommand(sRC522Obt_t *pRC522, eRC522RegCmd_t eCmd, eRC
 	}
 	
 	//Now wait until the command to complete
+	//Timer is set to start after transmission
+	for (nCtr = 0; nCtr < 1000; nCtr++) {
+		RC522ReadRegister(pRC522, RC522Reg_ComIrq, &nReadVal);
+		
+		if (CheckAnyBitsInMask(eDoneIRQ, nReadVal) == true) {
+			//At least 1 of the done IRQ flags is set
+			break;
+		}
+	}
+	
+	if (nCtr >= 1000) { //Command never completed? 
+		if (pReadData != null) {
+			*pReadData = 0;
+		}
+		return RC522Fail_Timeout;
+	}
+	
+	//Check if the device detected any errors
+	RC522ReadRegister(pRC522, RC522Reg_Error, &nReadVal);
+	if (nReadVal != 0) { //Buffer overflow, parity, or protocol indicate real failures
+		if (pReadData != null) {
+			*pReadData = 0;
+		}
+		return RC522Fail_DeviceError;
+	}
+	
+	//if data was requested, retrieve it
+	if ((pReadData != NULL) && (nReadDataLen > 0)) {
+		RC522ReadRegister(pRC522, RC522Reg_FIFOLevel, &nReadVal);
+		nReadVal &= RC522RegFIFOLvl_LvlMask; //Get just the used space
+		
+		if (nReadVal > *nReadDataLen) {
+			return RC522Fail_BuffSize;
+		}
+		
+		*pReadVal = nReadVal;
+		
+		//Read all bytes from the FIFO
+		for (nCtr = 0; nCtr < nReadVal; nCtr++) {
+			RC522ReadRegister(pRC522, RC522Reg_FIFOData, &(pReadData[nCtr]));
+		}
+		
+		RC522ReadRegister(pRC522, RC522Reg_Control, &nReadVal);
+		nReadVal &= RC522RegCtrl_RxLastBits; //Get just the number of bits in the last byte
+		//Not sure how to use this, but maybe its helpful?
+	}
+	
+	//If requested, do a CRC check
+	if (bCheckCRC == true) {
+		//Stop any active commands
+		RC522WriteRegister(pRC522, RC522Reg_Command, RC522RegCmd_CmdIdle);
+		//Clear CRC interrupts to detect command completion
+		RC522WriteRegister(pRC522, RC522Reg_DivIrq, RC522RegDivIrq_CRC);
+		
+		//Write the data into the fifo (Last two data bytes are the CRC)
+		RC522WriteRegister(pRC522, RC522Reg_FIFOLevel, RC522RegFIFOLvl_FlushBuff);
+		RC522WriteRegisterData(pRC522, RC522Reg_FIFOData, (*pReadVal) - 2, pReadData);
+		
+		//Have the device CRC the FIFO contents
+		RC522WriteRegister(pRC522, RC522Reg_Command, RC522RegCmd_CmdCalcCRC);
+		
+		//Wait for the command to complete
+		for (nCtr = 0; nCtr < 1000; nCtr++) {
+			RC522ReadRegister(pRC522, RC522Reg_DivIrq, &nReadVal);
+			
+			if (CheckAllBitsInMask(RC522RegDivIrq_CRC, nReadVal) == true) {
+				//CRC is complete
+				break;
+			}
+		}
+		
+		if (nCtr >= 1000) { //Command never completed? 
+			return RC522Fail_Timeout;
+		}
+		
+		//Be sure it won't start another CRC
+		RC522WriteRegister(pRC522, RC522Reg_Command, RC522RegCmd_CmdIdle);
+		
+		//Get the calculated CRC
+		RC522ReadRegister(pRC522, RC522Reg_CRCMSB, &nReadVal);
+		nCRC = nReadVal << 8;
+		RC522ReadRegister(pRC522, RC522Reg_CRCLSB, &nReadVal);
+		nCRC |= nReadVal;
+		
+		//Get the CRC from the received data
+		nCtr = pReadData[(*pReadVal) - 2] << 8;
+		nCtr |= pReadData[(*pReadVal) - 1];
+		
+		if (nCtr != nCRC) {
+			return RC522Fail_CRC;
+		}
+	}
+	
+	return RC522_Success;
 }
