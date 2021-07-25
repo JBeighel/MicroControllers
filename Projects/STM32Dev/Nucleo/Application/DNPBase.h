@@ -6,7 +6,7 @@
 	#File Information
 		File:	DNPBase.h
 		Author:	J. Beighel
-		Date:	2021-03-15
+		Date:	2021-04-29
 */
 
 #ifndef __DNPBASE_H
@@ -91,10 +91,10 @@
 		DNPHdrIdx_DestAddr		= 4,
 		DNPHdrIdx_SourceAddr	= 6,
 		DNPHdrIdx_CRC			= 8,
-		DNPHdrIdx_TransportHdr	= 11,
-		DNPHdrIdx_AppHdr		= 12,
-		DNPHdrIdx_ControlCode	= 13,
-		DNPHdrIdx_IntIndicators	= 14,
+		DNPHdrIdx_TransportHdr	= 10,
+		DNPHdrIdx_AppHdr		= 11,
+		DNPHdrIdx_ControlCode	= 12,
+		DNPHdrIdx_IntIndicators	= 13,
 	} eDNPHeaderIndexes_t;
 
 	/**	@brief		Addressed reserved by the DNP specification
@@ -221,6 +221,57 @@
 		DNPBinOutCtrl_Trip				= 0x80,
 	} eDNPBinOutControlCode_t;
 
+	typedef enum eDNPDevAttrVar_t {
+		DNPDevAttr_SecureAuthVer		= 0xD1,
+		DNPDevAttr_SecureStatsPerAssoc	= 0xD2,
+		DNPDevAttr_BinaryOutPerObj		= 0xD8,
+		DNPDevAttr_TimingAccuracy		= 0xD9,
+		DNPDevAttr_TimeSyncDuration		= 0xDA,
+		DNPDevAttr_AnalogOutCnt			= 0xDD,
+		DNPDevAttr_BinaryOutCnt			= 0xE0,
+		DNPDevAttr_CounterCnt			= 0xE5,
+		DNPDevAttr_AnalogInCnt			= 0xE9,
+		DNPDevAttr_BinaryInCnt			= 0xEF,
+		DNPDevAttr_MaxFragSend			= 0xF0,
+		DNPDevAttr_MaxFragRecv			= 0xF1,
+		DNPDevAttr_SoftwareVer			= 0xF2,
+		DNPDevAttr_HardwareVer			= 0xF3,
+		DNPDevAttr_StationName			= 0xF5,
+		DNPDevAttr_SerialNumber			= 0xF8,
+		DNPDevAttr_ProductName			= 0xFA,
+		DNPDevAttr_Manufacturer			= 0xFC,
+		DNPDevAttr_RequestAll			= 0xFE,
+		DNPDevAttr_AttrSupported		= 0xFF,
+	} eDNPDevAttrVar_t;
+
+	typedef enum eDNPDevAttrTypes_t {
+		DNPDevAttr_VisibleString		= 1,
+		DNPDevAttr_UnsignedInt			= 2,
+		DNPDevAttr_SignedInt			= 3,
+		DNPDevAttr_FLoat				= 4,
+		DNPDevAttr_OctetString			= 5,
+		DNPDevAttr_BitString			= 6,
+	} eDNPDevAttrTypes_t;
+
+	typedef enum eDNPObjBinOutFlags_t {
+		DNPBinOutFlag_Online		= 0x01,	/**< Point is online, data is reliable */
+		DNPBinOutFlag_Restart		= 0x02,	/**< Data has not been updated since the device reset */
+		DNPBinOutFlag_CommLost		= 0x04,	/**< Communications lost between originating and repeating devices */
+		DNPBinOutFlag_RemoteForce	= 0x08,	/**< Point is forced by a remote/repeater/non-originating station */
+		DNPBinOutFlag_LocalForce	= 0x10,	/**< Point is forced by the local/measuring/originating station */
+		DNPBinOutFlag_State			= 0x80,	/**< State of the point, set is latched */
+	} eDNPObjBinOutFlags_t;
+
+	typedef enum eDNPObjBinInFlags_t {
+		DNPBinInFlag_Online			= 0x01,	/**< Point is online, data is reliable */
+		DNPBinInFlag_Restart		= 0x02,	/**< Data has not been updated since the device reset */
+		DNPBinInFlag_CommLost		= 0x04,	/**< Communications lost between originating and repeating devices */
+		DNPBinInFlag_RemoteForce	= 0x08,	/**< Point is forced by a remote/repeater/non-originating station */
+		DNPBinInFlag_LocalForce		= 0x10,	/**< Point is forced by the local/measuring/originating station */
+		DNPBinInFlag_ChatterFilter	= 0x20,	/**< Rapid value changes activated chattering point filter */
+		DNPBinInFlag_State			= 0x80,	/**< State of the point, set is latched */
+	} eDNPObjBinInFlags_t;
+
 	/**	@brief		Details of the current data object being parsed from the message
 	 *	@ingroup	dnpmsgparse
 	 */
@@ -236,6 +287,20 @@
 		uint32_t nTotalBytes;			/**< Number of user data bytes comprising this data object */
 		uint32_t nCurrPoint;			/**< Last data point number that was read out */
 	} sDNPDataObject_t;
+
+	typedef struct __attribute__((__packed__)) sDNPObjGrp000Type01_t {
+		eDNPDevAttrTypes_t eType;
+		uint8_t nLength;
+		char aData[DNP_OBJECTDATASIZE - 2];
+	} sDNPObjGrp000Type01_t;
+
+	typedef struct __attribute__((__packed__)) sDNPObjGrp001Var02_t {
+		eDNPObjBinInFlags_t eFlags;
+	} sDNPObjGrp001Var02_t;
+
+	typedef struct __attribute__((__packed__)) sDNPObjGrp010Var02_t {
+		eDNPObjBinOutFlags_t eFlags;
+	} sDNPObjGrp010Var02_t;
 
 	/**	@brief		Structure to break out the Group 12 Variation 1 data object, control relay output block
 	 *	@ingroup	dnpmsgparse
@@ -256,6 +321,9 @@
 	 */
 	typedef union uDNPDataBlock_t {
 		uint8_t aBytes[DNP_OBJECTDATASIZE];	/**< Raw bytes in this data point */
+		sDNPObjGrp000Type01_t DevAttrText;
+		sDNPObjGrp001Var02_t BinInValue;
+		sDNPObjGrp010Var02_t BinOutValue;
 		sDNPObjGrp012Var01_t BinOutCmd;
 	} uDNPDataBlock_t;
 

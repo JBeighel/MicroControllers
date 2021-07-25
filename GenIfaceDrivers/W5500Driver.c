@@ -1,6 +1,6 @@
 /*	File:	W5500Driver.c
 	Author:	J. Beighel
-	Date:	08-27-2020
+	Date:	2021-05-02
 */
 
 /***** Includes		*****/
@@ -86,6 +86,34 @@
 	eNetReturn_t W5500NetTCPServReceive(sTCPServ_t *pTCPServ, sSocket_t *pClientSck, uint32_t nDataBytes, void *pData, uint32_t *pnBytesRecv);
 	
 	eNetReturn_t W5500NetTCPServSend(sTCPServ_t *pTCPServ, sSocket_t *pClientSck, uint32_t nDataBytes, void *pData);
+	
+	eNetReturn_t W5500NetTCPClientConnect(sTCPClient_t *pTCPClient, sConnInfo_t *pConn);
+	
+	/**	@brief		Closes the TCP connection
+		@param		pTCPClient		Pointer to hte TCP Client object to use
+		@return		Net_Success on succeess, or a code indicating the type of error encountered
+		@ingroup	networkgeniface
+	*/
+	eNetReturn_t W5500NetTCPClientClose(sTCPClient_t *pTCPClient);
+	
+	/**	@brief		Waits for and receives data from a TCP server
+		@param		pTCPClient		Pointer to hte TCP Client object to use
+		@param		nDataBytes		Number of bytes the data buffer can hold
+		@param		pData			Pointer to the bufer to receive the data 
+		@param		pnBytesRecv		Returns the number of data bytes received
+		@return		Net_Success on succeess, or a code indicating the type of error encountered
+		@ingroup	networkgeniface
+	*/
+	eNetReturn_t W5500NetTCPClientReceive(sTCPClient_t *pTCPClient, uint32_t nDataBytes, void *pData, uint32_t *pnBytesRecv);
+	
+	/**	@brief		Send data to a TCP server
+		@param		pTCPClient		Pointer to hte TCP Client object to use
+		@param		nDataBytes		Number of bytes to send
+		@param		pData			Buffer holding the data to send
+		@return		Net_Success on succeess, or a code indicating the type of error encountered
+		@ingroup	networkgeniface
+	*/
+	eNetReturn_t W5500NetTCPClientSend(sTCPClient_t *pTCPClient, uint32_t nDataBytes, void *pData);
 
 /***** Functions	*****/
 eW5500Return_t W5500Initialize(sW5500Obj_t *pDev, sSPIIface_t *pSpiBus, sGPIOIface_t *pIOObj, uint8_t nCSPin) {
@@ -132,7 +160,7 @@ eW5500Return_t W5500Initialize(sW5500Obj_t *pDev, sSPIIface_t *pSpiBus, sGPIOIfa
 	
 	//Check the SPI Mode
 	if ((pSpiBus->eMode != SPI_Mode0) && (pSpiBus->eMode != SPI_Mode3)) {
-		return SPIFail_Unknown;
+		return W5500Fail_SpiMode;
 	}
 	
 	return W5500_Success;
@@ -896,6 +924,120 @@ eNetReturn_t W5500NetTCPServSend(sTCPServ_t *pTCPServ, sSocket_t *pClientSck, ui
 	//Ship out the data
 	eResult = W5500SocketTCPSend(pDev, pClientSck->nSocket, (uint8_t *)pData, nDataBytes);
 	
+	if (eResult < W5500_Success) {
+		return NetFail_Unknown;
+	} else {
+		return Net_Success;
+	}
+}
+
+eW5500Return_t W5500CreateTCPClient(sW5500Obj_t *pDev, sTCPClient_t *pTCPClient) {
+	//Start with sane structure
+	IfaceTCPClientObjInitialize(pTCPClient);
+
+	//Fill out the structure variables
+	pTCPClient->Sck.nSocket = SOCKET_INVALID;
+	pTCPClient->Sck.Conn.Port = 0;
+	pTCPClient->Sck.Conn.Addr.nNetLong = 0;
+	pTCPClient->pHWInfo = (void *)pDev;
+	pTCPClient->eCapabilities = W5500_TCPCLIENTCAPS;
+
+	//Fill out function pointers
+	pTCPClient->pfConnect = &W5500NetTCPClientConnect;
+	pTCPClient->pfClose = &W5500NetTCPClientClose;
+	pTCPClient->pfReceive = &W5500NetTCPClientReceive;
+	pTCPClient->pfSend = &W5500NetTCPClientSend;
+	
+	return W5500_Success;
+}
+
+eNetReturn_t W5500NetTCPClientConnect(sTCPClient_t *pTCPClient, sConnInfo_t *pConn) {
+	sW5500Obj_t *pDev = (sW5500Obj_t *)pTCPClient->pHWInfo;
+	eW5500Return_t eResult;
+	IN_ADDR IPServ;
+	uint8_t nSck;
+	
+	IPServ.S_un.S_addr = pConn->Addr.nNetLong;
+	
+	eResult = W5500SocketConnect(pDev, &nSck, &IPServ, pConn->Port);
+	
+	if (eResult == W5500_Success) {
+		pTCPClient->Sck.Conn.Port = pConn->Port;
+		pTCPClient->Sck.Addr.nNetLong = pConn->Addr.nNetLong;
+		pTCPClient->Sck.nSocket = nSck;
+		return Net_Success;
+	} else {
+		return NetFail_Unknown;
+	}
+}
+	
+eNetReturn_t W5500NetTCPClientClose(sTCPClient_t *pTCPClient) {
+	eW5500Return_t eResult;
+	sW5500Obj_t * pDev = (sW5500Obj_t *)pTCPClient->pHWInfo;
+	
+	if (pTCPClient->Sck.nSocket == SOCKET_INVALID) {
+		return NetFail_InvSocket;
+	}
+	
+	eResult = W5500CloseSocket(pDev, pTCPClient->Sck.nSocket);
+	pTCPClient->Sck.nSocket = SOCKET_INVALID;
+	pTCPClient->Sck.Conn.Port = 0;
+	pTCPClient->Sck.Conn.Addr.nNetLong = 0;
+	
+	if (eResult != W5500_Success) {
+		return NetFail_Unknown;
+	} else {
+		return Net_Success;
+	}
+}
+	
+eNetReturn_t W5500NetTCPClientReceive(sTCPClient_t *pTCPClient, uint32_t nDataBytes, void *pData, uint32_t *pnBytesRecv) {
+	sW5500Obj_t *pDev = (sW5500Obj_t *)pTCPClient->pHWInfo;
+	eW5500Return_t eResult;
+	uint16_t nAvail;
+	eW5500SckProt_t eProt;
+	eW5500SckStat_t eState;
+	SOCKADDR_IN ConnAddr;
+	
+	(*pnBytesRecv) = 0;
+	
+	//Make sure the socket is in a valid state
+	eResult = W5500SocketStatus(pDev, pTCPClient->Sck.nSocket, &eProt, &eState, &nAvail, &ConnAddr, sizeof(SOCKADDR_IN));
+		
+	if (eResult != W5500_Success) { //failed to get socket information
+		return NetFail_Unknown;
+	} else if (eState != W5500SckStat_Establish) {
+		return NetFail_SocketState;
+	}
+	
+	//Socket looks good, accept out the data
+	eResult = W5500SocketReceive(pDev, pTCPClient->Sck.nSocket, pData, nDataBytes, pnBytesRead);
+	if (eResult < W5500_Success) {
+		return NetFail_Unknown;
+	} else {
+		return Net_Success;
+	}
+}
+	
+eNetReturn_t W5500NetTCPClientSend(sTCPClient_t *pTCPClient, uint32_t nDataBytes, void *pData) {
+	sW5500Obj_t *pDev = (sW5500Obj_t *)pTCPClient->pHWInfo;
+	eW5500Return_t eResult;
+	uint16_t nAvail;
+	eW5500SckProt_t eProt;
+	eW5500SckStat_t eState;
+	SOCKADDR_IN ConnAddr;
+	
+	//Make sure the socket is in a valid state
+	eResult = W5500SocketStatus(pDev, pTCPClient->Sck.nSocket, &eProt, &eState, &nAvail, &ConnAddr, sizeof(SOCKADDR_IN));
+		
+	if (eResult != W5500_Success) { //failed to get socket information
+		return NetFail_Unknown;
+	} else if (eState != W5500SckStat_Establish) {
+		return NetFail_SocketState;
+	}
+	
+	//Socket looks good, ship out the data
+	eResult = W5500SocketTCPSend(pDev, pTCPClient->Sck.nSocket, pData, nDataBytes);
 	if (eResult < W5500_Success) {
 		return NetFail_Unknown;
 	} else {

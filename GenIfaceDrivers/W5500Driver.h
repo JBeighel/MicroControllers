@@ -1,6 +1,6 @@
 /**	@defgroup	w5500driver
 	@brief		Driver for the Wizner W5500 Ethernet device
-	@details	v0.2
+	@details	v0.4
 	# Description #
 		This is an ethernet device that includes buffers for transmit/receive as well as includes
 		the entire Ethernet stack.  It will allow 8 sockets to be used for Ethernet communication
@@ -21,7 +21,7 @@
 	# File Info #
 		File:	W5500Driver.c
 		Author:	J. Beighel
-		Date:	08-27-2020
+		Date:	2021-05-02
 */
 
 #ifndef __W5500DRIVER
@@ -90,7 +90,8 @@
 		W5500Fail_Unsupported	= -4,	/**< A request for an unsupported protocol or socket type */
 		W5500Fail_NoSockets		= -5,	/**< Unable to create a socket, all are in use */
 		W5500Fail_InvalidSocket	= -6,	/**< A request was made for an invalid socket number */
-		W5500Fail_TXFreeSpace	= -7	/**< Transmit data size was too large */
+		W5500Fail_TXFreeSpace	= -7,	/**< Transmit data size was too large */
+		W5500Fail_SpiMode		= -8,	/**< SPI Mode is incorrect for this device */
 	} eW5500Return_t;
 	
 	/**	@brief		Control codes for area of memory in W5500 to access
@@ -567,6 +568,8 @@
 		@ingroup	w5500driver
 	*/
 	eW5500Return_t W5500CreateTCPServer(sW5500Obj_t *pDev, sTCPServ_t *pTCPServ);
+	
+	eW5500Return_t W5500CreateTCPClient(sW5500Obj_t *pDev, sTCPClient_t *pTCPClient);
 	
 /***** Functions	*****/
 

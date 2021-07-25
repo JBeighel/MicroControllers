@@ -1,12 +1,12 @@
 /**	@defgroup	terminal	Generic terminal interfaces
 	@brief		Generic terminal user interface
-	@details	v0.2
+	@details	v0.4
 	#Description
 	
 	#File Information
 		File:	Terminal.h
 		Author:	J. Beighel
-		Date:	2021-04-18
+		Date:	2021-06-01
 */
 
 #ifndef __TERMINAL_H
@@ -21,7 +21,7 @@
 	#include "StringTools.h"
 
 /*****	Defines		*****/
-	#define TERMINAL_BUFFERSIZE		35
+	#define TERMINAL_BUFFERSIZE		50
 
 	#define TERMINAL_MAXHANDLERS	5
 

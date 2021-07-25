@@ -57,6 +57,8 @@ void EXTI3_IRQHandler(void);
 void TIM1_UP_TIM16_IRQHandler(void);
 void TIM2_IRQHandler(void);
 void USART1_IRQHandler(void);
+void I2C3_EV_IRQHandler(void);
+void I2C3_ER_IRQHandler(void);
 /* USER CODE BEGIN EFP */
 
 /* USER CODE END EFP */

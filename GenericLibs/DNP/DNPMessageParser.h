@@ -7,7 +7,7 @@
 	#File Information
 		File:	DNPMessageParser.h
 		Author:	J. Beighel
-		Date:	2021-03-15
+		Date:	2021-04-29
 */
 
 #ifndef __DNPMESSAGEPARSER_H

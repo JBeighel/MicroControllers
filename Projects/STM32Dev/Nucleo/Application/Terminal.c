@@ -1,6 +1,6 @@
 /**	File:	Terminal.c
 	Author:	J. Beighel
-	Date:	2021-04-01
+	Date:	2021-06-01
 */
 
 /*****	Includes	*****/
@@ -30,7 +30,7 @@ eReturn_t IOCnctWriteByteUART(sIOConnect_t *pIOObj, uint8_t nByte);
 eReturn_t IOCnctReadDataUART(sIOConnect_t *pIOObj, uint8_t *pnDataBuff, uint32_t nBuffSize, uint32_t *pnReadSize);
 eReturn_t IOCnctWriteDataUART(sIOConnect_t *pIOObj, uint8_t *pnData, uint32_t nDataLen);
 
-eReturn_t TerminalWriteTextLine(sTerminal_t *pTerminal, char *pText);
+eReturn_t TerminalWriteTextLine(sTerminal_t *pTerminal, const char *pText);
 eReturn_t TerminalReadInput(sTerminal_t *pTerminal);
 
 eReturn_t TerminalProcessCommand(sTerminal_t *pTerminal, uint32_t nCmdLen);
@@ -45,6 +45,9 @@ eReturn_t TerminalDelCmdHandler(sTerminal_t *pTerminal, pfTerminalCommandHandler
 
 uint32_t CountStringWhiteSpace(char *aText, uint32_t nStartIdx, uint32_t nStringLen);
 uint32_t CountStringNonWhiteSpace(char *aText, uint32_t nStartIdx, uint32_t nStringLen);
+
+eReturn_t IOCnctReadByteTCPServ(sIOConnect_t *pIOObj, uint8_t *pnByte);
+eReturn_t IOCnctWriteByteTCPServ(sIOConnect_t *pIOObj, uint8_t nByte);
 
 /*****	Functions	*****/
 eReturn_t IOCnctObjectInitialize(sIOConnect_t *pIOObj) {
@@ -75,7 +78,9 @@ eReturn_t IOCnctReadDataNoImplement(sIOConnect_t *pIOObj, uint8_t *pnDataBuff, u
 	for (nCtr = 0; nCtr < nBuffSize; nCtr++) {
 		eResult = pIOObj->pfReadByte(pIOObj, &(pnDataBuff[nCtr]));
 
-		if (eResult != Success) {
+		if (eResult == Warn_EndOfData) {
+			return Warn_EndOfData;
+		} else if (eResult != Success) {
 			return eResult;
 		}
 
@@ -105,8 +110,8 @@ eReturn_t IOCnctCreateFromUART(sUARTIface_t *pUARTIface, sIOConnect_t *pIOObj) {
 
 	pIOObj->pfReadByte = &IOCnctReadByteUART;
 	pIOObj->pfWriteByte = &IOCnctWriteByteUART;
-	pIOObj->pfReadData = &IOCnctReadDataNoImplement;
-	pIOObj->pfWriteData = &IOCnctWriteDataNoImplement;
+	pIOObj->pfReadData = &IOCnctReadDataUART;
+	pIOObj->pfWriteData = &IOCnctWriteDataUART;
 
 	pIOObj->pHWInfo = pUARTIface;
 
@@ -147,6 +152,8 @@ eReturn_t IOCnctReadDataUART(sIOConnect_t *pIOObj, uint8_t *pnDataBuff, uint32_t
 	uint16_t nReadBytes, nDataLen;
 	eUARTReturn_t eResult;
 
+	*pnReadSize = 0; //Haven't read anything yet
+
 	while (nBuffSize > 0) {
 		if (nBuffSize > UINT16_MAXVALUE) {
 			nDataLen = UINT16_MAXVALUE;
@@ -155,6 +162,7 @@ eReturn_t IOCnctReadDataUART(sIOConnect_t *pIOObj, uint8_t *pnDataBuff, uint32_t
 		}
 
 		eResult = pUART->pfUARTReadData(pUART, nDataLen, pnDataBuff, &nReadBytes);
+		*pnReadSize += nReadBytes; //Update how much data we've read in
 
 		if (eResult < UART_Success) {
 			return Fail_CommError;
@@ -162,9 +170,9 @@ eReturn_t IOCnctReadDataUART(sIOConnect_t *pIOObj, uint8_t *pnDataBuff, uint32_t
 			return Warn_EndOfData;
 		}
 
-		//REad successful, try to get more
+		//Read successful, try to get more
 		nBuffSize -= nDataLen;
-		pnDataBuff = &(pnDataBuff[nDataLen]);
+		pnDataBuff = &(pnDataBuff[nDataLen]); //Update pointer so next read is positioned correctly
 	}
 
 	return Success;
@@ -181,7 +189,7 @@ eReturn_t IOCnctWriteDataUART(sIOConnect_t *pIOObj, uint8_t *pnData, uint32_t nD
 		} else {
 			nCurrWriteLen = nDataLen;
 		}
-		eResult = pUART->pfUARTWriteData(pUART, nCurrWriteLen, &pnData);
+		eResult = pUART->pfUARTWriteData(pUART, nCurrWriteLen, pnData);
 
 		if (eResult != UART_Success) {
 			return Fail_CommError;
@@ -221,7 +229,7 @@ eReturn_t TerminalInitialize(sTerminal_t *pTerm, sIOConnect_t *pIOObj) {
 	return Success;
 }
 
-eReturn_t TerminalWriteTextLine(sTerminal_t *pTerminal, char *pText) {
+eReturn_t TerminalWriteTextLine(sTerminal_t *pTerminal, const char *pText) {
 	uint32_t nTextLen;
 	eReturn_t eResult;
 
@@ -250,15 +258,10 @@ eReturn_t TerminalReadInput(sTerminal_t *pTerminal) {
 		return Fail_CommError;
 	}
 
-	if (nReadBytes > 0) {
-		nCtr = nReadBytes;
-	}
-
-	if (pTerminal->aInputBuffer[pTerminal->nBufferUsed] == '\r') {
-		nCtr = nReadBytes;
-	}
-
 	pTerminal->nBufferUsed += nReadBytes; //Update how much of the buffer is used
+	if (nReadBytes > 0) {
+		nCtr = 5;
+	}
 
 	//Look through the buffer for new line characters
 	for (nCtr = 0; nCtr < pTerminal->nBufferUsed; nCtr++) {
@@ -274,6 +277,7 @@ eReturn_t TerminalReadInput(sTerminal_t *pTerminal) {
 				for (nCutCtr = 0; nCutCtr + nCtr < pTerminal->nBufferUsed; nCutCtr++) {
 					pTerminal->aInputBuffer[nCutCtr] = pTerminal->aInputBuffer[nCutCtr + nCtr];
 				}
+				pTerminal->aInputBuffer[nCutCtr] = '\0';//Make sure it was placed
 				pTerminal->aInputBuffer[nCtr] = '\0'; //Probably not needed, but won't hurt
 
 				//Reduce the used count
@@ -496,24 +500,92 @@ uint32_t CountStringWhiteSpace(char *aText, uint32_t nStartIdx, uint32_t nString
 uint32_t CountStringNonWhiteSpace(char *aText, uint32_t nStartIdx, uint32_t nStringLen) {
 	uint32_t nCtr;
 
-		for (nCtr = nStartIdx; nCtr < nStringLen; nCtr++) {
-			//Found white space, stop counting
-			if (aText[nCtr] == ' ') {
-				break;
-			}
-
-			if (aText[nCtr] == '\t') {
-				break;
-			}
-
-			if (aText[nCtr] == '\r') {
-				continue;
-			}
-
-			if (aText[nCtr] == '\n') {
-				continue;
-			}
+	for (nCtr = nStartIdx; nCtr < nStringLen; nCtr++) {
+		//Found white space, stop counting
+		if (aText[nCtr] == ' ') {
+			break;
 		}
 
-		return nCtr;
+		if (aText[nCtr] == '\t') {
+			break;
+		}
+
+		if (aText[nCtr] == '\r') {
+			continue;
+		}
+
+		if (aText[nCtr] == '\n') {
+			continue;
+		}
+	}
+
+	return nCtr;
 }
+
+eReturn_t IOCnctCreateFromTCPServ(sTCPServ_t *pTCPIface, sIOConnect_t *pIOObj) {
+	sSocket_t sckClient;
+	eNetReturn_t eResult;
+	
+	IOCnctObjectInitialize(pIOObj);
+
+	pIOObj->pfReadByte = &IOCnctReadByteTCPServ;
+	pIOObj->pfWriteByte = &IOCnctWriteByteTCPServ;
+	pIOObj->pfReadData = &IOCnctReadDataNoImplement;
+	pIOObj->pfWriteData = &IOCnctWriteDataNoImplement;
+
+	pIOObj->pHWInfo = pTCPIface;
+	pIOObj->pClient = NULL;
+	
+	//Now wait on a connection to arrive, then create the terminal on that socket
+	eResult = pTCPIface->pfAcceptClient(pTCPIface, &sckClient);
+	if (eResult != Net_Success) {
+		return Fail_CommError;
+	}
+	
+	//Set a short timeout so reads don't block for long
+	pTCPIface->pfSetRecvTimeout(pTCPIface, &sckClient, 1);
+	
+	pIOObj->pClient = (void *)sckClient.nSocket; //All we need is the socket number to comm through it
+
+	return Success;
+}
+
+eReturn_t IOCnctReadByteTCPServ(sIOConnect_t *pIOObj, uint8_t *pnByte) {
+	sSocket_t sckClient;
+	uint32_t nBytesRcv;
+	eNetReturn_t eResult;
+	
+	//Extract TCP objects
+	sTCPServ_t *pServ = (sTCPServ_t *)pIOObj->pHWInfo;
+	sckClient.nSocket = (int32_t)pIOObj->pClient;
+	
+	//Read some data
+	eResult = pServ->pfReceive(pServ, &sckClient, 1, pnByte, &nBytesRcv);
+	
+	if (eResult == Net_Success) {
+		return Success;
+	} else if (eResult == NetWarn_EndOfData) {
+		return Warn_EndOfData;
+	} else {
+		return Fail_CommError;
+	}
+}
+
+eReturn_t IOCnctWriteByteTCPServ(sIOConnect_t *pIOObj, uint8_t nByte) {
+	sSocket_t sckClient;
+	eNetReturn_t eResult;
+	
+	//Extract TCP objects
+	sTCPServ_t *pServ = (sTCPServ_t *)pIOObj->pHWInfo;
+	sckClient.nSocket = (int32_t)pIOObj->pClient;
+	
+	//Read some data
+	eResult = pServ->pfSend(pServ, &sckClient, 1, &nByte);
+	
+	if (eResult != Net_Success) {
+		return Fail_CommError;
+	}
+	
+	return Success;
+}
+

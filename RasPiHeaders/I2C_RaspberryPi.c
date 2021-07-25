@@ -1,6 +1,6 @@
 /**	File:	I2C_RaspberryPi.c
 	Author:	J. Beighel
-	Date:	11-25-2020
+	Date:	2021-05-02
 */
 
 /*****	Includes	*****/
@@ -60,6 +60,8 @@ eI2CReturn_t RasPiInitializeI2CBus(sI2CIface_t *pI2CIface, bool bActAsMaster, ui
 		pI2C->nLastErr = errno;
 		return I2C_Fail_Unknown;
 	}
+	
+	pI2CIface->eCapabilities = I2C_1_CAPS;
 	
 	return I2C_Success;
 }
