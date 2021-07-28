@@ -1,6 +1,6 @@
 /**	File:	APA102Driver.c
 	Author:	J. Beighel
-	Date:	2021-03-02
+	Date:	2021-07-28
 */
 
 /*****	Includes	*****/

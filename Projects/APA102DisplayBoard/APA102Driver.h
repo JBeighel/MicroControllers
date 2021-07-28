@@ -1,12 +1,12 @@
 /**	@defgroup	apa102driver
 	@brief		Driver for the APA102 addressable tricolor LED
-	@details	v0.1
+	@details	v0.2
 	#Description
 	
 	#File Information
 		File:	APA102Driver.h
 		Author:	J. Beighel
-		Date:	2021-03-08
+		Date:	2021-07-28
 */
 
 #ifndef __APA102Driver_H

@@ -1,12 +1,12 @@
 /**	@defgroup	apa102driver
 	@brief		Driver for the APA102 addressable tricolor LED
-	@details	v0.1
+	@details	v0.2
 	#Description
 	
 	#File Information
 		File:	APA102Driver.h
 		Author:	J. Beighel
-		Date:	2021-03-08
+		Date:	2021-07-28
 */
 
 #ifndef __APA102Driver_H
@@ -34,6 +34,7 @@
 		
 		APA102_BRGOrder			= 0x00000810,	/**< Bit shifts to position bytes in BRG order */
 		APA102_RBGOrder			= 0x00100800,	/**< Bit shifts to position bytes in RBG order */
+		APA102_GBROrder			= 0x00001008,	/**< Bit shifts to position bytes in GBR order */
 		
 		APA102_ColorMask		= 0xFF,
 		
@@ -51,12 +52,30 @@
 		APA102_Black			= 0x00000000,
 		APA102_BrightWhite		= 0x00FFFFFF,
 		APA102_BrightRed		= 0x00FF0000,
+		APA102_BrightYellow		= 0x00FFFF00,
 		APA102_BrightGreen		= 0x0000FF00,
+		APA102_BrightCyan		= 0x0000FFFF,
 		APA102_BrightBlue		= 0x000000FF,
-		APA102_DimRed			= 0x00440000,
-		APA102_DimGreen			= 0x00004400,
-		APA102_DimBlue			= 0x00000044,
-		APA102_DimWhite			= 0x00444444,
+		APA102_BrightPink		= 0x00FF00FF,
+		
+		APA102_Red				= 0x00440000,
+		APA102_Yellow			= 0x00444400,
+		APA102_Green			= 0x00004400,
+		APA102_Cyan				= 0x00004444,
+		APA102_Blue				= 0x00000044,
+		APA102_Pink				= 0x00440044,
+		APA102_White			= 0x00444444,
+		
+		APA102_DimRed			= 0x00110000,
+		APA102_DimOrange		= 0x00110500,
+		APA102_DimYellow		= 0x00111100,
+		APA102_DimGreen			= 0x00001100,
+		APA102_DimAqua			= 0x00001505,
+		APA102_DimCyan			= 0x00001111,
+		APA102_DimBlue			= 0x00000011,
+		APA102_DimPurple		= 0x00050011,
+		APA102_DimPink			= 0x00110011,
+		APA102_DimWhite			= 0x00111111,
 	} eAPA102Color_t;
 
 	typedef struct sAPA102Info_t {

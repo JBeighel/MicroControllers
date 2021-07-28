@@ -1,6 +1,6 @@
 /**	File:	APA102Driver.c
 	Author:	J. Beighel
-	Date:	2021-03-02
+	Date:	2021-07-28
 */
 
 /*****	Includes	*****/
@@ -29,12 +29,13 @@
 eAPA102Return_t APA102Initialize(sAPA102Info_t *pDev, sSPIIface_t *pSpiDev) {
 	pDev->pSpi = pSpiDev;
 	
-	pDev->eOrder = APA102_RBGOrder;
+	//pDev->eOrder = APA102_RBGOrder;
+	pDev->eOrder = APA102_GBROrder;
 	pDev->nLightNum = 11;
 	memset(pDev->anLights, 0, sizeof(uint32_t) * pDev->nLightNum);
 	
 	if (pSpiDev->eMode != SPI_Mode3) {
-		return SPIFail_Mode;
+		return Fail_CommError;
 	}
 
 	return Success;
