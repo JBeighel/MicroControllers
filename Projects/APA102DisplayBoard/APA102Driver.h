@@ -1,6 +1,6 @@
 /**	@defgroup	apa102driver
 	@brief		Driver for the APA102 addressable tricolor LED
-	@details	v0.2
+	@details	v0.3
 	#Description
 	
 	#File Information
@@ -20,6 +20,13 @@
 
 /*****	Defines		*****/
 	#define APA102_SPICAPS		(SPI_BiDir1Byte)
+	
+	#ifndef APA102_NUMLIGHTS
+		/**	@brief		Number of lights the driver will store information about
+			@ingroup	apa102driver
+		*/
+		#define APA102_NUMLIGHTS	64
+	#endif
 	
 /*****	Definitions	*****/
 	typedef eReturn_t	eAPA102Return_t;
@@ -82,7 +89,7 @@
 		sSPIIface_t *pSpi;			/**< Pointer to SPI interface */
 		eAPA102Light_t eOrder;		/**< Light order to use for this set */
 		uint32_t nLightNum;			/**< Number of lights being controlled */
-		uint32_t anLights[64];		/**< Array of light colors to write */
+		uint32_t anLights[APA102_NUMLIGHTS];	/**< Array of light colors to write */
 	} sAPA102Info_t;
 
 /*****	Constants	*****/
@@ -120,6 +127,18 @@
 	eAPA102Return_t APA102SetLightColor(sAPA102Info_t *pDev, uint32_t nLightID, uint32_t nColor);
 
 	eAPA102Return_t APA102UpdateLights(sAPA102Info_t *pDev);
+	
+	/**	@brief		Sets the order of colors the device expects in commands
+		@details	Different manufacturers specify different color orders in 
+			the bytes sent over the data line.  This allows you to configure 
+			the order of bits sent to the light.
+		@param		pDev		The APA102 instance to work on
+		@param		eOrder		Order of bits expected by the device
+		@return		Success if the color order is updated, or a code indicating 
+			the nature of the failure
+		@ingroup	apa102driver
+	 */
+	eAPA102Return_t APA102SetColorOrder(sAPA102Info_t *pDev, eAPA102Light_t eOrder);
 
 /*****	Functions	*****/
 

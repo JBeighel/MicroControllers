@@ -29,7 +29,6 @@
 eAPA102Return_t APA102Initialize(sAPA102Info_t *pDev, sSPIIface_t *pSpiDev) {
 	pDev->pSpi = pSpiDev;
 	
-	//pDev->eOrder = APA102_RBGOrder;
 	pDev->eOrder = APA102_GBROrder;
 	pDev->nLightNum = 11;
 	memset(pDev->anLights, 0, sizeof(uint32_t) * pDev->nLightNum);
@@ -105,6 +104,12 @@ eAPA102Return_t APA102UpdateLights(sAPA102Info_t *pDev) {
 	}
 	
 	pDev->pSpi->pfEndTransfer(pDev->pSpi);
+	
+	return Success;
+}
+
+eAPA102Return_t APA102SetColorOrder(sAPA102Info_t *pDev, eAPA102Light_t eOrder) {
+	pDev->eOrder = eOrder;
 	
 	return Success;
 }
