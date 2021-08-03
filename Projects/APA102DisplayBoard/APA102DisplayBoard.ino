@@ -27,8 +27,9 @@
 
   #define NUM_LEDS        28
 
-  #define PATTERN_NUM     2
+  #define PATTERN_NUM     5
   #define PATTERN_MAXLEN  64
+  #define PATTERN_ORDHOLD 28
 
   #define PATTERN_END     0xFFFFFFFF
   
@@ -101,6 +102,120 @@
 
       (eAPA102Color_t)PATTERN_END
     },
+    {
+      APA102_DimRed,
+      APA102_DimRed,
+      APA102_DimRed,
+      APA102_DimRed,
+      APA102_DimRed,
+      APA102_DimRed,
+      APA102_DimRed,
+      APA102_DimOrange,
+      APA102_DimOrange,
+      APA102_DimOrange,
+      APA102_DimOrange,
+      APA102_DimOrange,
+      APA102_DimOrange,
+      APA102_DimOrange,
+      APA102_DimYellow,
+      APA102_DimYellow,
+      APA102_DimYellow,
+      APA102_DimYellow,
+      APA102_DimYellow,
+      APA102_DimYellow,
+      APA102_DimYellow,
+      APA102_DimGreen,
+      APA102_DimGreen,
+      APA102_DimGreen,
+      APA102_DimGreen,
+      APA102_DimGreen,
+      APA102_DimGreen,
+      APA102_DimGreen,
+      APA102_DimBlue,
+      APA102_DimBlue,
+      APA102_DimBlue,
+      APA102_DimBlue,
+      APA102_DimBlue,
+      APA102_DimBlue,
+      APA102_DimBlue,
+      APA102_DimPurple,
+      APA102_DimPurple,
+      APA102_DimPurple,
+      APA102_DimPurple,
+      APA102_DimPurple,
+      APA102_DimPurple,
+      APA102_DimPurple,
+      
+      (eAPA102Color_t)PATTERN_END
+    },
+    {
+      APA102_DimRed,
+      APA102_DimOrange,
+      APA102_DimYellow,
+      APA102_DimGreen,
+      APA102_DimBlue,
+      APA102_DimBlue,
+      APA102_DimPurple,
+      APA102_DimPink,
+      
+      (eAPA102Color_t)PATTERN_END
+    },
+    {
+      APA102_DimRed,
+      APA102_DimOrange,
+      APA102_DimYellow,
+      APA102_DimGreen,
+      APA102_DimBlue,
+      APA102_DimBlue,
+      APA102_DimPurple,
+      APA102_DimPink,
+      
+      (eAPA102Color_t)PATTERN_END
+    },
+  };
+
+  uint8_t ganOrders[PATTERN_NUM][NUM_LEDS + 1] = {
+    {
+      0,  1,  2,  3,  4,  5,  6, 
+      7,  8,  9,  10, 11, 12, 13,
+      14, 15, 16, 17, 18, 19, 20, 
+      21, 22, 23, 24, 25, 26, 27,
+      1, //Hold of 1 means every light gets a new color
+    },
+    {
+      0,  1,  2,  3,  4,  5,  6, 
+      7,  8,  9,  10, 11, 12, 13,
+      14, 15, 16, 17, 18, 19, 20, 
+      21, 22, 23, 24, 25, 26, 27,
+      1,
+    },
+    {
+      0,  7, 14, 21,
+      1,  8, 15, 22,
+      2,  9, 16, 23,
+      3, 10, 17, 24,
+      4, 11, 18, 25,
+      5, 12, 19, 26,
+      6, 13, 20, 27,
+      1,
+    },
+    {
+      0,  1,  2,  3,  4,  5,  6, 
+      7,  8,  9,  10, 11, 12, 13,
+      14, 15, 16, 17, 18, 19, 20, 
+      21, 22, 23, 24, 25, 26, 27,
+      7, //Hold of 7 means every row gets a color
+    },
+    {
+      0,  7, 14, 21,
+      1,  8, 15, 22,
+      2,  9, 16, 23,
+      3, 10, 17, 24,
+      4, 11, 18, 25,
+      5, 12, 19, 26,
+      6, 13, 20, 27,
+      4, //Hold of 4 means every column gets a color (with this order)
+    },
   };
   
 //----- Arduino Functions -----//
@@ -165,11 +280,13 @@ void loop() {
 
     //Update all the light colors
     for (nLedCtr = 0; nLedCtr < NUM_LEDS; nLedCtr += 1) {
-      APA102SetLightColor(&gLEDs, nLedCtr, gaPatterns[nPatternIdx][nPatternCtr]);
+      APA102SetLightColor(&gLEDs, ganOrders[nPatternIdx][nLedCtr], gaPatterns[nPatternIdx][nPatternCtr]);
 
-      nPatternCtr += 1;
-      if (nPatternCtr >= nPatternLen) {
-        nPatternCtr = 0;
+      if (((nLedCtr + 1) % ganOrders[nPatternIdx][PATTERN_ORDHOLD]) == 0) {
+        nPatternCtr += 1;
+        if (nPatternCtr >= nPatternLen) {
+          nPatternCtr = 0;
+        }
       }
     }
 
