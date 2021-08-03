@@ -6,7 +6,7 @@
 	#File Information
 		File:	APA102Driver.h
 		Author:	J. Beighel
-		Date:	2021-07-28
+		Date:	2021-08-02
 */
 
 #ifndef __APA102Driver_H
