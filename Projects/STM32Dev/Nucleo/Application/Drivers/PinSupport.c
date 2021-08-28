@@ -56,7 +56,7 @@ eReturn_t PinSetup() {
 	TIME_INIT(&gTime);
 
 	//Arrange interrupts
-	gGpioA.pfSetInterrupt(&gGpioA, GPI_A03_1_Pin, &GPIA03IntHandler, true, NULL);
+	//gGpioA.pfSetInterrupt(&gGpioA, GPI_A03_1_Pin, &GPIA03IntHandler, true, NULL);
 	gTime.pfInterruptSetHandler(TIMEINT_2_HWINFO, &TimerCallback, NULL);
 	gTime.pfInterruptStart(TIMEINT_2_HWINFO);
 
