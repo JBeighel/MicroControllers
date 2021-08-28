@@ -1,6 +1,6 @@
 /*		File:	ADS1115Driver.c
 		Author:	J. Beighel
-		Date:	10-20-2020
+		Date:	28-08-2021
 */
 
 

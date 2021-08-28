@@ -1,6 +1,6 @@
 /**	@defgroup	ads1115driver
 	@brief		Peripheral driver for the ADS1115 analog to digital converter
-	@details	v0.1
+	@details	v0.2
 	#Description
 		This device can measure inputs from Gnd to Vdd.  However, each cound from the ADC is 
 		a fixed value of 76.3 microvolts, such that a reading of 32767 equals 2.5 volts (1/2 Vdd).  This means that its effective measurement range is from -2.5 volts to +2.5 volts.  Setting a 2.5 volt reference on an input to compare to allows the full
@@ -17,7 +17,7 @@
 	#File Information
 		File:	ADS1115Driver.h
 		Author:	J. Beighel
-		Date:	10-20-2020
+		Date:	28-28-2021
 */
 
 #ifndef __ADS1115Driver_h

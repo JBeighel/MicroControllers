@@ -1,6 +1,6 @@
 /*		File:	ADS1115Driver.c
 		Author:	J. Beighel
-		Date:	10-20-2020
+		Date:	28-08-2021
 */
 
 
@@ -49,7 +49,7 @@ eADS1115Return_t ADS1115Init(sADS1115Dev_t *pDev, sGPIOIface_t *pGpio, sI2CIface
 	eResult = ADS1115ReadRegister(pDev, ADS1115_Config, &nRead);
 	if (eResult != ADS1115_Success) {
 		return eResult;
-	} else if (pDev->nConfig | ADS1115Cfg_OpStatNoConv != nRead) {
+	} else if ((pDev->nConfig | ADS1115Cfg_OpStatNoConv) != nRead) {
 		return ADS1115Fail_NoConfig;
 	}
 	
@@ -92,28 +92,28 @@ eADS1115Return_t ADS1115SetMeasurementInput(sADS1115Dev_t *pDev, eADS1115Measure
 	eADS1115Return_t eResult;
 	
 	switch (eMeas) {
-		ADS1115_MeasA0ToA1 :
+		case ADS1115_MeasA0ToA1 :
 			eCfg = ADS1115Cfg_MUXA0toA1;
 			break;
-		ADS1115_MeasA0ToA3 :
+		case ADS1115_MeasA0ToA3 :
 			eCfg = ADS1115Cfg_MUXA0toA3;
 			break;
-		ADS1115_MeasA1ToA3 :
+		case ADS1115_MeasA1ToA3 :
 			eCfg = ADS1115Cfg_MUXA1toA3;
 			break;
-		ADS1115_MeasA2ToA3 :
+		case ADS1115_MeasA2ToA3 :
 			eCfg = ADS1115Cfg_MUXA2toA3;
 			break;
-		ADS1115_MeasA0ToGnd :
+		case ADS1115_MeasA0ToGnd :
 			eCfg = ADS1115Cfg_MUXA0toGnd;
 			break;
-		ADS1115_MeasA1ToGnd :
+		case ADS1115_MeasA1ToGnd :
 			eCfg = ADS1115Cfg_MUXA1toGnd;
 			break;
-		ADS1115_MeasA2ToGnd :
+		case ADS1115_MeasA2ToGnd :
 			eCfg = ADS1115Cfg_MUXA2toGnd;
 			break;
-		ADS1115_MeasA3ToGnd :
+		case ADS1115_MeasA3ToGnd :
 			eCfg = ADS1115Cfg_MUXA3toGnd;
 			break;
 		default :
@@ -133,7 +133,7 @@ eADS1115Return_t ADS1115SetMeasurementInput(sADS1115Dev_t *pDev, eADS1115Measure
 	eResult = ADS1115ReadRegister(pDev, ADS1115_Config, &nRead);
 	if (eResult != ADS1115_Success) {
 		return eResult;
-	} else if (pDev->nConfig | ADS1115Cfg_OpStatNoConv != nRead) {
+	} else if ((pDev->nConfig | ADS1115Cfg_OpStatNoConv) != nRead) {
 		return ADS1115Fail_NoConfig;
 	}
 	
@@ -141,7 +141,7 @@ eADS1115Return_t ADS1115SetMeasurementInput(sADS1115Dev_t *pDev, eADS1115Measure
 }
 
 eADS1115Return_t ADS1115ReadRegister(sADS1115Dev_t *pDev, eADS1115Reg_t eRegAddr, uint16_t *pnRegValue) {
-	eI2CReturns_t eResult;
+	eI2CReturn_t eResult;
 	uint8_t nBytesRead, anReadData[2];
 	
 	//Send the register to read from
@@ -164,7 +164,7 @@ eADS1115Return_t ADS1115ReadRegister(sADS1115Dev_t *pDev, eADS1115Reg_t eRegAddr
 
 eADS1115Return_t ADS1115WriteRegister(sADS1115Dev_t *pDev, eADS1115Reg_t eRegAddr, uint16_t nRegValue) {
 	uint8_t anData[3];
-	eI2CReturns_t eResult;
+	eI2CReturn_t eResult;
 	
 	anData[0] = (uint8_t)eRegAddr;
 	anData[1] = nRegValue >> 8;
