@@ -78,8 +78,8 @@ void BootstrapTask(void const * argument) {
 	//Starts the output compare timer in interrupt mode
 	gTime.pfInterruptStart(TIMEINT_2_HWINFO);
 
-	IOCnctCreateFromUART(&gUart1, &IOObject);
-	TerminalInitialize(&gTerminal, &IOObject);
+	//IOCnctCreateFromUART(&gUart1, &IOObject);
+	//TerminalInitialize(&gTerminal, &IOObject);
 
 	SysModeInitialize(&gTime);
 
@@ -87,7 +87,7 @@ void BootstrapTask(void const * argument) {
 
 	gTerminal.pfAddCmdHandler(&gTerminal, &TerminalCommandHandler);
 
-	xTaskCreate(&TerminalTask, "UART Terminal", 512, (void *)Task_Terminal, osPriorityAboveNormal, NULL);
+	//xTaskCreate(&TerminalTask, "UART Terminal", 512, (void *)Task_Terminal, osPriorityAboveNormal, NULL);
 	xTaskCreate(&I2CTask, "I2C Controller", 256, (void *)Task_I2C, osPriorityAboveNormal, NULL);
 
 	//Begin the application

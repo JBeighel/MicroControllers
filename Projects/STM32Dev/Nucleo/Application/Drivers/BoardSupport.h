@@ -16,6 +16,7 @@
 	#include "PinSupport.h"
 
 	#include "APA102Driver.h"
+	#include "XBeeDriver.h"
 
 /*****	Defines		*****/
 	#if (APA102_SPICAPS & SPI_CAPS) != APA102_SPICAPS
@@ -30,6 +31,9 @@
 
 /*****	Globals		*****/
 	extern sAPA102Info_t gLEDString;
+
+	extern sXBeeObject_t gXBee1;
+	extern sXBeeObject_t gXBee2;
 
 /*****	Prototypes 	*****/
 
