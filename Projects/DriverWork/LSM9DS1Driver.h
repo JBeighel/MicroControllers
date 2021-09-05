@@ -25,6 +25,7 @@
 /*****	Includes	*****/
 	#include <string.h>
 
+	#include "CommonUtils.h"
 	#include "I2CGeneralInterface.h"
 
 /*****	Constants	*****/

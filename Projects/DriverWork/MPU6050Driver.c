@@ -4,7 +4,7 @@
 */
 
 /*****	Includes	*****/
-
+	#include "MPU6050Driver.h"
 
 /*****	Defines		*****/
 
@@ -22,13 +22,13 @@
 
 
 /*****	Functions	*****/
-eMPU6050Return_t MPU6050Initialize(sMPU6050Obj_t pObj, sI2CIface_t pI2C, eMPU6050Addr_t eI2CAddr) {
+eMPU6050Return_t MPU6050Initialize(sMPU6050Obj_t *pObj, sI2CIface_t *pI2C, eMPU6050Addr_t eI2CAddr) {
 	uint8_t nValue;
 	eI2CReturn_t eResult;
 	
 	//Initialize the driver object
 	pObj->pI2C = pI2C;
-	pObj->eAddr = MPU6050Addr_Base | eI2CAddr;
+	pObj->eAddr = (eMPU6050Addr_t)(MPU6050Addr_Base | eI2CAddr);
 	
 	//Verify the I2C bus will work
 	if (CheckAllBitsInMask(pObj->pI2C->eCapabilities, MPU6050_I2CCAPS) == false) {
@@ -41,7 +41,7 @@ eMPU6050Return_t MPU6050Initialize(sMPU6050Obj_t pObj, sI2CIface_t pI2C, eMPU605
 		return Fail_Invalid;
 	}
 	
-	if (pObj->pI2c->nClockFreq > MPU6050_MAXCLOCK) {
+	if (pObj->pI2C->nClockFreq > MPU6050_MAXCLOCK) {
 		//Bus clock is too high
 		return Fail_Invalid;
 	}
@@ -122,8 +122,10 @@ eMPU6050Return_t MPU6050Initialize(sMPU6050Obj_t pObj, sI2CIface_t pI2C, eMPU605
 	return Success;
 }
 
-eMPU6050Return_t MPU6050ReadGyro(sMPU6050Obj_t pObj, int16_t *pnXMeas, int16_t *pnYMeas, int16_t *pnZMeas) {
+eMPU6050Return_t MPU6050ReadGyro(sMPU6050Obj_t *pObj, int16_t *pnXMeas, int16_t *pnYMeas, int16_t *pnZMeas) {
 	int8_t anData[6];
+	uint8_t nRead;
+	eI2CReturn_t eResult;
 	
 	//Tell the device to start at Gyro data
 	anData[0] = MPU6050Reg_GyroXOutH;
@@ -133,7 +135,7 @@ eMPU6050Return_t MPU6050ReadGyro(sMPU6050Obj_t pObj, int16_t *pnXMeas, int16_t *
 	}
 	
 	//Read 6 bytes worth of samples out
-	eResult = pObj->pI2C->pfI2CReadData(pObj->pI2C, pObj->eAddr, 6, anData);
+	eResult = pObj->pI2C->pfI2CReadData(pObj->pI2C, pObj->eAddr, 6, anData, &nRead);
 	if (eResult != I2C_Success) { //Failed to talk on the bus
 		return Fail_CommError;
 	}
@@ -146,8 +148,10 @@ eMPU6050Return_t MPU6050ReadGyro(sMPU6050Obj_t pObj, int16_t *pnXMeas, int16_t *
 	return Success;
 }
 
-eMPU6050Return_t MPU6050ReadAccel(sMPU6050Obj_t pObj, int16_t *pnXMeas, int16_t *pnYMeas, int16_t *pnZMeas) {
+eMPU6050Return_t MPU6050ReadAccel(sMPU6050Obj_t *pObj, int16_t *pnXMeas, int16_t *pnYMeas, int16_t *pnZMeas) {
 	int8_t anData[6];
+	uint8_t nRead;
+	eI2CReturn_t eResult;
 	
 	//Tell the device to start at Gyro data
 	anData[0] = MPU6050Reg_AccelXOutH;
@@ -157,7 +161,7 @@ eMPU6050Return_t MPU6050ReadAccel(sMPU6050Obj_t pObj, int16_t *pnXMeas, int16_t 
 	}
 	
 	//Read 6 bytes worth of samples out
-	eResult = pObj->pI2C->pfI2CReadData(pObj->pI2C, pObj->eAddr, 6, anData);
+	eResult = pObj->pI2C->pfI2CReadData(pObj->pI2C, pObj->eAddr, 6, anData, &nRead);
 	if (eResult != I2C_Success) { //Failed to talk on the bus
 		return Fail_CommError;
 	}

@@ -32,7 +32,7 @@ eReturn_t LSM9DS1Initialize(sI2CIface_t *pI2CIface, sLSM9DS1_t *pDev) {
 eReturn_t LSM9DS1DetectDevice(sLSM9DS1_t *pDev) {
 	sI2CIface_t *pI2CIface = pDev->pI2CBus;
 	uint8_t nValue;
-	eI2CReturns_t eRetVal;
+	eI2CReturn_t eRetVal;
 	
 	eRetVal = pI2CIface->pfI2CReadUint8Reg(pI2CIface, pDev->nAGDevAddr, LSM9DS1_WHO_AM_I, &nValue);
 	
@@ -45,7 +45,7 @@ eReturn_t LSM9DS1DetectDevice(sLSM9DS1_t *pDev) {
 
 eReturn_t LSM9DS1Configure(sLSM9DS1_t *pDev) {
 	sI2CIface_t *pI2CIface = pDev->pI2CBus;
-	eI2CReturns_t eResult;
+	eI2CReturn_t eResult;
 	
 	eResult = pI2CIface->pfI2CWriteUint8Reg(pI2CIface, pDev->nAGDevAddr, LSM9DS1_CTRL_REG1_G, LSM9DS1_CTRL1G_G_14);
 	if (eResult > I2C_Success) {
@@ -58,7 +58,7 @@ eReturn_t LSM9DS1Configure(sLSM9DS1_t *pDev) {
 eReturn_t LSM9DS1ReadGyroscope(sLSM9DS1_t *pDev, int16_t *pnXVal, int16_t *pnYVal, int16_t *pnZVal) {
 	sI2CIface_t *pI2CIface = pDev->pI2CBus;
 	uint8_t nRegVal, nTimeOut;
-	eI2CReturns_t eResult;
+	eI2CReturn_t eResult;
 	bool bIsDataReady;
 	
 	(*pnXVal) = 0;
@@ -135,7 +135,7 @@ eReturn_t LSM9DS1ReadGyroscope(sLSM9DS1_t *pDev, int16_t *pnXVal, int16_t *pnYVa
 eReturn_t LSM9DS1ReadAccelerometer(sLSM9DS1_t *pDev, int16_t *pnXVal, int16_t *pnYVal, int16_t *pnZVal) {
 	sI2CIface_t *pI2CIface = pDev->pI2CBus;
 	uint8_t nRegVal, nTimeOut;
-	eI2CReturns_t eResult;
+	eI2CReturn_t eResult;
 	bool bIsDataReady;
 	
 	(*pnXVal) = 0;
