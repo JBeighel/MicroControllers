@@ -19,16 +19,30 @@
 	#include "I2CGeneralInterface.h"
 
 /*****	Defines		*****/
-
+	/**	@brief		Maximum I2C clock the device supports
+		@ingroup	mpu6050
+	*/
+	#define MPU6050_MAXCLOCK	400000
+	
+	/**	@brief		I2C bus capabilities this driver requires
+		@ingroup	mpu6050
+	*/
+	#define MPU6050_I2CCAPS		(I2CCap_ReadUint8Reg | I2CCap_WriteUint8Reg | I2CCap_ReadData)
 
 /*****	Definitions	*****/
 	typedef eReturn_t eMPU6050Return_t;
 	
+	/** @breif		I2C Address values for the MPU-6050
+		@ingroup	mpu6050
+	*/
 	typedef enum eMPU6050Addr_t {
 		MPU6050Addr_Base		0x68,
 		MPU6050Addr_AD0			0x01,
 	} eMPU6050Addr_t;
 	
+	/**	@brief		Enumeration of all MPU-6050 register addresses
+		@ingroup	mpu6050
+	*/
 	typedef enum eMPU6050Reg_t {
 		MPU6050Reg_SelfTestX	0x0D,
 		MPU6050Reg_SelfTestY	0x0E,
@@ -157,6 +171,60 @@
 		MPU6050RegACfg_FS16g		0x18,
 	} eMPU6050RegACfg_t;
 	
+	typedef enum eMPU6050RegFIFOEn_t {
+		MPU6050RegFIFOen_None		0x00,
+		MPU6050RegFIFOEn_Temp		0x80,
+		MPU6050RegFIFOen_GyroX		0x40,
+		MPU6050RegFIFOen_GyroY		0x20,
+		MPU6050RegFIFOen_GyroZ		0x10,
+		MPU6050RegFIFOen_AccelX		0x08,
+		MPU6050RegFIFOen_Slave2		0x04,
+		MPU6050RegFIFOen_Slave1		0x02,
+		MPU6050RegFIFOen_Slave0		0x01,
+	} eMPU6050RegFIFOEn_t;
+	
+	typedef enum eMPU6050RegI2CMst_t {
+		MPU6050RegI2CMst_MultiMstr	0x80,
+		MPU6050RegI2CMst_WaitForExt	0x40,
+		MPU6050RegI2CMst_Slave3FIFO	0x20,
+		MPU6050RegI2CMst_PNSR		0x10,
+		MPU6050RegI2CMst_MstClcMask	0x0F,
+		MPU6050RegI2CMst_Clk348kHz	0x00,
+		MPU6050RegI2CMst_Clk333kHz	0x01,
+		MPU6050RegI2CMst_Clk320kHz	0x02,
+		MPU6050RegI2CMst_Clk308kHz	0x03,
+		MPU6050RegI2CMst_Clk296kHz	0x04,
+		MPU6050RegI2CMst_Clk286kHz	0x05,
+		MPU6050RegI2CMst_Clk276kHz	0x06,
+		MPU6050RegI2CMst_Clk267kHz	0x07,
+		MPU6050RegI2CMst_Clk258kHz	0x08,
+		MPU6050RegI2CMst_Clk500kHz	0x09,
+		MPU6050RegI2CMst_Clk471kHz	0x0A,
+		MPU6050RegI2CMst_Clk444kHz	0x0B,
+		MPU6050RegI2CMst_Clk421kHz	0x0C,
+		MPU6050RegI2CMst_Clk400kHz	0x0D,
+		MPU6050RegI2CMst_Clk381kHz	0x0E,
+		MPU6050RegI2CMst_Clk364kHz	0x0F,
+	} eMPU6050RegI2CMst_t;
+	
+	typedef enum eMPU6050RegIntCfg_t {
+		MPU6050RegIntCfg_Level		0x80,
+		MPU6050RegIntCfg_Open		0x40,
+		MPU6050RegIntCfg_LatchEn	0x20,
+		MPU6050RegIntCfg_ReadClear	0x10,
+		MPU6050RegIntCfg_FsyncLevel	0x08,
+		MPU6050RegIntCfg_FsyncEn	0x04,
+		MPU6050RegIntCfg_BypassEn	0x02,
+		MPU6050RegIntCfg_None		0x00,
+	} eMPU6050RegIntCfg_t;
+	
+	typedef enum eMPU6050RegIntEn_t {
+		MPU6050RegIntEn_None		0x00,
+		MPU6050RegIntEn_FIFOOFlow	0x10,
+		MPU6050RegIntEn_I2CMaster	0x40,
+		MPU6050RegIntEn_DataReady	0x01,
+	} eMPU6050RegIntEn_t;
+	
 	typedef struct sMPU6050Obj_t {
 		sI2CIface_t pI2C;
 		
@@ -173,7 +241,10 @@
 
 
 /*****	Functions	*****/
+	eMPU6050Return_t MPU6050Initialize(sMPU6050Obj_t pObj, sI2CIface_t pI2C, eMPU6050Addr_t eI2CAddr);
 
+	eMPU6050Return_t MPU6050ReadGyro(sMPU6050Obj_t pObj, int16_t nXMeas, int16_t nYMeas, int16_t nZMeas);
+	
+	eMPU6050Return_t MPU6050ReadAccel(sMPU6050Obj_t pObj, , int16_t nXMeas, int16_t nYMeas, int16_t nZMeas);
 
 #endif
-
