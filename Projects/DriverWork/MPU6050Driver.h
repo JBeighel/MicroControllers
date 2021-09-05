@@ -225,6 +225,53 @@
 		MPU6050RegIntEn_DataReady	0x01,
 	} eMPU6050RegIntEn_t;
 	
+	typedef enum eMPU6050RegSigRst_t {
+		MPU6050RegSigRst_All		0x07,
+		MPU6050RegSigRst_Gyro		0x04,
+		MPU6050RegSigRst_Accel		0x02,
+		MPU6050RegSigRst_Temp		0x01,
+	} eMPU6050RegSigRst_t;
+	
+	typedef enum eMPU6050RegUsrCtrl_t {
+		MPU6050RegUsrCtrl_6050Def	0x00,
+		MPU6050RegUsrCtrl_FIFOEn	0x40,
+		MPU6050RegUsrCtrl_I2CMstEn	0x20,
+		MPU6050RegUsrCtrl_SPIEn		0x10,	/**< Enables the SPI interface and disables I2C */
+		MPU6050RegUsrCtrl_FIFORst	0x40,
+		MPU6050RegUsrCtrl_I2CMstRst	0x20,
+		MPU6050RegUsrCtrl_SigCndRst	0x01,
+	} eMPU6050RegUsrCtrl_t;
+	
+	typedef enum eMPU6050RegPwr1_t {
+		MPU6050RegPwr1_Reset		0x80,	/**< Set to reset all internal registers to default */
+		MPU6050RegPwr1_Sleep		0x40,
+		MPU6050RegPwr1_Cycle		0x20,
+		MPU6050RegPwr1_TempDis		0x08,	/**< Set to disable temperature sensor */
+		MPU6050RegPwr1_ClkSelMask	0x07,
+		MPU6050RegPwr1_ClkIntOsc	0x00,
+		MPU6050RegPwr1_ClkGyroX		0x01,
+		MPU6050RegPwr1_ClkGyroY		0x02,
+		MPU6050RegPwr1_ClkGyroZ		0x03,
+		MPU6050RegPwr1_ClkPLL32kHz	0x04,
+		MPU6050RegPwr1_ClkPLL19MKz	0x05,
+		MPU6050RegPwr1_ClkStop		0x07,
+	} eMPU6050RegPwr1_t;
+	
+	typedef enum eMPU6050RegPwr2_t {
+		MPU6050RegPwr2_LPWake1Hz	0x00,
+		MPU6050RegPwr2_LPWake5Hz	0x40,
+		MPU6050RegPwr2_LPWake20Hz	0x80,
+		MPU6050RegPwr2_LPWake40Hz	0xC0,
+		
+		MPU6050RegPwr2_StdByAccelX	0x20,
+		MPU6050RegPwr2_StdByAccelY	0x10,
+		MPU6050RegPwr2_StdByAccelZ	0x08,
+		
+		MPU6050RegPwr2_StdByGyroX	0x04,
+		MPU6050RegPwr2_StdByGyroY	0x02,
+		MPU6050RegPwr2_StdByGyroZ	0x01,
+	} eMPU6050RegPwr2_t;
+	
 	typedef struct sMPU6050Obj_t {
 		sI2CIface_t pI2C;
 		
@@ -243,8 +290,8 @@
 /*****	Functions	*****/
 	eMPU6050Return_t MPU6050Initialize(sMPU6050Obj_t pObj, sI2CIface_t pI2C, eMPU6050Addr_t eI2CAddr);
 
-	eMPU6050Return_t MPU6050ReadGyro(sMPU6050Obj_t pObj, int16_t nXMeas, int16_t nYMeas, int16_t nZMeas);
+	eMPU6050Return_t MPU6050ReadGyro(sMPU6050Obj_t pObj, int16_t *pnXMeas, int16_t *pnYMeas, int16_t *pnZMeas);
 	
-	eMPU6050Return_t MPU6050ReadAccel(sMPU6050Obj_t pObj, , int16_t nXMeas, int16_t nYMeas, int16_t nZMeas);
+	eMPU6050Return_t MPU6050ReadAccel(sMPU6050Obj_t pObj, , int16_t *pnXMeas, int16_t *pnYMeas, int16_t *pnZMeas);
 
 #endif
