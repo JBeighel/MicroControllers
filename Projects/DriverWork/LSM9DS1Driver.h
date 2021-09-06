@@ -1,6 +1,6 @@
 /**	@defgroup lsm9ds1
 	@brief
-	@details
+	@details v0.1
 	# Part Info #
 	Gyroscope gives Instantaneous Velocity of the chip.  This must be integrated int 
 	order to determine change in position.  This velocity is an angular velocity, so if 

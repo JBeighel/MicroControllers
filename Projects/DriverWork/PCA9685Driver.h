@@ -8,7 +8,7 @@
 	#File Information
 		File:	PCA9685Driver.h
 		Author:	J. Beighel
-		Date:	12-17-2020
+		Date:	2021-09-06
 */
 
 #ifndef __PCA9685DRIVER_H

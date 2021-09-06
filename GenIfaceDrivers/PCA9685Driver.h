@@ -8,7 +8,7 @@
 	#File Information
 		File:	PCA9685Driver.h
 		Author:	J. Beighel
-		Date:	12-17-2020
+		Date:	2021-09-06
 */
 
 #ifndef __PCA9685DRIVER_H
@@ -266,9 +266,15 @@
 		@ingroup	pca9685driver
 	*/
 	ePCA9685Return_t PCA9685SetPWMFrequency(sPCA9685Info_t *pObj, uint32_t nFreqHz);
+	
+	/**	@brief		Enables or disables all PWM outputs
+		@return		PCA9685_Success on success, or a code indicating the type of problem 
+			encounterd
+		@ingroup	pca9685driver
+	*/
+	ePCA9685Return_t PCA9685EnableOutputs(sPCA9685Info_t *pObj, bool bEnable);
 
 /*****	Functions	*****/
 
 
 #endif
-

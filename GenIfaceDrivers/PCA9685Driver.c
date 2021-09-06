@@ -1,6 +1,6 @@
 /**	File:	PCA9685Driver.c
 	Author:	J. Beighel
-	Date:	12-17-2020
+	Date:	2021-09-06
 */
 
 /*****	Includes	*****/
@@ -62,7 +62,7 @@ ePCA9685Return_t PCA9685Initialize(sPCA9685Info_t *pObj, sGPIOIface_t *pGpio, sI
 	//Put the details in the object
 	pObj->pGpio = pGpio;
 	pObj->pI2C = pI2C;
-	pObj->eAddr = eAddr | PCA9685_Fixed; //Ensure the fixed portion of the address is there
+	pObj->eAddr = (ePCA9685Address_t)(eAddr | PCA9685_Fixed); //Ensure the fixed portion of the address is there
 	pObj->nOutEnablePin = nOutEnPin;
 	
 	//Setup the pin	
@@ -101,11 +101,11 @@ ePCA9685Return_t PCA9685SetOutput(sPCA9685Info_t *pObj, uint8_t nPWMOutNum, uint
 	uint8_t nRegAddr, nRegVal;
 	
 	if (nPWMOutNum >= PCA9685_NUMPWM) { //requested output does not exist
-		return false;
+		return PCA9685Fail_Unknown;
 	}
 	
 	if ((nOnCnt >= PCA9685_PULSECOUNTS) || (nOffCnt >= PCA9685_PULSECOUNTS)) { //The duty cycle requested is invalid
-		return false;
+		return PCA9685Fail_Unknown;
 	}
 	
 	//Set the phase shift (high count)
@@ -130,7 +130,7 @@ ePCA9685Return_t PCA9685SetOutput(sPCA9685Info_t *pObj, uint8_t nPWMOutNum, uint
 
 	pObj->pI2C->pfI2CWriteUint8Reg(pObj->pI2C, pObj->eAddr, nRegAddr, nRegVal);
 
-	return true;
+	return PCA9685_Success;
 }
 
 ePCA9685Return_t PCA9685GetPWMFrequency(sPCA9685Info_t *pObj, uint32_t *pnFreqHz) {
@@ -186,6 +186,17 @@ ePCA9685Return_t PCA9685SetPWMFrequency(sPCA9685Info_t *pObj, uint32_t nFreqHz) 
 		
 	if (eResult != I2C_Success) {
 		return PCA9685Fail_BusError;
+	}
+	
+	return PCA9685_Success;
+}
+
+ePCA9685Return_t PCA9685EnableOutputs(sPCA9685Info_t *pObj, bool bEnable) {
+	eGPIOReturn_t eResult;
+	
+	eResult = pObj->pGpio->pfDigitalWriteByPin(pObj->pGpio, pObj->nOutEnablePin, bEnable);
+	if (eResult != GPIO_Success) {
+		return PCA9685Fail_Unknown;
 	}
 	
 	return PCA9685_Success;

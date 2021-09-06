@@ -1,13 +1,17 @@
 /**	@defgroup lsm9ds1
 	@brief
-	@details
+	@details v0.1
 	# Part Info #
-	Gyroscope gives Instantaneous Velocity of the chip.  This must be integrated int order to determine
-	change in position.  This velocity is an angular velocity, so if the chip is not rotating it will
-	not be registered.
+	Gyroscope gives Instantaneous Velocity of the chip.  This must be integrated int 
+	order to determine change in position.  This velocity is an angular velocity, so if 
+	the chip is not rotating it will not be registered.
 	
 	# Intent #
-
+	
+	# File Information #
+		File:	LSM9DS1Driver.h
+		Author:	J. Beighel
+		Date:	2021-09-05
 */
 
 /**	@defgroup lsm9ds1_priv : Private Objects
@@ -21,6 +25,7 @@
 /*****	Includes	*****/
 	#include <string.h>
 
+	#include "CommonUtils.h"
 	#include "I2CGeneralInterface.h"
 
 /*****	Constants	*****/
@@ -30,6 +35,9 @@
 	#define LSM9DS1_SELFID				0x68
 
 /*****	Definitions	*****/
+	/**	@brief		Registers for the LSM9DS1 gyrometer and accelerometer
+		@ingroup	lsm9ds1
+	*/
 	typedef enum eLSM9DS1Reg_AG_t {
 		LSM9DS1_ACT_THS				= 0x04,
 		LSM9DS1_ACT_DUR				= 0x05,
@@ -83,6 +91,9 @@
 		LSM9DS1_INT_GEN_DUR_G		= 0x37,
 	} eLSM9DS1Reg_AG_t;
 	
+	/**	@brief		Registers for the LSM9DS1 magnetometer
+		@ingroup	lsm9ds1
+	*/
 	typedef enum eLSM9DS1Reg_M_t {
 		LSM9DS1_OFFSET_X_REG_L_M	= 0x05,
 		LSM9DS1_OFFSET_X_REG_H_M	= 0x06,
@@ -156,14 +167,14 @@
 
 
 /*****	Prototypes	*****/
-	bool LSM9DS1Initialize(sI2CIface_t *pI2CIface, sLSM9DS1_t *pDev);
+	eReturn_t LSM9DS1Initialize(sI2CIface_t *pI2CIface, sLSM9DS1_t *pDev);
 	
-	bool LSM9DS1DetectDevice(sLSM9DS1_t *pDev);
+	eReturn_t LSM9DS1DetectDevice(sLSM9DS1_t *pDev);
 	
-	bool LSM9DS1Configure(sLSM9DS1_t *pDev);
+	eReturn_t LSM9DS1Configure(sLSM9DS1_t *pDev);
 	
-	bool LSM9DS1ReadGyroscope(sLSM9DS1_t *pDev, int16_t *pnXVal, int16_t *pnYVal, int16_t *pnZVal);
+	eReturn_t LSM9DS1ReadGyroscope(sLSM9DS1_t *pDev, int16_t *pnXVal, int16_t *pnYVal, int16_t *pnZVal);
 	
-	bool LSM9DS1ReadAccelerometer(sLSM9DS1_t *pDev, int16_t *pnXVal, int16_t *pnYVal, int16_t *pnZVal);
+	eReturn_t LSM9DS1ReadAccelerometer(sLSM9DS1_t *pDev, int16_t *pnXVal, int16_t *pnYVal, int16_t *pnZVal);
 
 #endif

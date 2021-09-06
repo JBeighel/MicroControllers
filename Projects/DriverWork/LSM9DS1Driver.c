@@ -1,7 +1,6 @@
-/** # File Information #
-		File:	LSM9DS1Driver.c
-		Author:	J. Beighel
-		Date:	2021-09-05
+/** File:	LSM9DS1Driver.c
+	Author:	J. Beighel
+	Date:	2021-09-05
 */
 
 #include "LSM9DS1Driver.h"
