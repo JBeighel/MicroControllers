@@ -190,3 +190,14 @@ ePCA9685Return_t PCA9685SetPWMFrequency(sPCA9685Info_t *pObj, uint32_t nFreqHz) 
 	
 	return PCA9685_Success;
 }
+
+ePCA9685Return_t PCA9685EnableOutputs(sPCA9685Info_t *pObj, bool bEnable) {
+	eGPIOReturn_t eResult;
+	
+	eResult = pObj->pGpio->pfDigitalWriteByPin(pObj->pGpio, pObj->nOutEnablePin, bEnable);
+	if (eResult != GPIO_Success) {
+		return PCA9685Fail_Unknown;
+	}
+	
+	return PCA9685_Success;
+}
