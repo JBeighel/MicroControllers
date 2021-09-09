@@ -67,12 +67,12 @@ eMPU6050Return_t MPU6050Initialize(sMPU6050Obj_t *pObj, sI2CIface_t *pI2C, eMPU6
 		return Fail_CommError;
 	}
 	
-	eResult = pObj->pI2C->pfI2CWriteUint8Reg(pObj->pI2C, pObj->eAddr, MPU6050Reg_GyroConfig, MPU6050RegGCfg_FS2000);
+	eResult = pObj->pI2C->pfI2CWriteUint8Reg(pObj->pI2C, pObj->eAddr, MPU6050Reg_GyroConfig, MPU6050RegGCfg_FS500);
 	if (eResult != I2C_Success) { //Failed to talk on the bus
 		return Fail_CommError;
 	}
 	
-	eResult = pObj->pI2C->pfI2CWriteUint8Reg(pObj->pI2C, pObj->eAddr, MPU6050Reg_AccelConfig,  MPU6050RegACfg_FS16g);
+	eResult = pObj->pI2C->pfI2CWriteUint8Reg(pObj->pI2C, pObj->eAddr, MPU6050Reg_AccelConfig,  MPU6050RegACfg_FS2g);
 	if (eResult != I2C_Success) { //Failed to talk on the bus
 		return Fail_CommError;
 	}

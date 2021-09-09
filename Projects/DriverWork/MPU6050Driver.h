@@ -237,12 +237,13 @@
 	} eMPU6050RegIntCfg_t;
 	
 	/**	@brief		Bit mask and field values for the Interrupt Enable register
+		@details	These are the same bits in the Interrupt Status register as well.
 		@ingroup	mpu6050
 	*/
 	typedef enum eMPU6050RegIntEn_t {
 		MPU6050RegIntEn_None		= 0x00,	/**< Do not trigger the interrupt pin */
 		MPU6050RegIntEn_FIFOOFlow	= 0x10,	/**< Send an interrupt when the FIFO overflows */
-		MPU6050RegIntEn_I2CMaster	= 0x40,	/**< Send an interrupt when the I2C master receives data */
+		MPU6050RegIntEn_I2CMaster	= 0x80,	/**< Send an interrupt when the I2C master receives data */
 		MPU6050RegIntEn_DataReady	= 0x01,	/**< Send an interrupt when sample data is ready */
 	} eMPU6050RegIntEn_t;
 	
