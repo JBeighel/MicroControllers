@@ -8,6 +8,9 @@ Collection of headder files written specifically for arduino.
 
 Includes some convenience objects and interfaces intended to simplify firmware creation.
 
+# Complete
+Projects that were completed into a workign device of some sort.  This may be include a PCB layout in addition to the source code controllign it.
+
 # Fritzing Parts
 PCBs designed through Fritzing are being used to test these drivers and work on the projects.  Customized parts for these circuit boards are stroed in this directory.
 

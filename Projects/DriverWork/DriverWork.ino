@@ -62,27 +62,15 @@ void setup() {
 }
 
 void loop() {
-  int16_t anGyro[3], anAccel[3];
+  int16_t anAccel[3];
   eMPU6050Return_t eResult;
-
-  //MPU6050ReadGyro(&gAccel, &anGyro[0], &anGyro[1], &anGyro[2]);
-  eResult = MPU6050ReadAccel(&gAccel, &anAccel[0], &anAccel[1], &anAccel[2]);
-
-  /*
-  Serial.print("G X:");
-  Serial.print(anGyro[0]);
-  Serial.print(" Y:");
-  Serial.print(anGyro[1]);
-  Serial.print(" Z:");
-  Serial.print(anGyro[2]);
-  */
-  Serial.print(" - A X,");
-  Serial.print(anAccel[0]);
-  Serial.print(",Y,");
-  Serial.print(anAccel[1]);
-  Serial.print(",Z,");
-  Serial.print(anAccel[2]);
+  float nVelocity;
   
+  nVelocity = GetVelocity(&gAccel);
+  nVelocity -= 0; //Apply some calibration?
+  
+  Serial.print("V,");
+  Serial.print(nVelocity);  
   Serial.print("\r\n");
 
   gTime.pfDelayMilliSeconds(100);
@@ -93,3 +81,64 @@ void loop() {
 //----- Callback Functions -----//
 
 //----- Application Code   -----//
+float GetVelocity(sMPU6050Obj_t *pAccel) {
+  static float nLastVelocity = 0;
+  
+  int16_t anAccelTry[3], anAccelGood[3];
+  uint8_t nGoodSamples;
+  float nValue;
+  eMPU6050Return_t eResult;
+
+  //Set flags to say we have no good samples
+  nGoodSamples = 0;
+  while (nGoodSamples != 7) {
+    eResult = MPU6050ReadAccel(pAccel, &anAccelTry[0], &anAccelTry[1], &anAccelTry[2]);
+    if (eResult != Success) { //Bad read, try again?
+      continue;
+    }
+
+    //Check X sample
+    if ((anAccelTry[0] < -150) || (anAccelTry[0] > 0)) { //Found a good sample
+      nGoodSamples |= 0x01,
+      anAccelGood[0] = anAccelTry[0];
+    }
+
+    //Check Y sample
+    if ((anAccelTry[1] < -150) || (anAccelTry[1] > 0)) { //Found a good sample
+      nGoodSamples |= 0x02,
+      anAccelGood[1] = anAccelTry[1];
+    }
+
+    //Check Z sample
+    if ((anAccelTry[2] < -150) || (anAccelTry[2] > 0)) { //Found a good sample
+      nGoodSamples |= 0x04,
+      anAccelGood[2] = anAccelTry[2];
+    }
+  }
+
+  //Have good samples, calculate the magnitude of the acceleration vector
+  //Each sample is the length along some axis
+  nValue = anAccelGood[0] * anAccelGood[0];
+  nValue += anAccelGood[1] * anAccelGood[1];
+  nValue += anAccelGood[2] * anAccelGood[2];
+
+  nValue = sqrt(nValue);
+  nValue -= 16000; //Subtract the effect of gravity
+  nValue /= 8; //Attenuate the acceleration 
+
+  //Have the acceleration, integrate it to get the current velocity
+  nLastVelocity *= 0.90; //Leak some from the accumulator
+  nLastVelocity += nValue;
+
+  Serial.print("X,");
+  Serial.print(anAccelGood[0]);
+  Serial.print(",Y,");
+  Serial.print(anAccelGood[1]);
+  Serial.print(",Z,");
+  Serial.print(anAccelGood[2]);
+  Serial.print(",M,");
+  Serial.print(nValue);  
+  Serial.print("\r\n");
+
+  return nLastVelocity;
+}
