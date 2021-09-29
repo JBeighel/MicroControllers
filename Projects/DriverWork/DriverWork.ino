@@ -28,6 +28,9 @@
   #include "PCA9685Driver.c"
 
 //----- Constants         -----//
+  #define PIN_LEDRED      3
+  #define PIN_LEDWHITE    4
+  #define PIN_PWMOUTEN    1
 
 //----- Definitions       -----//
 
@@ -41,6 +44,7 @@
   
   //Peripheral objects
   sMPU6050Obj_t gAccel;
+  sPCA9685Info_t gPWM;
 
 //----- Arduino Functions -----//
 void setup() {
@@ -49,14 +53,20 @@ void setup() {
 
   //General Interface setup
   TIME_INIT(&gTime);
-  //GPIO_INIT(&gGPIO, GPIO_HWINFO);
+  GPIO_INIT(&gGPIO, GPIO_HWINFO);
   I2C_INIT(&gI2C, true, 100000, I2C_1_HWINFO);
   //SPI_INIT(&gSpi, SPI_1_HWINFO, 5000000, SPI_MSBFirst, SPI_Mode0);
   //UART_INIT(&gUart, 38400, UART_8None1, UART_1_HWINFO);
 
+  gGPIO.pfSetModeByPin(&gGPIO, PIN_PWMOUTEN, GPIO_DigitalOutput);
+  gGPIO.pfSetModeByPin(&gGPIO, PIN_LEDRED, GPIO_DigitalOutput);
+  gGPIO.pfSetModeByPin(&gGPIO, PIN_LEDWHITE, GPIO_DigitalOutput);
+
   //Peripheral setup
   MPU6050Initialize(&gAccel, &gI2C, (eMPU6050Addr_t)0);
   gTime.pfDelayMilliSeconds(100);
+
+  PCA9685Initialize(&gPWM, &gGPIO, &gI2C, PCA9685_None, PIN_PWMOUTEN);
   
   return;
 }
@@ -64,11 +74,36 @@ void setup() {
 void loop() {
   int16_t anAccel[3];
   eMPU6050Return_t eResult;
+  ePCA9685Return_t ePWMResult;
   float nVelocity;
-  
-  nVelocity = GetVelocity(&gAccel);
+  int16_t anAccelTry[3];
+  uint32_t nFreq;
+
+ if ((millis() & 0x0200) == 0) {
+    gGPIO.pfDigitalWriteByPin(&gGPIO, PIN_LEDRED, true);
+    gGPIO.pfDigitalWriteByPin(&gGPIO, PIN_LEDWHITE, false);
+  } else {
+    gGPIO.pfDigitalWriteByPin(&gGPIO, PIN_LEDRED, false);
+    gGPIO.pfDigitalWriteByPin(&gGPIO, PIN_LEDWHITE, true);
+  }
+
+  eResult = MPU6050ReadAccel(&gAccel, &anAccelTry[0], &anAccelTry[1], &anAccelTry[2]);
+  if (eResult != Success) {
+    Serial.println("Accelerometer Read failure!!");
+  }
+
+  ePWMResult = PCA9685GetPWMFrequency(&gPWM, &nFreq);
+  if (ePWMResult != Success) {
+    Serial.println("PWM Read failure!!!");
+  }
+
+  if ((ePWMResult != Success) || (eResult != Success)) {
+    return;
+  }
+ 
+  //nVelocity = GetVelocity(&gAccel);
   nVelocity -= 0; //Apply some calibration?
-  
+
   Serial.print("V,");
   Serial.print(nVelocity);  
   Serial.print("\r\n");
@@ -124,10 +159,10 @@ float GetVelocity(sMPU6050Obj_t *pAccel) {
 
   nValue = sqrt(nValue);
   nValue -= 16000; //Subtract the effect of gravity
-  nValue /= 8; //Attenuate the acceleration 
+  nValue /= 16; //Attenuate the acceleration 
 
   //Have the acceleration, integrate it to get the current velocity
-  nLastVelocity *= 0.90; //Leak some from the accumulator
+  nLastVelocity *= 0.80; //Leak some from the accumulator
   nLastVelocity += nValue;
 
   Serial.print("X,");
